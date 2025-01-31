@@ -1,0 +1,10 @@
+[run]
+# Include the main CLI script and the classes directory
+source = 
+    gh_semver.py
+    classes/*
+
+# Exclude test files
+omit = 
+    tests/*
+    setup.py

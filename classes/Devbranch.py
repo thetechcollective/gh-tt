@@ -14,7 +14,7 @@ class Devbranch:
 
     # Class variables
 
-    issue-number = None
+    issue_number = None 
     branch_name = None
     pull_request = None
     workdir = os.getcwd() # Required, therefore also  set at class level to allow a null constructor
@@ -41,17 +41,25 @@ class Devbranch:
 
         self.__read_context()
 
-    def __read_contex(self):
-        """Desinged to be called from __init__ to read the branch context in the repo and again 
-        after a from bump, when a new tag is created.
-
-        Reads the tags in the repo, extract the semantic version tags
-        and store them in a dictionary (semver_tags) with the tuple of the
-        three integers as the key and the tag as the value and keep the most recent
-        version (current_semver and current_tag).
-
-        Also sets the next major, minor and patch versions in the next dictionary.
-        """
+    def __read_context(self):
+        """Desinged to be called from __init__ to read the branch context in the repo"""
+        
+        result = self.__run_git('git rev-parse --abbrev-ref HEAD')
+        if not result.returncode == 0:
+            raise FileNotFoundError(f"{result.stderr}")
+            sys.exit(1)
+        self.branch_name = result.stdout.strip()
+ 
+         # Check if the branch name is in the format issue-<number>
+        match = re.match(r'^(\d+).+', self.branch_name)
+        if match:
+            self.issue_number = match.group(1)
+        else:
+            self.issue_number = None
+        
+        
+        
+        
         
         
 

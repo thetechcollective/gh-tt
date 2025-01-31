@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+# Function to check if puython is installed
+ensure_python() {
+    if ! command -v python3 &> /dev/null; then
+        echo "Python 3 not found. Please install Python 3."
+        exit 1
+    fi
+}
+
+
+# Function to check if pipenv is installed and provide instructions if not
+check_pipenv() {
+    if ! command -v pipenv &> /dev/null; then
+        echo ""
+        echo "This scripts is designed to run in an isolated pipenv environment."
+        echo "...but pipenv is not installed on your system."
+        echo "Given the myriad of ways to install pipenv, we leave it up to you fix it yourself."
+        wcho ""
+        echo "Here are some common ways:"
+        echo "1. Using pip (recommended for most users):"
+        echo "   python3 -m pip install --user pipenv"
+        echo "2. Using Homebrew (for macOS users who installed python through Homebrew):"
+        echo "   brew install pipenv"
+        echo "3. Using pipx (alternative method):"
+        echo "   brew install pipx"
+        echo "   pipx install pipenv"
+        exit 1
+    fi
+}
+
+## Main script
+
+# Attempt to get the virtual environment path
+export PIPENV_VERBOSITY=-1
+export PIPENV_VENV_IN_PROJECT=0
+export PIPENV_CUSTOM_VENV_NAME=gh-semver
+export PIPENV_PIPFILE=$(dirname "$0")/Pipfile
+
+ensure_python
+check_pipenv
+
+# Check if a virtual environment exists
+pipenv --venv > /dev/null 2>&1
+
+# If pipenv --venv failed, it means no virtual environment exists
+if [ $? -ne 0 ]; then
+    echo "First time around - Setting up pipenv environment..."
+    pipenv sync --bare -q > /dev/null 2>&1
+fi
+
+pipenv run python3 $(dirname "$0")/gh_tt.py "$@"

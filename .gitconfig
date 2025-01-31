@@ -1,0 +1,19 @@
+[core]
+    editor = nano
+
+[push]
+  default = current
+
+[pull]
+  rebase = true
+
+[alias]
+  undo-commit = reset --soft HEAD^
+  addremove = add -A
+  recommit = commit -C HEAD --amend
+  co = checkout
+  st = status
+  root =  rev-parse --show-toplevel
+  tree = log --graph --full-history --all --color --date=short --pretty=format:\"%Cred%x09%h %Creset%ad%Cblue%d %Creset %s %C(bold)(%an)%Creset\"
+  backward = checkout HEAD^1
+  forward = !git checkout $(git log --all --ancestry-path ^HEAD --format=format:%H | tail -n 1)

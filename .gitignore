@@ -1,0 +1,6 @@
+**/__pycache__/
+.pytest_cache/
+logs/
+gh_semver.egg-info
+*testbed
+.coverage
