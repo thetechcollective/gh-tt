@@ -4,6 +4,7 @@ import os
 import sys
 import argparse
 import re
+import pprint
 
 # Add the subdirectory containing the classes to the general class_path
 class_path = os.path.dirname(os.path.abspath(__file__)) + "/classes"
@@ -38,18 +39,18 @@ def parse(args=None):
     subparsers = parser.add_subparsers(dest='command')
 
     # Add workon subcommand
-    workon_parser = subparsers.add_parser('workon', help='Set the issue number context to work on')
+    workon_parser = subparsers.add_parser('workon', parents=[parent_parser], help='Set the issue number context to work on')
     workon_group = workon_parser.add_mutually_exclusive_group()
     workon_group.add_argument('-i', '--issue', type=int, help='Issue number')
     workon_group.add_argument('-t', '--title', type=str, help='Title for the new issue')
     workon_parser.set_defaults(exclusive_groups=['workon'])
     
     # Add wrapup subcommand
-    wrapup_parser = subparsers.add_parser('wrapup', help='Collapse dev branch into one commit, rebase and create PR if needed')
+    wrapup_parser = subparsers.add_parser('wrapup', parents=[parent_parser], help='Collapse dev branch into one commit, rebase and create PR if needed')
     wrapup_parser.add_argument('-m', '--message', type=str, help='Message for the commit')
 
     # Add comment subcommand
-    comment_parser = subparsers.add_parser('comment', help='Add a comment to the issue related to the dev branch')
+    comment_parser = subparsers.add_parser('comment', parents=[parent_parser], help='Add a comment to the issue related to the dev branch')
     comment_parser.add_argument('-m', '--message', type=str, help='Comment message')
 
     args = parser.parse_args(args)
@@ -59,21 +60,25 @@ def parse(args=None):
 if __name__ == "__main__":
     args = parse(sys.argv[1:])
     
-    devbranch = Devbranch()
+    devbranch = Devbranch(verbose=args.verbose)
     
-    print(devbranch.branch_name)
-
     if args.command == 'workon':
         if args.issue:
-            print("workon issue: ", args.issue)
-            # Check if there is a branch that begins with issue the issue number
-            # If there is, check it out, if not, create a new branch
-            result = devbranch.__run_git(f'git checkout -b issue-{args.issue}')
+            devbranch.set_issue(args.issue)
+            if args.verbose:
+                pprint.pprint(devbranch.props)
+        elif args.title:
+            issue =  devbranch.create_issue(args.title)
+            devbranch.set_issue(issue)            
+            if args.verbose:
+                pprint.pprint(devbranch.props)
             
     if args.command == 'wrapup':
-        print("wrapup")
+        devbranch.collapse()
+        if args.verbose:
+            pprint.pprint(devbranch.props)
     
     if args.command == 'comment':
-        print("comment")
+        print( "Subcommand 'comment' is not implemented yet\nWhile you wait, you can use the GitHub ClI like this:\n$ gh issue comment <issue_number> -b '<comment>'")
     
     exit(0)
