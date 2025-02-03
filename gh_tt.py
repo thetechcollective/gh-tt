@@ -11,6 +11,7 @@ class_path = os.path.dirname(os.path.abspath(__file__)) + "/classes"
 sys.path.append(class_path)
 
 from devbranch import Devbranch
+from project import Project
 
 def validate_suffix(suffix):
     if not re.match("^[a-z0-9_-]*$", suffix):
@@ -80,5 +81,8 @@ if __name__ == "__main__":
     
     if args.command == 'comment':
         print( "Subcommand 'comment' is not implemented yet\nWhile you wait, you can use the GitHub ClI like this:\n$ gh issue comment <issue_number> -b '<comment>'")
+        
+        project = Project(verbose=args.verbose)
+        pprint.pprint(project.props)
     
     exit(0)
