@@ -9,6 +9,8 @@ class_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(class_path)
 
 from runner import run
+from project import Project
+
 
 class Devbranch:
     """Class used to represent the Devbranch for a development contribution"""
@@ -30,6 +32,7 @@ class Devbranch:
     }
 
     props['workdir'] = os.getcwd()
+    project = None
 
     def verbose(self, verbose):
         self.props['verbose'] = verbose
@@ -47,8 +50,7 @@ class Devbranch:
             if not os.path.exists(workdir):
                 raise FileNotFoundError(f"Directory {workdir} does not exist")
                 sys.exit(1)
-            self.props['workdir'] = os.path.abspath(workdir)
-
+            self.props['workdir'] = os.path.abspath(workdir)                
 
         [output, result] = run(
             'git fetch',
@@ -114,6 +116,8 @@ class Devbranch:
             f"git rev-list --count {self.props['branch_name']} ^{self.props['default_branch']}",
             verbose=self.props['verbose'], 
             msg="Get the number of commits in the current branch")
+        
+        
 
     def collapse(self):
         """Collapse the current branch into a single commit"""
