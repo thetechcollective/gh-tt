@@ -9,8 +9,6 @@ class_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(class_path)
 
 from runner import run
-from project import Project
-
 
 class Devbranch:
     """Class used to represent the Devbranch for a development contribution"""
