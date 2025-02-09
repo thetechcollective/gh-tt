@@ -5,16 +5,16 @@
     "version": "0.2.0",
     "configurations": [
 
+
         {
-            "name": "Python Debugger: wrapup --verbose",
-            "type": "python",
+            "name": "Python Debugger: gh_tt.py with Arguments",
+            "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/gh_tt.py",
             "console": "integratedTerminal",
-            "args": ["wrapup", "--verbose"],
-            "cwd": "${workspaceFolder}/../../gitsquash_lab/testbed"
-
-        },        
+            "cwd": "${workspaceFolder}/../gitsquash_lab/testbed",
+            "args": "${command:pickArgs}"
+        },
         
         {
             "name": "Python Debugger: Current File",
