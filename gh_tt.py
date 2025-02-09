@@ -11,6 +11,7 @@ class_path = os.path.dirname(os.path.abspath(__file__)) + "/classes"
 sys.path.append(class_path)
 
 from devbranch import Devbranch
+from project import Project
 
 def parse(args=None):
     # Define the parent parser with the --verbose argument
@@ -32,11 +33,11 @@ def parse(args=None):
     
     # Add wrapup subcommand
     wrapup_parser = subparsers.add_parser('wrapup', parents=[parent_parser], help='Collapse dev branch into one commit, rebase and create PR if needed')
-#    wrapup_parser.add_argument('-m', '--message', type=str, help='Message for the commit')
+#   wrapup_parser.add_argument('-m', '--message', type=str, help='Message for the commit')
 
     # Add comment subcommand
-#    comment_parser = subparsers.add_parser('comment', parents=[parent_parser], help='Add a comment to the issue related to the dev branch')
-#    comment_parser.add_argument('-m', '--message', type=str, help='Comment message')
+#   comment_parser = subparsers.add_parser('comment', parents=[parent_parser], help='Add a comment to the issue related to the dev branch')
+#   comment_parser.add_argument('-m', '--message', type=str, help='Comment message')
 
     args = parser.parse_args(args)
     return args
@@ -50,24 +51,15 @@ if __name__ == "__main__":
     if args.command == 'workon':
         if args.issue:
             devbranch.set_issue(args.issue)
-            if args.verbose:
-                pprint.pprint(devbranch.props)
         elif args.title:
             issue =  devbranch.create_issue(args.title)
             devbranch.set_issue(issue)            
-            if args.verbose:
-                pprint.pprint(devbranch.props)
             
     if args.command == 'wrapup':
         devbranch.collapse()
-            
-        if args.verbose:
-            pprint.pprint(devbranch.props)
+
     
     if args.command == 'comment':
         print( "Subcommand 'comment' is not implemented yet\nWhile you wait, you can use the GitHub ClI like this:\n$ gh issue comment <issue_number> -b '<comment>'")
-        
-        project = Project(verbose=args.verbose)
-        pprint.pprint(project.props)
-    
+            
     exit(0)
