@@ -9,6 +9,7 @@ class_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(class_path)
 
 from runner import run
+from project import Project
 
 class Devbranch:
     """Class used to represent the Devbranch for a development contribution"""
@@ -34,10 +35,6 @@ class Devbranch:
 
     def verbose(self, verbose):
         self.props['verbose'] = verbose
-        
-    def verbose_print(self, message):
-        if self.props['verbose'] == True:
-            print(message)
             
 
     # Instance methods
@@ -228,7 +225,7 @@ class Devbranch:
                 verbose=self.props['verbose'],
                 msg=f"Create and checkout an issue branch off of the default branch")    
             [output, result] = run(
-                f"git checkout {self.props['branch_name']}",
+                f"git checkout {self.props['branch_name']}", ##TODO checkout from origin main
                 verbose=self.props['verbose'],
                 msg=f"Switch to the branch {self.props['branch_name']}")
             
@@ -237,11 +234,19 @@ class Devbranch:
                 verbose=self.props['verbose'],
                 msg=f"Set the upstream branch") 
             
-    def create_issue(self, title):
+        project = Project( owner='thetechcollective', number='12', verbose=self.props['verbose'])
+        issue_url = project.get_url_from_issue(issue=issue_number)
+        project.add_issue(url=issue_url)
+        project.update_field( url=issue_url, field='Status', field_value='In Progress' )
+        
+            
+            
+    def create_issue(self, title=str, body=None):
         """Create a new issue with the title"""
         issue_number = None
+        
         [output, result] = run(
-            f"gh issue create --title '{title}' -b ''",
+            f"gh issue create --title '{title}' -b '{body}'",
             verbose=self.props['verbose'],
             msg=f"Create a new issue with the title '{title}'")
         match_obj = re.search(r'^https://.*/issues/(\d+)', output, re.MULTILINE)
@@ -251,13 +256,6 @@ class Devbranch:
         else:
             print("ERROR: Issue number not found", file=sys.stderr)
             
-            
-    def set_issue_status(self, issue=int, status=str):
-        """Set the status of the issue"""
-        [output, result] = run(
-            f"gh issue edit {self.props['issue_number']} --state {status}",
-            verbose=self.props['verbose'],
-            msg=f"Set the status of the issue to {status}")
         
     
                   
