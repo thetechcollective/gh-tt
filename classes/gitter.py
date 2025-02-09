@@ -20,7 +20,7 @@ class Gitter:
     git_root = result.stdout.strip()
     if not git_root or result.returncode != 0:
         raise RuntimeError(f"Could not determine the git root directory")
-    class_cache_file = f"{git_root}/.tt_cache'"
+    class_cache_file = f"{git_root}/.tt_cache"
     
     def __init__(self, cmd=str, die_on_error=True, msg=None, verbose=False, workdir=None):    
         if workdir == None:
@@ -45,6 +45,8 @@ class Gitter:
     def __verbose_print(self):
 
         if self.get('verbose'):
+            ## print an empty line
+            print()
             if self.get('msg'):
                 print (f"# {self.get('msg')}")
             print (f"$ {self.get('cmd')}")
@@ -57,7 +59,7 @@ class Gitter:
             cached_value = self.get_cache(self.get('workdir'), self.get('cmd'))
             if cached_value:
                 if self.get('verbose'):
-                    print(f"# Returned cached value from previous run\n")
+                    print(f"# Returned cached value from previous run")
                 return cached_value, None
                     
         result = subprocess.run(
