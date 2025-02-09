@@ -12,6 +12,7 @@ sys.path.append(class_path)
 
 from devbranch import Devbranch
 from project import Project
+from gitter import Gitter
 
 def parse(args=None):
     # Define the parent parser with the --verbose argument
@@ -49,11 +50,19 @@ if __name__ == "__main__":
     devbranch = Devbranch(verbose=args.verbose)
     
     if args.command == 'workon':
+        Gitter.read_cache()
         if args.issue:
             devbranch.set_issue(args.issue)
+            
         elif args.title:
             issue =  devbranch.create_issue(args.title)
-            devbranch.set_issue(issue)            
+            devbranch.set_issue(issue)   
+        
+        Gitter.write_cache()
+            
+        if args.verbose:
+            Gitter.print_cache()
+
             
     if args.command == 'wrapup':
         devbranch.collapse()

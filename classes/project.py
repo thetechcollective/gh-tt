@@ -10,6 +10,7 @@ class_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(class_path)
 
 from runner import run
+from gitter import Gitter
 
 class Project:
     """Class used to represent the Devbranch for a development contribution"""
@@ -32,7 +33,16 @@ class Project:
   
     def verbose(self, verbose):
         self.props['verbose'] = verbose
-            
+        
+    def set(self, key, value):
+        self.props[key] = value
+        return self.props[key]
+    
+    def get(self, key):
+        if key not in self.props:
+            raise KeyError(f"Key {key} not found in properties")
+            sys.exit(1)
+        return self.props[key]
 
     # Instance methods
     
@@ -42,12 +52,12 @@ class Project:
             if not os.path.exists(workdir):
                 raise FileNotFoundError(f"Directory {workdir} does not exist")
                 sys.exit(1)
-            self.props['workdir'] = os.path.abspath(workdir)
+            self.set('workdir', os.path.abspath(workdir))
             
-        self.props['project_owner'] = owner
-        self.props['project_number'] = number
-        self.props['verbose'] = verbose
- 
+        self.set('project_owner', owner)
+        self.set('project_number', number)
+        self.set('verbose', verbose)
+        
         
     def get_item_id_from_url(self, owner=None, number=None, url=str):
         """Get the project item id from the issue url (consider using add_issue(url) to get the item-id instead)
@@ -59,17 +69,23 @@ class Project:
         Returns:
             item_id (str): The item id of the issue if it is added to the project
             None: If the issue is not added to the project
+        Raises:
+            RuntimeError: If the issue is not found in the project
         """
         
+        # User overriden values is applicable, else use the class cached values
         if not owner:
-            owner = self.props['project_owner']
+            owner = self.get('project_owner')
         if not number:
-            number = self.props['project_number']
-        
+            number = self.get('project_number')
+            
         [item_id, result] = run(
             f"gh project item-list {number} --owner {owner} --limit 1000 --format json --jq '.items[] | select(.content.url == \"{url}\") | .id'",
             verbose=self.props['verbose'],
             msg="Get the item id from the url")
+        if item_id == '':
+            raise RuntimeError(f"Item with url {url} not found in project {owner}/{number}")
+            sys.exit(1)
         return item_id
     
     def get_url_from_issue(self, issue=int):
@@ -208,11 +224,20 @@ class Project:
         if not number:
             number = self.props['project_number']
             
-        [id, result] = run(
-            f"gh project item-add {number} --owner {owner} --url {url} --format json --jq '.id'",
+        gitter = Gitter(
+            cmd=f"gh project item-add {number} --owner {owner} --url {url} --format json --jq '.id'",
             verbose=self.props['verbose'],
             msg="Add the issue to the project")
+        
+        [id, result] = gitter.run(cache=True)
         return id
+        
+            
+    #    [id, result] = run(
+    #        f"gh project item-add {number} --owner {owner} --url {url} --format json --jq '.id'",
+    #        verbose=self.props['verbose'],
+    #        msg="Add the issue to the project")
+    #    return id
          
             
             
