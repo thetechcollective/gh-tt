@@ -57,7 +57,7 @@ class Gitter:
             cached_value = self.get_cache(self.get('workdir'), self.get('cmd'))
             if cached_value:
                 if self.get('verbose'):
-                    print(f"# Returned cached value from previous run")
+                    print(f"# Returned cached value from previous run\n")
                 return cached_value, None
                     
         result = subprocess.run(
