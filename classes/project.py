@@ -14,34 +14,40 @@ from gitter import Gitter
 
 class Project:
     """Class used to represent the Devbranch for a development contribution"""
-
+    
     props = {
         'project_owner': 'None',
         'project_number': 'None',
         'verbose': False,
-        'workdir': None,
-        'project_id': None,
-        'item_id': None,
-        'field_id': None,
-        'field_type': None,
-        'option_id': None,
-        'issue_url': None
+        'workdir': os.getcwd()
     }
-
-    props['workdir'] = os.getcwd()
-
-  
-    def verbose(self, verbose):
-        self.props['verbose'] = verbose
+    
+    type_to_switch_conversion = {
+        'ProjectV2SingleSelectField': '--single-select-option-id',
+        'ProjectV2Field': '--text'
+        }
         
     def set(self, key, value):
+        """Some syntactic sugar to set the class properties
+        
+        Args:
+            key (str): The key to set in the class properties
+            value: The value to set the key to
+        """
+        
         self.props[key] = value
         return self.props[key]
     
     def get(self, key):
-        if key not in self.props:
-            raise KeyError(f"Key {key} not found in properties")
-            sys.exit(1)
+        """Some syntactic sugar to get the class properties
+        
+        Args:
+            key (str): The key to get from the class properties - The key must exist in the class properties
+
+        Returns:
+            value: The value of the key in the class properties
+        """    
+        assert key in self.props, f"Property {key} not found on class"
         return self.props[key]
 
     # Instance methods
@@ -59,35 +65,6 @@ class Project:
         self.set('verbose', verbose)
         
         
-    def get_item_id_from_url(self, owner=None, number=None, url=str):
-        """Get the project item id from the issue url (consider using add_issue(url) to get the item-id instead)
-        
-        Args:
-            owner (str): The owner of the project (optional)
-            number (int): The project number (optional)
-            url (str): The url of the issue
-        Returns:
-            item_id (str): The item id of the issue if it is added to the project
-            None: If the issue is not added to the project
-        Raises:
-            RuntimeError: If the issue is not found in the project
-        """
-        
-        # User overriden values is applicable, else use the class cached values
-        if not owner:
-            owner = self.get('project_owner')
-        if not number:
-            number = self.get('project_number')
-            
-        [item_id, result] = run(
-            f"gh project item-list {number} --owner {owner} --limit 1000 --format json --jq '.items[] | select(.content.url == \"{url}\") | .id'",
-            verbose=self.props['verbose'],
-            msg="Get the item id from the url")
-        if item_id == '':
-            raise RuntimeError(f"Item with url {url} not found in project {owner}/{number}")
-            sys.exit(1)
-        return item_id
-    
     def get_url_from_issue(self, issue=int):
         """Get the url of the issue in context of the current repository
         
@@ -98,10 +75,11 @@ class Project:
         Raises:
             RuntimeError: If the issue number is not found
         """
-        [url, result] = run(
-            f"gh issue view {issue} --json url --jq '.url'",
-            verbose=self.props['verbose'],
+        gitter = Gitter(
+            cmd=f"gh issue view {issue} --json url --jq '.url'",
+            verbose=self.get('verbose'),
             msg="Get the url from the issue")
+        [url, result] = gitter.run(cache=True)
         return url
     
     def get_project_id(self, owner=None, number=None):
@@ -116,14 +94,15 @@ class Project:
             RuntimeError: If the project owner or number is not
         """
         if not owner:
-            owner = self.props['project_owner']
+            owner = self.get('project_owner')
         if not number:
-            number = self.props['project_number']
+            number = self.get('project_number')
             
-        [id, result] = run(
-            f"gh project view {number} --owner {owner} --format json --jq '.id'",
-            verbose=self.props['verbose'],
-            msg="Get the project id")      
+        gitter = Gitter(
+            cmd=f"gh project view {number} --owner {owner} --format json --jq '.id'",
+            verbose=self.get('verbose'),
+            msg="Get the project id")   
+        [id, result] = gitter.run(cache=True)  
         return id   
     
     def get_field_description(self, owner=None, number=None, field=str):
@@ -140,15 +119,18 @@ class Project:
         """
         
         if not owner:
-            owner = self.props['project_owner']
+            owner = self.get('project_owner')
         if not number:
-            number = self.props['project_number']
+            number = self.get('project_number')
                     
-        [field_json_str, result] = run(
-            f"gh project field-list {number} --owner {owner} --format json --jq '.fields[] | select(.name == \"{field}\")'",
+        gitter = Gitter(
+            cmd=f"gh project field-list {number} --owner {owner} --format json --jq '.fields[] | select(.name == \"{field}\")'",
             verbose=self.props['verbose'],
             msg="Get the field description in json format")
+        
+        [field_json_str, result] = gitter.run(cache=True)
         field_json = json.loads(field_json_str)
+        
         if field_json_str == '':
             raise RuntimeError(f"Field {field} not found in project {owner}/{number}\n{result.stderr}")
             sys.exit(1)
@@ -167,9 +149,9 @@ class Project:
             result (str): The result of the update
         """
         if not owner:
-            owner = self.props['project_owner']
+            owner = self.get('project_owner')
         if not number:
-            number = self.props['project_number']
+            number = self.get('project_number')
 
         project_id = self.get_project_id()
         item_id = self.add_issue(url=url)
@@ -190,22 +172,19 @@ class Project:
         if field_option_id == None:
             raise RuntimeError(f"Field option value {field_value} not found in field {field}")
             sys.exit(1)
-          
-        type_to_switch_conversion = {
-            'ProjectV2SingleSelectField': '--single-select-option-id',
-            'ProjectV2Field': '--text'
-            }
-                     
-        type_switch = type_to_switch_conversion[field_type]     
+        
+        # convert the field type used internally in project definition to map the corresponting  switch used in the gh project edit-item cli  
+        type_switch = self.type_to_switch_conversion[field_type]  
         if type_switch == None:
-            raise RuntimeError(f"Field type {field_type} not supported")
+            raise RuntimeError(f"Field type {field_type} not supported. It may be that the field type is just not supported in this extension yet. - Please open an issue or discussion on the repository")
             sys.exit(1)
              
-        [output, result] = run(
-            f"gh project item-edit --project-id {project_id} --field-id {field_id} --id {item_id} {type_switch} {field_option_id}",
-            verbose=self.props['verbose'],
-            msg="Update the field with the option")    
+        gitter = Gitter(
+            cmd=f"gh project item-edit --project-id {project_id} --field-id {field_id} --id {item_id} {type_switch} {field_option_id}",
+            verbose=self.get('verbose'),
+            msg="Update the field with the option") 
         
+        [output, result] = gitter.run(cache=False)   # cache=False because this is a write operation 
         return output
     
     def add_issue(self, owner=None, number=None, url=str):
@@ -220,9 +199,9 @@ class Project:
             result (str): item-id of the issue in the project
         """
         if not owner:
-            owner = self.props['project_owner']
+            owner = self.get('project_owner')
         if not number:
-            number = self.props['project_number']
+            number = self.get('project_number')
             
         gitter = Gitter(
             cmd=f"gh project item-add {number} --owner {owner} --url {url} --format json --jq '.id'",
@@ -231,13 +210,6 @@ class Project:
         
         [id, result] = gitter.run(cache=True)
         return id
-        
-            
-    #    [id, result] = run(
-    #        f"gh project item-add {number} --owner {owner} --url {url} --format json --jq '.id'",
-    #        verbose=self.props['verbose'],
-    #        msg="Add the issue to the project")
-    #    return id
          
             
             
