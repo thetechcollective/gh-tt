@@ -9,7 +9,6 @@ import json
 class_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(class_path)
 
-from runner import run
 from gitter import Gitter
 
 class Project:
@@ -52,17 +51,52 @@ class Project:
 
     # Instance methods
     
-    def __init__(self, owner=str, number=int, workdir=None, verbose=False):
+    def __init__(self, owner=None, number=None, workdir=None, verbose=False):
         if workdir:
             # check if the directory exists
             if not os.path.exists(workdir):
                 raise FileNotFoundError(f"Directory {workdir} does not exist")
                 sys.exit(1)
             self.set('workdir', os.path.abspath(workdir))
-            
-        self.set('project_owner', owner)
-        self.set('project_number', number)
+
         self.set('verbose', verbose)
+            
+        if owner == None or number == None:
+            result = subprocess.run("git rev-parse --show-toplevel", capture_output=True, text=True, shell=True)
+            git_root = result.stdout.strip()
+            if not git_root or result.returncode != 0:
+                raise RuntimeError(f"Could not determine the git root directory")
+            self.set('config_file', f"{git_root}/.gitconfig")
+            
+            [self.props['project_owner'], result] = Gitter(
+                cmd=f"git config get -f {self.get('config_file')} project.owner",
+                verbose=self.get('verbose'),
+                msg="Get the project owner from .gitconfig").run(cache=True)
+            if self.get('project_owner') == '':
+                raise ValueError("Project owner not found in the git config")
+            
+            [self.props['project_number'], result] = Gitter(
+                cmd=f"git config get -f {self.get('config_file')} project.number",
+                verbose=self.get('verbose'),
+                msg="Get the project number from .gitconfig").run(cache=True)
+            if self.get('project_number') == '':
+                raise ValueError("Project number not found in the git config")
+                sys.exit(1)
+            
+            [workon_action, result] = Gitter(
+                cmd=f"git config get -f {self.get('config_file')} project.workon",
+                verbose=self.get('verbose'),
+                msg="Get the workon trigger action from .gitconfig").run(cache=True)
+            
+            # split the workon action on : into field and value
+            [self.props['project_field'], self.props['project_field_value']] = workon_action.split(':')
+            
+            if self.get('project_field') == '' or self.get('project_field_value') == '':
+                raise ValueError("Failed to read  project_field and project_field_value from the .gitconfig")
+                sys.exit(1)      
+        else:
+            self.set('project_owner', owner)
+            self.set('project_number', number)      
         
         
     def get_url_from_issue(self, issue=int):
