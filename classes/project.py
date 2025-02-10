@@ -112,8 +112,12 @@ class Project:
         gitter = Gitter(
             cmd=f"gh issue view {issue} --json url --jq '.url'",
             verbose=self.get('verbose'),
+            die_on_error=False, 
             msg="Get the url from the issue")
         [url, result] = gitter.run(cache=True)
+        if result.returncode != 0:
+            raise KeyError(f"Could not find issue {issue}\n{result.stderr}")
+            sys.exit(1) 
         return url
     
     def get_project_id(self, owner=None, number=None):
@@ -165,12 +169,12 @@ class Project:
         [field_json_str, result] = gitter.run(cache=True)
         field_json = json.loads(field_json_str)
         
-        if field_json_str == '':
-            raise RuntimeError(f"Field {field} not found in project {owner}/{number}\n{result.stderr}")
+        if field_json_str == '{}':
+            raise KeyError(f"Field {field} not found in project {owner}/{number}\n{result.stderr}")
             sys.exit(1)
         return field_json
     
-    def update_field(self, owner=str, number=int, url=str, field=str, field_value=str):
+    def update_field(self, owner=None, number=None, url=str, field=str, field_value=str):
         """Update the field with the value
         
         Args:
@@ -191,26 +195,34 @@ class Project:
         item_id = self.add_issue(url=url)
         field_desc = self.get_field_description(field=field)
 
-        # read the field description        
-        field_id = field_desc['id']
-        field_type= field_desc['type']
+        # read the field description
+        try:
+            field_id = field_desc['id']
+        except KeyError as e:
+            raise KeyError(f"Field {field} in project {owner}/{number} doesn't have an id\n{e}")
+            sys.exit(1)     
+
+        try:
+            field_type= field_desc['type']
+        except KeyError as e:
+            raise KeyError(f"Field {field} in project {owner}/{number} doesn't have a type\n{e}")
+            sys.exit(1)
+
         field_option_id = None
         for option in field_desc['options']:
             if option['name'] == field_value:
                 field_option_id = option['id']  
-                
-        if field_id == None or field_option_id == None:
-            raise RuntimeError(f"Field {field} not found in project {owner}/{number}")
-            sys.exit(1)
+                break
         
         if field_option_id == None:
-            raise RuntimeError(f"Field option value {field_value} not found in field {field}")
+            raise KeyError(f"Field option value {field_value} not found in field {field}")
             sys.exit(1)
         
         # convert the field type used internally in project definition to map the corresponting  switch used in the gh project edit-item cli  
-        type_switch = self.type_to_switch_conversion[field_type]  
-        if type_switch == None:
-            raise RuntimeError(f"Field type {field_type} not supported. It may be that the field type is just not supported in this extension yet. - Please open an issue or discussion on the repository")
+        try:
+            type_switch = self.type_to_switch_conversion[field_type]
+        except KeyError as e:
+            raise KeyError(f"Field type {field_type} not supported. It may be that the field type is just not supported in this extension yet. - Please open an issue or discussion on the repository\n{e}")
             sys.exit(1)
              
         gitter = Gitter(
@@ -244,8 +256,3 @@ class Project:
         
         [id, result] = gitter.run(cache=True)
         return id
-         
-            
-            
-
-
