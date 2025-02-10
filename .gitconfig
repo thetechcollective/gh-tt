@@ -17,3 +17,8 @@
   tree = log --graph --full-history --all --color --date=short --pretty=format:\"%Cred%x09%h %Creset%ad%Cblue%d %Creset %s %C(bold)(%an)%Creset\"
   backward = checkout HEAD^1
   forward = !git checkout $(git log --all --ancestry-path ^HEAD --format=format:%H | tail -n 1)
+
+[project]
+  owner = thetechcollective
+  number = 12
+  workon = Status:In Progress
