@@ -96,8 +96,51 @@ class Project:
                 sys.exit(1)      
         else:
             self.set('project_owner', owner)
-            self.set('project_number', number)      
+            self.set('project_number', number)   
         
+        [self.props['gh_validated'],msg] = self.validate_gh_access()
+        if not self.get('gh_validated'):
+            print (f"WARNING\nYour GH CLI is not setup correctly:{msg}", file=sys.stderr)
+        
+    def validate_gh_access(self):
+        """Check if the user has sufficient access to the github cli
+        
+        Returns:
+            [result (bool), status (str)] : True/'' if the validation is OK, False/Error message if the validation fails
+        """
+        gitter = Gitter(
+            cmd="gh --version",
+            verbose=self.get('verbose'),
+            msg="Check if the user has access to right version of gh CLI")
+        [stdout, result] = gitter.run(cache=False)
+        
+        # Validate that the version is => 2.55.0
+        # The command returns something like this:
+        #    gh version 2.65.0 (2025-01-06)
+        #    https://github.com/cli/cli/releases/tag/v2.65.0
+        
+        version = stdout.split()[2]
+        if version < '2.55.0':
+            return [False, f"gh version {version} is not supported. Please upgrade to version 2.55.0 or higher"]
+        
+        [stdout, result] = Gitter(
+            cmd="gh auth status",
+            verbose=self.get('verbose'),
+            msg="Check if the user has sufficient access to update projects").run(cache=False)
+        
+        # Valiadate that we have reaacce to projects
+        # The command returns something like this:
+        #  github.com
+        #    ✓ Logged in to github.com account lakruzz (/home/vscode/.config/gh/hosts.yml)
+        #    - Active account: true
+        #    - Git operations protocol: https
+        #    - Token: gho_************************************
+        #    - Token scopes: 'gist', 'read:org', 'read:project', 'repo', 'workflow'
+        # The token scopes must contain 'read:project'
+        if "'project'" not in stdout:
+            return [False, f"gh token does not have the required scope 'project'"]
+        
+        return [True, '']
         
     def get_url_from_issue(self, issue=int):
         """Get the url of the issue in context of the current repository

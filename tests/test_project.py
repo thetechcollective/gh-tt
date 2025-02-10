@@ -13,8 +13,9 @@ from project import Project
 
 class TestProject(unittest.TestCase):
 
+    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
-    def test_update_field_success(self, MockGitter):
+    def test_update_field_success(self, MockGitter, MockValidateGhAccess):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
@@ -36,8 +37,9 @@ class TestProject(unittest.TestCase):
         self.assertRegex(result, r"Edited item \".+\"")
         mock_gitter_instance.run.assert_called_with(cache=False)
 
+    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
-    def test_update_field_success_impicit_owner_number(self, MockGitter):
+    def test_update_field_success_impicit_owner_number(self, MockGitter, MockValidateGhAccess):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
@@ -58,8 +60,9 @@ class TestProject(unittest.TestCase):
         self.assertRegex(result, r"Edited item \".+\"")
         mock_gitter_instance.run.assert_called_with(cache=False)
 
+    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
-    def test_update_field_option_not_found(self, MockGitter):
+    def test_update_field_option_not_found(self, MockGitter, MockValidateGhAccess):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
@@ -77,8 +80,9 @@ class TestProject(unittest.TestCase):
             project.update_field(owner="lakruzz", number=13, url="https://github.com/lakruzz/gitsquash_lab/issues/7",
                                  field="Status", field_value="Blaha") # Bad field_value
 
+    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
-    def test_update_field_type_not_supported(self, MockGitter):
+    def test_update_field_type_not_supported(self, MockGitter, MockValidateGhAccess):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
@@ -96,8 +100,9 @@ class TestProject(unittest.TestCase):
             project.update_field(owner="lakruzz", number="13", url="https://github.com/lakruzz/gitsquash_lab/issues/7",
                                  field="Status", field_value="In Progress")
 
+    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
-    def test_update_field_descriptor_is_empty(self, MockGitter):
+    def test_update_field_descriptor_is_empty(self, MockGitter, MockValidateGhAccess):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
@@ -112,8 +117,9 @@ class TestProject(unittest.TestCase):
                                  field="Status", field_value="In Progress")
         self.assertRegex(str(e.exception), r"Field Status not found in project")
             
+    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
-    def test_update_field_field_not_found(self, MockGitter):
+    def test_update_field_field_not_found(self, MockGitter, MockValidateGhAccess):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
@@ -131,8 +137,9 @@ class TestProject(unittest.TestCase):
             project.update_field(owner="lakruzz", number="13", url="https://github.com/lakruzz/gitsquash_lab/issues/7",
                                  field="Blaha", field_value="In Progress") # bad field name
 
+    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
-    def test_update_field_field_id_not_found(self, MockGitter):
+    def test_update_field_field_id_not_found(self, MockGitter, MockValidateGhAccess):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
@@ -150,8 +157,9 @@ class TestProject(unittest.TestCase):
             project.update_field(owner="lakruzz", number="13", url="https://github.com/lakruzz/gitsquash_lab/issues/7",
                                  field="Blaha", field_value="In Progress") # bad field name
 
+    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
-    def test_update_field_field_type_not_found(self, MockGitter):
+    def test_update_field_field_type_not_found(self, MockGitter, MockValidateGhAccess):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
@@ -170,8 +178,9 @@ class TestProject(unittest.TestCase):
                                  field="Blaha", field_value="In Progress") # bad field name
 
 
+    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
-    def test_get_url_from_issue_success(self, MockGitter):
+    def test_get_url_from_issue_success(self, MockGitter, MockValidateGhAccess):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
@@ -185,8 +194,9 @@ class TestProject(unittest.TestCase):
         self.assertRegex(result, r"https://github.com/lakruzz/.+/7")
         mock_gitter_instance.run.assert_called_with(cache=True)
 
+    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
-    def test_get_url_from_issue_failure(self, MockGitter):
+    def test_get_url_from_issue_failure(self, MockGitter, MockValidateGhAccess):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
@@ -199,6 +209,58 @@ class TestProject(unittest.TestCase):
         self.assertRegex(str(e.exception), r"Could not find issue \d+")            
         
         
+    @patch.object(Project, '__init__', lambda self, owner, number: None)
+    @patch('project.Gitter')
+    def test_validate_gh_access_invalid_version(self, MockGitter):
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = [
+            ["gh version 2.54.0 (2025-01-06)\nhttps://github.com/cli/cli/releases/tag/v2.54.0", Mock(returncode=0, stderr="")]  
+        ]
+
+        project = Project(owner="lakruzz", number="13")
+        [validated, msg] = project.validate_gh_access()
+        self.assertFalse(validated)
+        self.assertRegex(msg, r"gh version 2.54.0 is not supported. Please upgrade to version 2.55.0 or higher") 
+
+    @patch('project.Gitter')
+    @patch.object(Project, '__init__', lambda self, owner, number: None)
+    def test_validate_gh_access_invalid_scope(self, MockGitter):
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = [
+            ["gh version 2.65.0 (2025-01-06)\nhttps://github.com/cli/cli/releases/tag/v2.65.0", Mock(returncode=0, stderr="")],
+            ["""github.com
+  ✓ Logged in to github.com account lakruzz (/home/vscode/.config/gh/hosts.yml)
+  - Active account: true
+  - Git operations protocol: https
+  - Token: gho_************************************
+  - Token scopes: 'gist', 'read:org', 'repo', 'workflow'""", Mock(returncode=0, stderr="")]              
+        ]
+
+        project = Project(owner="lakruzz", number="13")
+        [validated, msg] = project.validate_gh_access()
+        self.assertFalse(validated)
+        self.assertRegex(msg, r"gh token does not have the required scope") 
+
+    @patch.object(Project, '__init__', lambda self, owner, number: None)
+    @patch('project.Gitter')
+    def test_validate_gh_access_valid(self, MockGitter):
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = [
+            ["gh version 2.65.0 (2025-01-06)\nhttps://github.com/cli/cli/releases/tag/v2.65.0", Mock(returncode=0, stderr="")],
+            ["""github.com
+  ✓ Logged in to github.com account lakruzz (/home/vscode/.config/gh/hosts.yml)
+  - Active account: true
+  - Git operations protocol: https
+  - Token: gho_************************************
+  - Token scopes: 'gist', 'read:org', 'project', 'repo', 'workflow'""", Mock(returncode=0, stderr="")]              
+        ]
+
+        project = Project(owner="lakruzz", number="13")
+        [validated, msg] = project.validate_gh_access()
+        self.assertTrue(validated)
 
 
 if __name__ == '__main__':
