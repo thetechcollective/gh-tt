@@ -60,10 +60,6 @@ if __name__ == "__main__":
         
         Gitter.write_cache()
             
-        if args.verbose:
-            Gitter.print_cache()
-
-            
     if args.command == 'wrapup':
         devbranch.collapse()
 

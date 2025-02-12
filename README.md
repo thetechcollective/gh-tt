@@ -8,7 +8,9 @@ Install:
 gh extension install thetechcollective/gh-tt
 ```
 
-The extension requires that you have write access to projects too
+The extension requires that you have write access to projects too (`gh auth refresh --scope project`)
+
+
 
 Run `gh tt -h` to learn the syntax
 
