@@ -46,24 +46,18 @@ def parse(args=None):
 
 if __name__ == "__main__":
     args = parse(sys.argv[1:])
-    
+
+    Gitter.read_cache()  
     devbranch = Devbranch(verbose=args.verbose)
     
     if args.command == 'workon':
-        Gitter.read_cache()
         if args.issue:
             devbranch.set_issue(args.issue)
             
         elif args.title:
             issue =  devbranch.create_issue(args.title)
-            devbranch.set_issue(issue)   
-        
-        Gitter.write_cache()
-            
-        if args.verbose:
-            Gitter.print_cache()
-
-            
+            devbranch.set_issue(issue)        
+          
     if args.command == 'wrapup':
         devbranch.collapse()
 
@@ -71,4 +65,5 @@ if __name__ == "__main__":
     if args.command == 'comment':
         print( "Subcommand 'comment' is not implemented yet\nWhile you wait, you can use the GitHub ClI like this:\n$ gh issue comment <issue_number> -b '<comment>'")
             
+    Gitter.write_cache()            
     exit(0)
