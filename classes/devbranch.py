@@ -68,11 +68,12 @@ class Devbranch:
             cmd=f"gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'",
             verbose = self.get('verbose'), 
             msg = "Get the name of the default branch").run(cache=True)
-        
-
-        
-        
-          
+    
+        # get the name of the remote
+        [self.props['remote'], result] = Gitter(
+            cmd='git remote',
+            verbose=self.props['verbose'],
+            msg="Get the name of the remote").run(cache=False)        
         
 
     def collapse(self):
@@ -143,7 +144,7 @@ class Devbranch:
                     verbose=self.props['verbose'],
                     msg="Amend the commit message").run(cache=False)
                                 
-                [[self.props['new_SHA1'], result]] = Gitter(
+                [self.props['new_SHA1'], result] = Gitter(
                     cmd=f"git rev-parse HEAD",
                     verbose=self.props['verbose'],
                     msg="Get the SHA1 of the new commit").run(cache=False)
@@ -239,12 +240,6 @@ class Devbranch:
             if result.returncode != 0:
                 print(f"Error: Issue {issue_number} not found", file=sys.stderr)
                 sys.exit(1)
-                
-            # get the name of the remote
-            [self.props['remote'], result] = Gitter(
-                cmd='git remote',
-                verbose=self.props['verbose'],
-                msg="Get the name of the remote").run(cache=False)
             
             ## create a new branch with the issue number, and the title as the branch name, replacing spaces with underscores , and weed out any chars that arn't allowind in branch names
             self.set('branch_name', f"{issue_number}-{re.sub('[^a-zA-Z0-9_-]', '', re.sub(' ', '_', self.get('issue_title')))}" )
