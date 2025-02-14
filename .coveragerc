@@ -8,3 +8,11 @@ source =
 omit = 
     tests/*
     setup.py
+
+[report]
+# Fail the build if the coverage is less than 80%
+fail_under = 37
+
+# Skip empty files
+skip_empty = True
+
