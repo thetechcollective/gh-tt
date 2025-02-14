@@ -202,7 +202,7 @@ class TestProject(unittest.TestCase):
           
         # Assertions
         self.assertRegex(result, r"https://github.com/lakruzz/.+/7")
-        mock_gitter_instance.run.assert_called_with(cache=True)
+        mock_gitter_instance.run.assert_called_with(cache=False)
 
     @pytest.mark.unittest
     @patch.object(Project, 'validate_gh_access', return_value=[True, ''])

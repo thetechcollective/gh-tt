@@ -157,7 +157,7 @@ class Project:
             verbose=self.get('verbose'),
             die_on_error=False, 
             msg="Get the url from the issue")
-        [url, result] = gitter.run(cache=True)
+        [url, result] = gitter.run(cache=False)
         if result.returncode != 0:
             raise KeyError(f"Could not find issue {issue}\n{result.stderr}")
             sys.exit(1) 
