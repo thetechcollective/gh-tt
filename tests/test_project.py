@@ -4,6 +4,7 @@ import sys
 import json
 from unittest.mock import patch, MagicMock
 from unittest.mock import Mock
+import pytest
 
 class_path = os.path.dirname(os.path.abspath(__file__)) + "/../classes"
 sys.path.append(class_path)
@@ -13,6 +14,7 @@ from project import Project
 
 class TestProject(unittest.TestCase):
 
+    @pytest.mark.unittest
     @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
     def test_update_field_success(self, MockGitter, MockValidateGhAccess):
@@ -37,6 +39,7 @@ class TestProject(unittest.TestCase):
         self.assertRegex(result, r"Edited item \".+\"")
         mock_gitter_instance.run.assert_called_with(cache=False)
 
+    @pytest.mark.unittest
     @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
     def test_update_field_success_impicit_owner_number(self, MockGitter, MockValidateGhAccess):
@@ -60,6 +63,7 @@ class TestProject(unittest.TestCase):
         self.assertRegex(result, r"Edited item \".+\"")
         mock_gitter_instance.run.assert_called_with(cache=False)
 
+    @pytest.mark.unittest
     @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
     def test_update_field_option_not_found(self, MockGitter, MockValidateGhAccess):
@@ -80,6 +84,7 @@ class TestProject(unittest.TestCase):
             project.update_field(owner="lakruzz", number=13, url="https://github.com/lakruzz/gitsquash_lab/issues/7",
                                  field="Status", field_value="Blaha") # Bad field_value
 
+    @pytest.mark.unittest
     @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
     def test_update_field_type_not_supported(self, MockGitter, MockValidateGhAccess):
@@ -100,6 +105,7 @@ class TestProject(unittest.TestCase):
             project.update_field(owner="lakruzz", number="13", url="https://github.com/lakruzz/gitsquash_lab/issues/7",
                                  field="Status", field_value="In Progress")
 
+    @pytest.mark.unittest
     @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
     def test_update_field_descriptor_is_empty(self, MockGitter, MockValidateGhAccess):
@@ -117,6 +123,7 @@ class TestProject(unittest.TestCase):
                                  field="Status", field_value="In Progress")
         self.assertRegex(str(e.exception), r"Field Status not found in project")
             
+    @pytest.mark.unittest
     @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
     def test_update_field_field_not_found(self, MockGitter, MockValidateGhAccess):
@@ -137,6 +144,7 @@ class TestProject(unittest.TestCase):
             project.update_field(owner="lakruzz", number="13", url="https://github.com/lakruzz/gitsquash_lab/issues/7",
                                  field="Blaha", field_value="In Progress") # bad field name
 
+    @pytest.mark.unittest
     @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
     def test_update_field_field_id_not_found(self, MockGitter, MockValidateGhAccess):
@@ -157,6 +165,7 @@ class TestProject(unittest.TestCase):
             project.update_field(owner="lakruzz", number="13", url="https://github.com/lakruzz/gitsquash_lab/issues/7",
                                  field="Blaha", field_value="In Progress") # bad field name
 
+    @pytest.mark.unittest
     @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
     def test_update_field_field_type_not_found(self, MockGitter, MockValidateGhAccess):
@@ -178,6 +187,7 @@ class TestProject(unittest.TestCase):
                                  field="Blaha", field_value="In Progress") # bad field name
 
 
+    @pytest.mark.unittest
     @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
     def test_get_url_from_issue_success(self, MockGitter, MockValidateGhAccess):
@@ -194,6 +204,7 @@ class TestProject(unittest.TestCase):
         self.assertRegex(result, r"https://github.com/lakruzz/.+/7")
         mock_gitter_instance.run.assert_called_with(cache=True)
 
+    @pytest.mark.unittest
     @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
     def test_get_url_from_issue_failure(self, MockGitter, MockValidateGhAccess):
@@ -209,6 +220,7 @@ class TestProject(unittest.TestCase):
         self.assertRegex(str(e.exception), r"Could not find issue \d+")            
         
         
+    @pytest.mark.unittest
     @patch.object(Project, '__init__', lambda self, owner, number: None)
     @patch('project.Gitter')
     def test_validate_gh_access_invalid_version(self, MockGitter):
@@ -223,6 +235,7 @@ class TestProject(unittest.TestCase):
         self.assertFalse(validated)
         self.assertRegex(msg, r"gh version 2.54.0 is not supported. Please upgrade to version 2.55.0 or higher") 
 
+    @pytest.mark.unittest
     @patch('project.Gitter')
     @patch.object(Project, '__init__', lambda self, owner, number: None)
     def test_validate_gh_access_invalid_scope(self, MockGitter):
@@ -243,6 +256,7 @@ class TestProject(unittest.TestCase):
         self.assertFalse(validated)
         self.assertRegex(msg, r"gh token does not have the required scope") 
 
+    @pytest.mark.unittest
     @patch.object(Project, '__init__', lambda self, owner, number: None)
     @patch('project.Gitter')
     def test_validate_gh_access_valid(self, MockGitter):
