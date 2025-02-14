@@ -6,9 +6,7 @@ name: Python application
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: [ "**" ]
 
 permissions:
   contents: read
@@ -30,4 +28,4 @@ jobs:
         pipenv sync --dev
     - name: Test with pytest
       run: |
-        pipenv run pytest -cov=. -m dev
+        pipenv run pytest --cov=. --cov-config=.coveragerc -m unittest

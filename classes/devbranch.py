@@ -188,10 +188,12 @@ class Devbranch:
             # rebase the default branch            
             print(f"WARNING:\nThe {
                   self.get('default_branch')} branch has commits your branch has never seen. A rebase is required. Do it now!")
+    
             
-    def set_issue(self, issue_number):
+    def set_issue(self, issue_number=int, assign=True):
         """Set the issue number context to work on"""
         self.set('issue_number', issue_number)
+        self.set('assign', assign)            
         
         ## check if there is a local branch with the issue number
         [local_branches, result] = Gitter(
@@ -260,11 +262,17 @@ class Devbranch:
                 cmd=f"git push --set-upstream {self.props['remote']} {self.props['branch_name']}",
                 verbose=self.props['verbose'],
                 msg=f"Set the upstream branch").run(cache=False) 
+        
+        if self.get('assign'):
+            [output, result] = Gitter(
+                cmd=f"gh issue edit {issue_number} --add-assignee '@me'",
+                verbose=self.props['verbose'],
+                msg=f"Assign @me to the issue").run(cache=False)   
             
         project = Project( verbose=self.get('verbose'))
         issue_url = project.get_url_from_issue(issue=issue_number)
         project.update_field( url=issue_url, field=project.get('project_field'), field_value=project.get('project_field_value')  ) 
-            
+
     def create_issue(self, title=str, body=None):
         """Create a new issue with the title"""
         issue_number = None

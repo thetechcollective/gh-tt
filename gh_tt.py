@@ -30,7 +30,10 @@ def parse(args=None):
     workon_group = workon_parser.add_mutually_exclusive_group()
     workon_group.add_argument('-i', '--issue', type=int, help='Issue number')
     workon_group.add_argument('-t', '--title', type=str, help='Title for the new issue')
-    workon_parser.set_defaults(exclusive_groups=['workon'])
+    assign_group = workon_parser.add_mutually_exclusive_group()
+    assign_group.add_argument('--assign', dest='assignee', action='store_true', help='Assign @me to the issue (default)')
+    assign_group.add_argument('--no-assign', dest='assignee', action='store_false', help='Do not assign anybody to the issue')
+    workon_parser.set_defaults(assignee=True, exclusive_groups=['workon'])
     
     # Add wrapup subcommand
     wrapup_parser = subparsers.add_parser('wrapup', parents=[parent_parser], help='Collapse dev branch into one commit, rebase and create PR if needed')
@@ -52,11 +55,11 @@ if __name__ == "__main__":
     
     if args.command == 'workon':
         if args.issue:
-            devbranch.set_issue(args.issue)
+            devbranch.set_issue(issue_number=args.issue, assign=args.assignee)
             
         elif args.title:
-            issue =  devbranch.create_issue(args.title)
-            devbranch.set_issue(issue)        
+            issue =  devbranch.create_issue(args.title, args.assignee)
+            devbranch.set_issue(issue_number=issue, assign=args.assignee)
           
     if args.command == 'wrapup':
         devbranch.collapse()
