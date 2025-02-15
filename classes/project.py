@@ -92,8 +92,20 @@ class Project:
             try:
                 [self.props['workon_field'], self.props['workon_field_value']] = workon_action.split(':')
             except ValueError as e:
-                raise ValueError("Failed to read  workon_field and workon_field_value from the .gitconfig")
+                raise ValueError("Failed to read workon_field and workon_field_value from the .gitconfig")
                 sys.exit(1)
+
+            [workon_action, result] = Gitter(
+                cmd=f"git config get -f {self.get('config_file')} project.deliver",
+                verbose=self.get('verbose'),
+                msg="Get the deliver trigger action from .gitconfig").run(cache=True)
+            
+            # split the workon action on : into field and value
+            try:
+                [self.props['deliver_field'], self.props['deliver_field_value']] = workon_action.split(':')
+            except ValueError as e:
+                raise ValueError("Failed to read deliver_field and deliver_field_value from the .gitconfig")
+                sys.exit(1)       
               
         else:
             self.set('project_owner', owner)
@@ -142,28 +154,7 @@ class Project:
             return [False, f"gh token does not have the required scope 'project'"]
         
         return [True, '']
-        
-    def get_url_from_issue(self, issue=int):
-        """Get the url of the issue in context of the current repository
-        
-        Args:
-            issue (int): The issue number
-        Returns: 
-            url (str): The url of the issue
-        Raises:
-            RuntimeError: If the issue number is not found
-        """
-        gitter = Gitter(
-            cmd=f"gh issue view {issue} --json url --jq '.url'",
-            verbose=self.get('verbose'),
-            die_on_error=False, 
-            msg="Get the url from the issue")
-        [url, result] = gitter.run(cache=False)
-        if result.returncode != 0:
-            raise KeyError(f"Could not find issue {issue}\n{result.stderr}")
-            sys.exit(1) 
-        return url
-    
+            
     def get_project_id(self, owner=None, number=None):
         """Get the project id from the project owner and number
         
