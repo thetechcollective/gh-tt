@@ -89,11 +89,12 @@ class Project:
                 msg="Get the workon trigger action from .gitconfig").run(cache=True)
             
             # split the workon action on : into field and value
-            [self.props['project_field'], self.props['project_field_value']] = workon_action.split(':')
-            
-            if self.get('project_field') == '' or self.get('project_field_value') == '':
-                raise ValueError("Failed to read  project_field and project_field_value from the .gitconfig")
-                sys.exit(1)      
+            try:
+                [self.props['workon_field'], self.props['workon_field_value']] = workon_action.split(':')
+            except ValueError as e:
+                raise ValueError("Failed to read  workon_field and workon_field_value from the .gitconfig")
+                sys.exit(1)
+              
         else:
             self.set('project_owner', owner)
             self.set('project_number', number)   
