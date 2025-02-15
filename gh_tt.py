@@ -39,13 +39,8 @@ def parse(args=None):
     wrapup_parser = subparsers.add_parser('wrapup', parents=[parent_parser], help='Collapse dev branch into one commit, rebase and create PR if needed')
 #   wrapup_parser.add_argument('-m', '--message', type=str, help='Message for the commit')
 
-    # Add comment subcommand
-#   comment_parser = subparsers.add_parser('comment', parents=[parent_parser], help='Add a comment to the issue related to the dev branch')
-#   comment_parser.add_argument('-m', '--message', type=str, help='Comment message')
-
     args = parser.parse_args(args)
     return args
-
 
 if __name__ == "__main__":
     args = parse(sys.argv[1:])
@@ -63,10 +58,6 @@ if __name__ == "__main__":
           
     if args.command == 'wrapup':
         devbranch.collapse()
-
-    
-    if args.command == 'comment':
-        print( "Subcommand 'comment' is not implemented yet\nWhile you wait, you can use the GitHub ClI like this:\n$ gh issue comment <issue_number> -b '<comment>'")
             
     Gitter.write_cache()            
     exit(0)
