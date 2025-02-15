@@ -243,25 +243,17 @@ class Devbranch:
                 print(f"Error: Issue {issue_number} not found", file=sys.stderr)
                 sys.exit(1)
             
-            ## create a new branch with the issue number, and the title as the branch name, replacing spaces with underscores , and weed out any chars that arn't allowind in branch names
+            ## Construct a valid branch name based on the issue number, and the title, replacing spaces with underscores and weed out any chars that aren't allowind in branch names
             self.set('branch_name', f"{issue_number}-{re.sub('[^a-zA-Z0-9_-]', '', re.sub(' ', '_', self.get('issue_title')))}" )
+            
+            # create a new branch, link it to it's upstream , it's issue issue and then check it out           
             [output, result] = Gitter(
-                cmd=f"git branch  {self.get('branch_name')} {self.get('remote')}/{self.get('default_branch')}", ##TODO checkout from origin main
-                verbose=self.props['verbose'],
-                msg=f"Create and checkout an issue branch off of the default branch").run(cache=False)    
-            [output, result] = Gitter(
-                cmd=f"git checkout {self.props['branch_name']}",
+                cmd=f"gh issue develop {issue_number} -b {self.get('default_branch')} -n {self.get('branch_name')} -c" ,
                 verbose=self.props['verbose'],
                 die_on_error=False,
-                msg=f"Switch to the branch {self.props['branch_name']}").run(cache=False)
-            if result.returncode != 0:
-                print(f"Error: {result.stderr}", file=sys.stderr)
-                sys.exit(1)
-            
-            [output, result] = Gitter(
-                cmd=f"git push --set-upstream {self.props['remote']} {self.props['branch_name']}",
-                verbose=self.props['verbose'],
-                msg=f"Set the upstream branch").run(cache=False) 
+                msg=f"Get the body of the issue").run(cache=False)
+        
+        # at this point the branch should exist and is checked out - either through a local branch, a remote branch or a new branch 
         
         if self.get('assign'):
             [output, result] = Gitter(
@@ -271,7 +263,7 @@ class Devbranch:
             
         project = Project( verbose=self.get('verbose'))
         issue_url = project.get_url_from_issue(issue=issue_number)
-        project.update_field( url=issue_url, field=project.get('project_field'), field_value=project.get('project_field_value')  ) 
+        project.update_field( url=issue_url, field=project.get('workon_field'), field_value=project.get('workon_field_value')  ) 
 
     def create_issue(self, title=str, body=None):
         """Create a new issue with the title"""

@@ -276,6 +276,85 @@ class TestProject(unittest.TestCase):
         [validated, msg] = project.validate_gh_access()
         self.assertTrue(validated)
 
+    @pytest.mark.unittest
+    def test_project_constructor_invalid_workdir_found(self):
+        with self.assertRaises(FileNotFoundError):
+            project = Project(owner="lakruzz", number="13", workdir="blaha_obscure_dir")
 
+    @pytest.mark.unittest
+    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
+    @patch('project.Gitter')
+    def test_project_constructor_valid_workdir_found(self, MockGitter, MockValidateGhAccess):
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = []
+
+        project = Project(owner="lakruzz", number="13", workdir=".")
+        self.assertEqual(project.props['project_owner'], "lakruzz")
+        self.assertEqual(project.props['project_number'], "13")
+
+    @pytest.mark.unittest
+    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
+    @patch('project.Gitter')
+    def test_project_constructor_read_config_success(self, MockGitter, MockValidateGhAccess):
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = [
+            ['lakruzz', None],  # get_project_owner
+            ['13', None],  # get_project_number
+            ['Status:In Progress', None]  # get_project_workon_field:value
+        ]
+
+        project = Project()
+        self.assertEqual(project.props['project_owner'], "lakruzz")
+        self.assertEqual(project.props['project_number'], "13")
+        self.assertEqual(project.props['workon_field'], "Status")
+        self.assertEqual(project.props['workon_field_value'], "In Progress")
+        
+    @pytest.mark.unittest
+    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
+    @patch('project.Gitter')
+    def test_project_constructor_read_config_no_owner(self, MockGitter, MockValidateGhAccess):
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = [
+            ['', Mock(return_value=1, stderr='Error')],  # get_project_owner
+        ]
+
+        with self.assertRaises(ValueError) as e:
+            project = Project()
+        self.assertRegex(str(e.exception), r"Project owner not found in the git config")
+
+    @pytest.mark.unittest
+    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
+    @patch('project.Gitter')
+    def test_project_constructor_read_config_no_project_number(self, MockGitter, MockValidateGhAccess):
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = [
+            ['lakruzz', None],  # get_project_owner
+            ['', Mock(return_value=1, stderr='Error')],  # get_project_owner
+        ]
+
+        with self.assertRaises(ValueError) as e:
+            project = Project()
+        self.assertRegex(str(e.exception), r"Project number not found in the git config")
+
+    @pytest.mark.unittest
+    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
+    @patch('project.Gitter')
+    def test_project_constructor_read_config_no_workon_trigger(self, MockGitter, MockValidateGhAccess):
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = [
+            ['lakruzz', None],  # get_project_owner
+            ['13', None],  # get_project_number
+            ['', Mock(return_value=1, stderr='Error')],  # get_project_owner
+        ]
+
+        with self.assertRaises(ValueError) as e:
+            project = Project()
+        self.assertRegex(str(e.exception), r"Failed to read  workon_field and workon_field_value from the .gitconfig")
+        
 if __name__ == '__main__':
     unittest.main()
