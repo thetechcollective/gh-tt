@@ -21,6 +21,7 @@
 		}
 	},
 
+	"initializeCommand": "./.devcontainer/initializeCommand.sh",
 	"postCreateCommand": "./.devcontainer/postCreateCommand.sh",
 
 	// Mount the workspace folder one level higher than the git repo
