@@ -1,5 +1,5 @@
-workon: '!gh tt workon $*'
-wrapup: '!gh tt wrapup $*'
+workon: '!gh tt workon "$@"'
+wrapup: '!gh tt wrapup "$@"'
 note:   '!f(){ 
     USAGE="Usage:\n    gh note \"This is the note to the issue I´m working on\"";
     ISSUE_NUMBER=$(git rev-parse --abbrev-ref HEAD | grep -o -E "^[0-9]+");
