@@ -176,6 +176,24 @@ class Devbranch:
             return True
         else:
             return False
+        
+    def __squeeze(self):
+        # Squeeze the current branch into a single commit
+        keyname = 'squeeze_sha1'
+        value = None        
+        branch_name = self.get('branch_name')
+        merge_base = self.get('merge_base')
+        new_message = self.get('new_message')
+            
+        [value, result] = Gitter(
+            cmd=f"git commit-tree {branch_name}^{{tree}} -p {merge_base} -m \"{new_message}\"",
+            workdir=self.get('workdir'),
+            verbose=self.get('verbose'),
+            msg="Collapse the branch into a single commit").run(cache=False)
+
+        self.set(keyname, value)
+        return self.get(keyname)      
+                
 
     def collapse(self):
         """Collapse the current branch into a single commit"""
@@ -228,14 +246,11 @@ class Devbranch:
                 print("Even the commit message is already up to date.")
 
         # A collapse is necessary
-        else:            
-            # construct the command to collpase the branch and run it
-            [self.props['new_SHA1'], result] = Gitter(
-                cmd=f"git commit-tree {self.get('branch_name')}^{{tree}} -p {
-                self.get('merge_base')} -m \"{self.get('new_message')}\"",
-                verbose=self.get('verbose'),
-                msg="Collapse the branch into a single commit").run(cache=False)
-
+        else:
+            new_SHA1 = self.__squeeze()
+            
+            #### TODO - IM HERE: Next up is to create a private function that will check if the new commit tree is 
+            # identical to the old commit tree (as below) and then move the branch to the new commit
             
             # verify that the new commit tree is identical to the old commit
             [output, result] = Gitter(

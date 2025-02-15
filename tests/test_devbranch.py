@@ -63,13 +63,15 @@ class TestDevbranch(unittest.TestCase):
     @patch('devbranch.Devbranch._Devbranch__get_commit_count', return_value='2')
     @patch('devbranch.Devbranch._Devbranch__get_commit_message', return_value="related to Add a 'deliver' subcommand #17")
     @patch('devbranch.Devbranch._Devbranch__validate_commit_message', return_value=True)
+    @patch('devbranch.Devbranch._Devbranch__squeeze', return_value='de291d6f38de30e8037142d6bb2afb5d69429368')
     @patch('devbranch.Gitter')
     def test_collaps_success(self, MockGitter, 
                              mock_get_branch_sha1, 
                              mock_get_merge_base, 
                              mock_get_commit_count,
                              mock_get_commit_message,
-                             mock_validate_commit_message):
+                             mock_validate_commit_message,
+                             mock_squeeze):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
