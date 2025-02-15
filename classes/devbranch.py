@@ -280,8 +280,17 @@ class Devbranch:
             return issue_number
         else:
             print("ERROR: Issue number not found", file=sys.stderr)
-            
-        
     
-                  
-
+    def deliver(self, title=None):
+        """Create the pull request for the current issue"""
+        
+        if title == None:
+            title = self.get('issue_title')
+        
+        # Get the name of the current branch        
+        [self.props['pr_url'], result] = Gitter(
+            cmd=f"gh pr create --title '{title}' --body '' --base {self.get('default_branch')} --assignee '@me'",
+            verbose=self.get('verbose'),
+            msg="Create a pull request for the current branch").run(cache=False)
+        
+        

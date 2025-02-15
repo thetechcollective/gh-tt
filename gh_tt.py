@@ -20,7 +20,18 @@ def parse(args=None):
     parent_parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
 
     # Define command-line arguments
-    parser = argparse.ArgumentParser(prog='gh tt', parents=[parent_parser])
+    parser = argparse.ArgumentParser(
+        prog='gh tt', 
+        parents=[parent_parser],
+        description="""
+            A command-line tool to support a consistent workflow across among a team. 
+            It supports a number of subcommands which defines the entiner process: `workon`,
+            `wrapup`, `deliver`  use the `-h|--help` switch on each to learn more. It utilizes 
+            the GitHub API `gh` to interact with GtiHub and therefore it's provided as a gh extension. 
+            GitHub Project integration is supporte4d. It enabels the issues to autoamtically 
+            propregate through the columns in the (kanban) board. Please consult the README.md file 
+            for more information on how to enable this feature - and many more neat tricks.  
+            """,)
 
     # Create two subcommands - bump and config
     subparsers = parser.add_subparsers(dest='command')
@@ -36,8 +47,17 @@ def parse(args=None):
     workon_parser.set_defaults(assignee=True, exclusive_groups=['workon'])
     
     # Add wrapup subcommand
-    wrapup_parser = subparsers.add_parser('wrapup', parents=[parent_parser], help='Collapse dev branch into one commit, rebase and create PR if needed')
+    wrapup_parser = subparsers.add_parser('wrapup', parents=[parent_parser], help='Collapse dev branch into one commit, check or set the commit message')
 #   wrapup_parser.add_argument('-m', '--message', type=str, help='Message for the commit')
+
+    # Add deliver subcommand
+    deliver_parser = subparsers.add_parser(
+        'deliver', 
+        parents=[parent_parser], help='Create the pull request for the current issue',
+        description="""
+            Create the pull request for the issue related to the currently checked out branch. The 
+            command will fail if the current branch name does not begin with and integer.""")
+    deliver_parser.add_argument('--title', type=str, help='Title for the pull request - default is the issue title')
 
     args = parser.parse_args(args)
     return args
@@ -58,6 +78,9 @@ if __name__ == "__main__":
           
     if args.command == 'wrapup':
         devbranch.collapse()
+    
+    if args.command == 'deliver':
+        devbranch.deliver(title=args.title)
             
     Gitter.write_cache()            
     exit(0)
