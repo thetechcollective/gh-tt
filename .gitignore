@@ -5,3 +5,4 @@ gh_semver.egg-info
 *testbed
 .coverage
 .tt_cache
+_temp.token

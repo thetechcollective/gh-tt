@@ -9,4 +9,4 @@ git config --local --get include.path | grep -e ../.gitconfig || git config --lo
 
 $(dirname $0)/gh-login.sh postcreate
 gh extension install thetechcollective/gh-tt
-gh alias import .gh-alias.yml
+gh alias import .gh-alias.yml --clobber
