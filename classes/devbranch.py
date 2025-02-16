@@ -46,6 +46,10 @@ class Devbranch:
     # Instance methods
     def __init__(self, workdir=None, verbose=False):
         
+        self.props = {
+            'workdir': os.getcwd()}
+        
+    
         self.set('verbose', verbose)
                
         if workdir:

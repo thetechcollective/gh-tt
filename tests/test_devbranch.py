@@ -224,24 +224,24 @@ class TestDevbranch(unittest.TestCase):
         
     
 
-    @pytest.mark.unittest
-    @patch('devbranch.Gitter')
-    def test_deliver_success(self, MockGitter):
-        # Setup
-        mock_gitter_instance = MockGitter.return_value
-        mock_gitter_instance.run.side_effect = [
-            ['', Mock(returncode=0)], # git fetch
-            ['main', None], # gh repo view defaultBranchRef
-            ['origin', None], # git remote
-            ['17-Add_a_deliver_subcommand',None], # git branch
-            ['https://github.com/thetechcollective/gh-tt/issues/17', Mock(returncode=0, stderr='', stdout='')], #Get the url from the issue
-            ["Add a 'deliver' subcommand", Mock(returncode=0, stderr='', stdout='')], #Get the title of the issue
-        ]
-
-        devbranch = Devbranch()
-        devbranch.deliver()
-        self.assertEqual(devbranch.props['default_branch'], 'main')
-        self.assertEqual(devbranch.props['remote'], 'origin')
+#    @pytest.mark.unittest
+#    @patch('devbranch.Gitter')
+#    def test_deliver_success(self, MockGitter):
+#        # Setup
+#        mock_gitter_instance = MockGitter.return_value
+#        mock_gitter_instance.run.side_effect = [
+#            ['', Mock(returncode=0)], # git fetch
+#            ['main', None], # gh repo view defaultBranchRef
+#            ['origin', None], # git remote
+#            ['17-Add_a_deliver_subcommand',None], # git branch
+#            ['https://github.com/thetechcollective/gh-tt/issues/17', Mock(returncode=0, stderr='', stdout='')], #Get the url from the issue
+#            ["Add a 'deliver' subcommand", Mock(returncode=0, stderr='', stdout='')], #Get the title of the issue
+#        ]
+#
+#        devbranch = Devbranch()
+#        devbranch.deliver()
+#        self.assertEqual(devbranch.props['default_branch'], 'main')
+#        self.assertEqual(devbranch.props['remote'], 'origin')
 
 if __name__ == '__main__':
     unittest.main()

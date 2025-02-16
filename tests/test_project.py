@@ -185,41 +185,8 @@ class TestProject(unittest.TestCase):
         with self.assertRaises(KeyError):
             project.update_field(owner="lakruzz", number="13", url="https://github.com/lakruzz/gitsquash_lab/issues/7",
                                  field="Blaha", field_value="In Progress") # bad field name
-
-
-    @pytest.mark.unittest
-    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
-    @patch('project.Gitter')
-    def test_get_url_from_issue_success(self, MockGitter, MockValidateGhAccess):
-        # Setup
-        mock_gitter_instance = MockGitter.return_value
-        mock_gitter_instance.run.side_effect = [
-            ["https://github.com/lakruzz/gitsquash_lab/issues/7", Mock(returncode=0, stderr="")]  # get_url_from_issue
-        ]
-
-        project = Project(owner="lakruzz", number="13")
-        result = project.get_url_from_issue(7)
-          
-        # Assertions
-        self.assertRegex(result, r"https://github.com/lakruzz/.+/7")
-        mock_gitter_instance.run.assert_called_with(cache=False)
-
-    @pytest.mark.unittest
-    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
-    @patch('project.Gitter')
-    def test_get_url_from_issue_failure(self, MockGitter, MockValidateGhAccess):
-        # Setup
-        mock_gitter_instance = MockGitter.return_value
-        mock_gitter_instance.run.side_effect = [
-            ["https://github.com/lakruzz/gitsquash_lab/issues/7", Mock(returncode=1, stderr="Error message")]  # get_url_from_issue - mimich error
-        ]
-
-        project = Project(owner="lakruzz", number="13")
-        with self.assertRaises(KeyError) as e:
-            result = project.get_url_from_issue(1237)
-        self.assertRegex(str(e.exception), r"Could not find issue \d+")            
         
-        
+                
     @pytest.mark.unittest
     @patch.object(Project, '__init__', lambda self, owner, number: None)
     @patch('project.Gitter')
@@ -281,6 +248,20 @@ class TestProject(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             project = Project(owner="lakruzz", number="13", workdir="blaha_obscure_dir")
 
+
+    @pytest.mark.unittest
+    @patch.object(Project, 'validate_gh_access', return_value=[False, ''])
+    @patch('project.Gitter')
+    def test_project_constructor_invalid_gh_access(self, MockGitter, MockValidateGhAccess):
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = []
+        
+        with self.assertRaises(RuntimeError) as e:
+            project = Project(owner="lakruzz", number="13", workdir=".")
+        self.assertRegex(str(e.exception), r"WARNING\nYour GH CLI is not setup correctly:.*")
+
+
     @pytest.mark.unittest
     @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
     @patch('project.Gitter')
@@ -292,6 +273,22 @@ class TestProject(unittest.TestCase):
         project = Project(owner="lakruzz", number="13", workdir=".")
         self.assertEqual(project.props['project_owner'], "lakruzz")
         self.assertEqual(project.props['project_number'], "13")
+        
+    @pytest.mark.unittest
+    @patch('subprocess.run')
+    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
+    @patch('project.Gitter')
+    def test_project_constructor_invalid_gitroot(self, MockGitter, MockValidateGhAccess, MockSubprocessRun):
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = []
+
+        # Mock subprocess.run to return an empty result
+        MockSubprocessRun.return_value = Mock(stdout='', stderr='', returncode=1)
+
+        with self.assertRaises(FileNotFoundError) as e:
+            project = Project()
+        self.assertRegex(str(e.exception), r"Could not determine the git root directory")
 
     @pytest.mark.unittest
     @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
@@ -302,7 +299,8 @@ class TestProject(unittest.TestCase):
         mock_gitter_instance.run.side_effect = [
             ['lakruzz', None],  # get_project_owner
             ['13', None],  # get_project_number
-            ['Status:In Progress', None]  # get_project_workon_field:value
+            ['Status:In Progress', None],  # get_project_workon_field:value
+            ['Status:Pull Request Created', None] # get_project_deliver_field:value    
         ]
 
         project = Project()
@@ -350,11 +348,32 @@ class TestProject(unittest.TestCase):
             ['lakruzz', None],  # get_project_owner
             ['13', None],  # get_project_number
             ['', Mock(return_value=1, stderr='Error')],  # get_project_owner
+            ['Status:Pull Request Created', None]  # # get_project_deliver_field:value    
+
         ]
 
         with self.assertRaises(ValueError) as e:
             project = Project()
-        self.assertRegex(str(e.exception), r"Failed to read  workon_field and workon_field_value from the .gitconfig")
+        self.assertRegex(str(e.exception), r"Failed to read workon_field and workon_field_value from the .gitconfig")
+
+    @pytest.mark.unittest
+    @patch.object(Project, 'validate_gh_access', return_value=[True, ''])
+    @patch('project.Gitter')
+    def test_project_constructor_read_config_no_deliver_trigger(self, MockGitter, MockValidateGhAccess):
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = [
+            ['lakruzz', None],  # get_project_owner
+            ['13', None],  # get_project_number
+            ['Status:In Progress', None],  # get_project_workon_field:value            
+            ['', Mock(return_value=1, stderr='Error')],  # get_project_deliver_field:value    
+
+        ]
+
+        with self.assertRaises(ValueError) as e:
+            project = Project()
+        self.assertRegex(str(e.exception), r"Failed to read deliver_field and deliver_field_value from the .gitconfig")
+
         
 if __name__ == '__main__':
     unittest.main()

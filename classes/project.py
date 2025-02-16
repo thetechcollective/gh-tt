@@ -65,7 +65,7 @@ class Project:
             result = subprocess.run("git rev-parse --show-toplevel", capture_output=True, text=True, shell=True)
             git_root = result.stdout.strip()
             if not git_root or result.returncode != 0:
-                raise RuntimeError(f"Could not determine the git root directory")
+                raise FileNotFoundError(f"Could not determine the git root directory")
             self.set('config_file', f"{git_root}/.gitconfig")
             
             [self.props['project_owner'], result] = Gitter(
@@ -113,7 +113,8 @@ class Project:
         
         [self.props['gh_validated'],msg] = self.validate_gh_access()
         if not self.get('gh_validated'):
-            print (f"WARNING\nYour GH CLI is not setup correctly:{msg}", file=sys.stderr)
+            raise RuntimeError(f"WARNING\nYour GH CLI is not setup correctly:{msg}")
+            sys.exit(1)
         
     def validate_gh_access(self):
         """Check if the user has sufficient access to the github cli

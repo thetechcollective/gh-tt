@@ -70,8 +70,12 @@ class Issue:
             cmd=f"gh issue view {number} --json url --jq '.url'",
             workdir=devbranch.get('workdir'),
             verbose=devbranch.get('verbose'),
+            die_on_error=True,
             msg="Get the url from the issue")
         [url, result] = gitter.run(cache=True)
+        if result != None and result.returncode != 0:
+            raise ValueError(f"Could not get the issue url on issue number: '{number}'\n{result.stderr}")
+            exit(1) 
         self.set('url', url)
         
         # Set the issue title
@@ -82,7 +86,7 @@ class Issue:
         [title, result] = Gitter(
             cmd=f"gh issue view {number} --json title --jq '.title'",
             workdir=devbranch.get('workdir'),
-            verbose=devbranch.props['verbose'],
+            verbose=devbranch.get('verbose'),
             die_on_error=False,
             msg=f"Get the title of the issue").run(cache=False)
         if result.returncode != 0:
