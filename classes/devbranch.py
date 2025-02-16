@@ -170,20 +170,25 @@ class Devbranch:
         self.set(keyname, value)
         return self.get(keyname)      
     
-    def __validate_commit_message(self, commit_message, issue_number):
-        # Check if the commit message already contains the issue number
+    def __validate_commit_message(self):
+        # Check if the commit message already contains the issue number , fix it if it doesn't
+        commit_message = self.__get_commit_message()
+        issue_number = self.get('issue').get('number')
+        
         if re.search(r'(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved) #'+issue_number, commit_message):
-            return True
+            self.set('new_message', commit_message)
+            return commit_message
         else:
-            return False
+            self.set('new_message', commit_message + f" - closes #{issue_number}")
+            return self.get('new_message')
         
     def __squeeze(self):
         # Squeeze the current branch into a single commit
         keyname = 'squeeze_sha1'
         value = None        
         branch_name = self.get('branch_name')
-        merge_base = self.get('merge_base')
-        new_message = self.get('new_message')
+        merge_base = self.__get_merge_base()
+        new_message = self.__validate_commit_message()
             
         [value, result] = Gitter(
             cmd=f"git commit-tree {branch_name}^{{tree}} -p {merge_base} -m \"{new_message}\"",
@@ -194,6 +199,47 @@ class Devbranch:
         self.set(keyname, value)
         return self.get(keyname)      
                 
+    def __compare_before_after_trees(self):
+        
+        sha1 = self.get('SHA1')
+        new_sha1 = self.get('new_SHA1')
+        [output, result] = Gitter(
+            cmd=f"git diff-tree --no-commit-id --name-only -r {sha1} {new_sha1}",
+            verbose=self.props['verbose'],
+            msg="Verify that the new commit tree is identical to the old commit").run(cache=False)
+        if output != '':
+            print(f"WARNING:\nNew commit tree ({sha1}) is not identical to the old commit tree ({new_sha1})\n Diff:\n{output}")
+            return False
+        else:
+            return True
+        
+    def __reset_branch(self, new_SHA1):
+        [output, result] = Gitter(
+            cmd=f"git reset {new_SHA1}",
+            verbose=self.get('verbose'),
+            workdir=self.get('workdir'),
+            msg="Set the branch to the new commit").run(cache=False)
+        return new_SHA1
+        
+        
+    def __check_rebase(self):
+        # Get the SHA1 of the default branch
+        [self.props['default_SHA1'], result] = Gitter(
+        f"git rev-parse {self.get('default_branch')}",
+        verbose=self.props('verbose'),
+        workdir=self.get('workdir'),
+        msg="Get the SHA1 of the default branch").run(cache=False)
+        
+            
+        # Check if the default branch is ahead of the merge-base
+        if self.get('default_SHA1') != self.get('merge_base'):
+            # rebase the default branch            
+            print(f"WARNING:\nThe {
+                  self.get('default_branch')} branch has commits your branch has never seen. A rebase is required. Do it now!")
+            return False
+        else:
+            return True
+
 
     def collapse(self):
         """Collapse the current branch into a single commit"""
@@ -219,12 +265,8 @@ class Devbranch:
         issue_number = self.get('issue').get('number')
         
         # Check if the commit message already contains the valid issue reference
-        message_is_valid = self.__validate_commit_message(commit_message, issue_number)
+        new_message = self.__validate_commit_message()
         
-        if not message_is_valid:
-            self.set('new_message', commit_message + f" - closed #{issue_number}")
-        else:
-            self.set('new_message', commit_message)
         
         # Check if the collapse is even necessary
         if commit_count == '1':
@@ -248,37 +290,21 @@ class Devbranch:
         # A collapse is necessary
         else:
             new_SHA1 = self.__squeeze()
-            
-            #### TODO - IM HERE: Next up is to create a private function that will check if the new commit tree is 
-            # identical to the old commit tree (as below) and then move the branch to the new commit
-            
+                        
             # verify that the new commit tree is identical to the old commit
-            [output, result] = Gitter(
-                cmd=f"git diff-tree --no-commit-id --name-only -r {self.props['SHA1']} {self.props['new_SHA1']}",
-                verbose=self.props['verbose'],
-                msg="Verify that the new commit tree is identical to the old commit").run(cache=False)
-            if output != '':
-                raise AssertionError(f"New commit tree ({self.get('new_SHA1')}) is not identical to the old commit tree ({self.get('SHA1')})\n Diff:\n{output}")
+            is_the_same = self.__compare_before_after_trees()
+            
+            if not is_the_same:            
+                raise AssertionError(f"Before and after the squeeze commit trees differ")
                 sys.exit(1)
 
             # move the branch to the new commit
-            [output, result] = Gitter(
-                cmd=f"git reset {self.props['new_SHA1']}",
-                verbose=self.props['verbose'],
-                msg="Set the branch to the new commit").run(cache=False)
-
-        
-        # Get the SHA1 of the default branch
-        [self.props['default_SHA1'], result] = Gitter(
-        f"git rev-parse {self.props['default_branch']}",
-        verbose=self.props['verbose'],
-        msg="Get the SHA1 of the default branch").run(cache=False)
+            self.__reset_branch(new_SHA1)
             
-        # Check if the default branch is ahead of the merge-base
-        if self.get('default_SHA1') != self.get('merge_base'):
-            # rebase the default branch            
-            print(f"WARNING:\nThe {
-                  self.get('default_branch')} branch has commits your branch has never seen. A rebase is required. Do it now!")
+        ## Issue a rebase warning if the default branch is ahead of the merge-base
+        
+        is_rebased = self.__check_rebase()
+        
     
             
     def set_issue(self, issue_number=int, assign=True):

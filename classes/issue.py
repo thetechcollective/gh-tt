@@ -70,12 +70,8 @@ class Issue:
             cmd=f"gh issue view {number} --json url --jq '.url'",
             workdir=devbranch.get('workdir'),
             verbose=devbranch.get('verbose'),
-            die_on_error=False,
             msg="Get the url from the issue")
         [url, result] = gitter.run(cache=True)
-        if result.returncode != 0:
-            raise ValueError(f"Could not get the issue url on issue number: '{number}'\n{result.stderr}")
-            sys.exit(1) 
         self.set('url', url)
         
         # Set the issue title
