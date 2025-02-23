@@ -1,287 +1,457 @@
+from lazyload import Lazyload
+from issue import Issue
+from project import Project
+from gitter import Gitter
 import os
 import subprocess
 import sys
 import re
+from datetime import datetime
 
 # Add directory of this class to the general class_path
 # to allow import of sibling classes
 class_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(class_path)
 
-#from runner import run
-from project import Project
-from gitter import Gitter
 
-class Devbranch:
+class Devbranch(Lazyload):
     """Class used to represent the Devbranch for a development contribution"""
-
-    props = {
-        'workdir': os.getcwd()}
-        
-    def set(self, key, value):
-        """Some syntactic sugar to set the class properties
-        
-        Args:
-            key (str): The key to set in the class properties
-            value: The value to set the key to
-        """
-        
-        self.props[key] = value
-        return self.props[key]
-    
-    def get(self, key):
-        """Some syntactic sugar to get the class properties
-        
-        Args:
-            key (str): The key to get from the class properties - The key must exist in the class properties
-
-        Returns:
-            value: The value of the key in the class properties
-        """    
-        assert key in self.props, f"Property {key} not found on class"
-        return self.props[key]
-                
 
     # Instance methods
     def __init__(self, workdir=None, verbose=False):
-        
+        super().__init__()
+
+        self.set('workdir', os.getcwd())
         self.set('verbose', verbose)
-               
+        self.set('default_branch', None)
+        self.set('remote', None)
+        self.set('branch_name', None)
+        self.set('sha1', None)
+        self.set('issue_number', None)
+        self.set('merge_base', None)
+        self.set('commit_count', None)
+        self.set('commit_message', None)
+        self.set('new_message', None)
+        self.set('squeeze_sha1', None)
+        self.set('default_sha1', None)
+
         if workdir:
             # check if the directory exists
             if not os.path.exists(workdir):
                 raise FileNotFoundError(f"Directory {workdir} does not exist")
                 sys.exit(1)
             self.set('workdir', os.path.abspath(workdir))
-            
-        # Git fetch    
+
+        # Git fetch
         [output, result] = Gitter(
             cmd='git fetch',
-            verbose = self.get('verbose'), 
-            msg = "Fetch all unknows from the remote").run(cache=False) 
+            msg="Fetch all unknows from the remote").run()
         if result.returncode != 0:
             raise RuntimeError(f"Error: Unable to fetch from the remote")
             sys.exit(1)
-            
-        # get the name of the default branch       
-        [self.props['default_branch'], result] = Gitter(
+
+        # get the name of the default branch
+        value = None
+        result = None
+        [value, result] = Gitter(
             cmd=f"gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'",
-            verbose = self.get('verbose'), 
-            msg = "Get the name of the default branch").run(cache=True)
-    
+            msg="Get the name of the default branch").run(cache=True)
+        self.set('default_branch', value)
+
         # get the name of the remote
-        [self.props['remote'], result] = Gitter(
+        value = None
+        result = None
+        [value, result] = Gitter(
             cmd='git remote',
-            verbose=self.props['verbose'],
-            msg="Get the name of the remote").run(cache=False)        
+            msg="Get the name of the remote").run()
+        self.set('remote', value)
+
+        # Get the name of the current branch
+        value = None
+        result = None
+        [value, result] = Gitter(
+            cmd='git rev-parse --abbrev-ref HEAD',
+            msg="Get the name of the current branch").run()
+        self.set('branch_name', value)
+
+        # Set the issue number from the branch name
+        match = re.match(r'^(\d+).+', self.get('branch_name'))
+        if match:
+            self.set('issue_number', f"{match.group(1)}")
+
+    def __get_branch_sha1(self):
+        # Get the SHA1 of the current branch
+        keyname = 'sha1'
+        value = self.get(keyname)
+        if value:
+            return value
+
+        [value, result] = Gitter(
+            cmd='git rev-parse HEAD',
+            workdir=self.get('workdir'),
+
+            msg="Get the SHA1 of the current branch").run()
+
+        self.set(keyname, value)
+        return self.get(keyname)
+
+    def __get_merge_base(self):
+        # Get the merge base of the current branch and the default branch
+        keyname = 'merge_base'
+        value = self.get(keyname)
+        if value:
+            return value
+
+        branch_name = self.get('branch_name')
+        default_branch = self.get('default_branch')
+
+        [value, result] = Gitter(
+            cmd=f"git merge-base {branch_name} {default_branch}",
+            workdir=self.get('workdir'),
+
+            msg="Get the merge base of the current branch and the default branch").run()
+
+        self.set(keyname, value)
+        return self.get(keyname)
+
+    def __get_commit_count(self):
+        # Get the number of commits in the current branch
+        keyname = 'commit_count'
+        value = self.get(keyname)
+        if value:
+            return value
+
+        branch_name = self.get('branch_name')
+        default_branch = self.get('default_branch')
+
+        [value, result] = Gitter(
+            cmd=f"git rev-list --count {self.get('branch_name')} ^{self.get('default_branch')}",
+            workdir=self.get('workdir'),
+
+            msg="Get the number of commits in the current branch").run()
+
+        self.set(keyname, value)
+        return self.get(keyname)
+
+    def __get_commit_message(self):
+        # Get the commit message of the HEAD of the current branch
+        keyname = 'commit_message'
+        value = self.get(keyname)
+        if value:
+            return value
+
+        branch_name = self.get('branch_name')
+
+        [value, result] = Gitter(
+            cmd=f"git show -s --format=%B {branch_name}",
+            workdir=self.get('workdir'),
+
+            msg="Get the commit message of the current branch HEAD").run()
+
+        self.set(keyname, value)
+        return self.get(keyname)
+
+    def __validate_commit_message(self):
+        # Check if the commit message already contains the issue number , fix it if it doesn't
+        commit_message = self.__get_commit_message()
+        issue_number = self.get('issue_number')
+
+        if re.search(r'(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved) #'+issue_number, commit_message):
+            self.set('new_message', commit_message)
+            return commit_message
+        else:
+            self.set('new_message', commit_message +
+                     f" - resolves #{issue_number}")
+            return self.get('new_message')
+
+    def __squeeze(self):
+        # Squeeze the current branch into a single commit
+        keyname = 'squeeze_sha1'
+        value = None
+        branch_name = self.get('branch_name')
+        merge_base = self.__get_merge_base()
+        new_message = self.__validate_commit_message()
+
+        [value, result] = Gitter(
+            cmd=f"git commit-tree {branch_name}^{{tree}} -p {merge_base} -m \"{new_message}\"",
+            workdir=self.get('workdir'),
+
+            msg="Collapse the branch into a single commit").run()
+
+        self.set(keyname, value)
+        return self.get(keyname)
+    
+    def __workspace_is_clean(self):
+        # check if status is clean
+        [output, result] = Gitter(
+            cmd='git status --porcelain',
+            die_on_error=False,
+            msg="Check if the status is clean").run()
+
+        if output != '':
+            print(
+                f"ERROR: The working directory is not clean:\n{output}\n\nPlease commit or stash your changes before delivering the issue")
+            sys.exit(1)
+        return True        
+
+    def __rebase(self):
+        # Rebase the branch to the remote
+        [output, result] = Gitter(
+            cmd="git rebase",
+            die_on_error=False,
+            msg="Rebase the branch").run()
+        if result.returncode != 0:
+            print(
+                f"ERROR: Could not rebase the branch\n{result.stderr}", file=sys.stderr)
+            sys.exit(1)
+        return True  
+    
+    def __push(self, force=False):
+        # push the branch to the remote
+        force_switch = ''   
+        if force == True:
+            force_switch = '--force'
+            
+        [output, result] = Gitter(
+            cmd=f"git push {force_switch}",
+            msg="Push the branch to the remote").run()    
         
+        return True          
+
+    def __compare_before_after_trees(self):
+
+        sha1 = self.get('sha1')
+        squeeze_sha1 = self.get('squeeze_sha1')
+        [output, result] = Gitter(
+            cmd=f"git diff-tree --no-commit-id --name-only -r {sha1} {squeeze_sha1}",
+
+            msg="Verify that the new commit tree is identical to the old commit").run()
+        if output != '':
+            print(
+                f"WARNING:\nNew commit tree ({sha1}) is not identical to the old commit tree ({squeeze_sha1})\n Diff:\n{output}")
+            return False
+        else:
+            return True
+
+    def __reset_branch(self, squeeze_sha1):
+        [output, result] = Gitter(
+            cmd=f"git reset {squeeze_sha1}",
+
+            workdir=self.get('workdir'),
+            msg="Set the branch to the new commit").run()
+        return squeeze_sha1
+
+    def __check_rebase(self):
+        # Get the SHA1 of the default branch
+        [self.props['default_sha1'], result] = Gitter(
+            f"git rev-parse {self.get('default_branch')}",
+            msg="Get the SHA1 of the default branch").run()
+
+        # Check if the default branch is ahead of the merge-base
+        if self.get('default_sha1') != self.get('merge_base'):
+            # rebase the default branch
+            print(f"WARNING:\nThe {
+                  self.get('default_branch')} branch has commits your branch has never seen. A rebase is required. Do it now!")
+            return False
+        else:
+            return True
 
     def collapse(self):
         """Collapse the current branch into a single commit"""
-        
-        # Get the name of the current branch        
-        [self.props['branch_name'], result] = Gitter(
-            cmd='git rev-parse --abbrev-ref HEAD',
-            verbose=self.get('verbose'),
-            msg="Get the name of the current branch").run(cache=False)
-        
-        # Get the SHA1 of the current branch
-        [self.props['SHA1'], result] = Gitter(
-            cmd='git rev-parse HEAD',
-            verbose=self.props['verbose'],
-            msg="Get the SHA1 of the current branch").run(cache=False)
-        
-        # Get the merge base of the current branch and the default branch
-        [self.props['merge_base'], result] = Gitter(
-        cmd=f"git merge-base {self.props['branch_name']} {self.props['default_branch']}",
-        verbose=self.get('verbose'),
-        msg="Get the merge base of the current branch and the default branch").run(cache=False)
 
-        
         # Check if the current branch is the default branch
         if self.get('branch_name') == self.get('default_branch'):
-            raise RuntimeError(f"Cannot collapse the default branch ({self.get('branch_name')})")
+            print(
+                f"ERROR: Cannot collapse the default branch: ({self.get('branch_name')})\nSwitch to a development branch", file=sys.stderr)
             sys.exit(1)
-            
-        # Get the issue number from the branch name
-        match = re.match(r'^(\d+).+', self.get('branch_name'))
-        if match:
-            self.set('issue_number', match.group(1))
-        else:
-            self.set('issue_number', None)
-            print (f"WARNING: The branch name {self.get('branch_name')} does not contain an issue number")
-            
-            
+
+        # check if status is clean
+        self.__workspace_is_clean() # will exit if not clean
+
+        # Rebase the branch to the remote
+        self.__rebase() # will exit if rebase fails
+        
+        # Get the SHA1 of the current branch
+        sha1 = self.__get_branch_sha1()
+
+        # Get the merge base of the current branch and the default branch
+        merge_base = self.__get_merge_base()
+
         # Get the number of commits in the current branch
-        [self.props['commit_count'], result] = Gitter(
-            cmd=f"git rev-list --count {self.get('branch_name')} ^{self.get('default_branch')}",
-            verbose=self.get('verbose'), 
-            msg="Get the number of commits in the current branch").run(cache=False)
-        
+        commit_count = self.__get_commit_count()
+
         # get the most recent commit message
-        [self.props['commit_message'], result] = Gitter(
-            cmd=f"git show -s --format=%B {self.props['branch_name']}",
-            verbose=self.props['verbose'],
-            msg="Get the commit message of the current branch HEAD").run(cache=False)
-        
+        commit_message = self.__get_commit_message()
+
         # Check if the commit message already contains the issue number
-        if self.get('issue_number') != None:
-            if not re.search(r'fixed #'+self.get('issue_number'), self.get('commit_message')) and not re.search(r'closed #'+self.get('issue_number'), self.get('commit_message')):
-                self.set('new_message', self.get('commit_message') + \
-                    f" - closed #{self.get('issue_number')}")
-            else:
-                self.set('new_message', self.get('commit_message'))
-        
+        issue_number = self.get('issue_number')
+
+        # Check if the commit message already contains the valid issue reference
+        new_message = self.__validate_commit_message()
+
         # Check if the collapse is even necessary
-        if self.get('commit_count') == '1':
+        if commit_count == '1':
             print(
                 "Nothing to collapse. The branch already only contain a single commit")
             if self.props['new_message'] != self.props['commit_message']:
                 print("The commit message has been updated and amended.")
-                
+
                 [output, result] = Gitter(
                     cmd=f"git commit --amend -m \"{self.props['new_message']}\"",
-                    verbose=self.props['verbose'],
-                    msg="Amend the commit message").run(cache=False)
-                                
-                [self.props['new_SHA1'], result] = Gitter(
+
+                    msg="Amend the commit message").run()
+
+                [self.props['squeeze_sha1'], result] = Gitter(
                     cmd=f"git rev-parse HEAD",
-                    verbose=self.props['verbose'],
-                    msg="Get the SHA1 of the new commit").run(cache=False)
+
+                    msg="Get the SHA1 of the new commit").run()
             else:
                 print("Even the commit message is already up to date.")
 
         # A collapse is necessary
-        else:            
-            # construct the command to collpase the branch and run it
-            [self.props['new_SHA1'], result] = Gitter(
-                cmd=f"git commit-tree {self.get('branch_name')}^{{tree}} -p {
-                self.get('merge_base')} -m \"{self.get('new_message')}\"",
-                verbose=self.get('verbose'),
-                msg="Collapse the branch into a single commit").run(cache=False)
+        else:
+            squeeze_sha1 = self.__squeeze()
 
-            
             # verify that the new commit tree is identical to the old commit
-            [output, result] = Gitter(
-                cmd=f"git diff-tree --no-commit-id --name-only -r {self.props['SHA1']} {self.props['new_SHA1']}",
-                verbose=self.props['verbose'],
-                msg="Verify that the new commit tree is identical to the old commit").run(cache=False)
-            if output != '':
-                raise AssertionError(f"New commit tree ({self.get('new_SHA1')}) is not identical to the old commit tree ({self.get('SHA1')})\n Diff:\n{output}")
+            is_the_same = self.__compare_before_after_trees()
+
+            if not is_the_same:
+                raise AssertionError(
+                    f"Before and after the squeeze commit trees differ")
                 sys.exit(1)
 
             # move the branch to the new commit
-            [output, result] = Gitter(
-                cmd=f"git reset {self.props['new_SHA1']}",
-                verbose=self.props['verbose'],
-                msg="Set the branch to the new commit").run(cache=False)
+            self.__reset_branch(squeeze_sha1)
+        
+        # push the branch to the remote
+        self.__push(force=True)
+        
+#        print(f"Branch {self.get('branch_name')} has been collapsed into a single commit (was: {self.get('sha1')[:7]} now: {self.get('squeeze_sha1')[:7]})")
 
-        
-        # Get the SHA1 of the default branch
-        [self.props['default_SHA1'], result] = Gitter(
-        f"git rev-parse {self.props['default_branch']}",
-        verbose=self.props['verbose'],
-        msg="Get the SHA1 of the default branch").run(cache=False)
-            
-        # Check if the default branch is ahead of the merge-base
-        if self.get('default_SHA1') != self.get('merge_base'):
-            # rebase the default branch            
-            print(f"WARNING:\nThe {
-                  self.get('default_branch')} branch has commits your branch has never seen. A rebase is required. Do it now!")
-    
-            
-    def set_issue(self, issue_number=int, assign=True):
-        """Set the issue number context to work on"""
-        self.set('issue_number', issue_number)
-        self.set('assign', assign)            
-        
-        ## check if there is a local branch with the issue number
+
+
+
+    def __develop(self, issue_number=int, branch_name=str):
+        # create a new branch, link it to it's upstream , it's issue issue and then check it out
+        [output, result] = Gitter(
+            cmd=f"gh issue develop {issue_number} -b {self.get('default_branch')} -n {branch_name} -c",
+            msg=f"gh develop {issue_number} on new branch {branch_name}").run()
+
+    def __reuse_issue_branch(self, issue_number=int):
+        # check if there is a local branch with the issue number
         [local_branches, result] = Gitter(
-            'git branch --format="%(refname:short)"',
-            verbose=self.props['verbose'],
-            msg=f"Get all local branches").run(cache=False)
-        match=False
-        for branch in local_branches.split('\n'):          
+            cmd='git branch --format="%(refname:short)"',
+            msg=f"Get all local branches").run()
+        match = False
+        for branch in local_branches.split('\n'):
             if re.match(f"^{issue_number}.+", branch):
                 self.set('branch_name', branch)
                 [output, result] = Gitter(
-                    cmd=f"git checkout {self.props['branch_name']}",
-                    verbose=self.props['verbose'],
+                    cmd=f"git checkout {self.get('branch_name')}",
                     die_on_error=False,
-                    msg=f"Switch to the branch {self.get('branch_name')}").run(cache=False)
+                    msg=f"Switch to the branch {self.get('branch_name')}").run()
                 if result.returncode != 0:
                     print(f"Error: {result.stderr}", file=sys.stderr)
                     sys.exit(1)
-                match=True
+                match = True
                 break
-            
+
         if not match:
-            ## check if there is a remote branch with the issue number
+            # check if there is a remote branch with the issue number
             [remote_branches, result] = Gitter(
                 cmd='git branch -r --format="%(refname:short)"',
-                verbose=self.props['verbose'],
-                msg=f"Get all remote branches").run(cache=False)
+                msg=f"Get all remote branches").run()
             for branch in remote_branches.split('\n'):
                 match_obj = re.match(f"^origin/({issue_number}.+)", branch)
                 if match_obj:
-                    self.set('branch_name', match_obj.group(1) )
+                    self.set('branch_name', match_obj.group(1))
                     [output, result] = Gitter(
                         cmd=f"git checkout -b {self.get('branch_name')} {self.get('remote')}/{self.get('branch_name')}",
-                        verbose=self.props['verbose'],
-                        msg=f"Switch to the branch {self.props['branch_name']}").run(cache=False)
-                    match=True
+                        msg=f"Switch to the branch {self.props['branch_name']}").run()
+                    match = True
                     break
-        
-        if not match:
-            ## get the title of the issue
-            [self.props['issue_title'], result] = Gitter(
-                cmd=f"gh issue view {issue_number} --json title --jq '.title'",
-                verbose=self.props['verbose'],
-                die_on_error=False,
-                msg=f"Get the title of the issue").run(cache=False)
-            if result.returncode != 0:
-                print(f"Error: Issue {issue_number} not found", file=sys.stderr)
-                sys.exit(1)
-            
-            ## Construct a valid branch name based on the issue number, and the title, replacing spaces with underscores and weed out any chars that aren't allowind in branch names
-            self.set('branch_name', f"{issue_number}-{re.sub('[^a-zA-Z0-9_-]', '', re.sub(' ', '_', self.get('issue_title')))}" )
-            
-            # create a new branch, link it to it's upstream , it's issue issue and then check it out           
-            [output, result] = Gitter(
-                cmd=f"gh issue develop {issue_number} -b {self.get('default_branch')} -n {self.get('branch_name')} -c" ,
-                verbose=self.props['verbose'],
-                die_on_error=False,
-                msg=f"Get the body of the issue").run(cache=False)
-        
-        # at this point the branch should exist and is checked out - either through a local branch, a remote branch or a new branch 
-        
+        return match
+
+    def set_issue(self, issue_number=int, assign=True):
+        """Set the issue number context to work on"""
+        self.set('issue_number', issue_number)
+        self.set('assign', assign)
+        issue = Issue(number=issue_number)
+
+        reuse = self.__reuse_issue_branch(issue_number=issue_number)
+        if not reuse:
+            # Construct a valid branch name based on the issue number, and the title, replacing spaces with underscores and weed out any chars that aren't allowind in branch names
+            issue_title = issue.get('title')
+            branch_valid_title = re.sub(
+                '[^a-zA-Z0-9_-]', '', re.sub(' ', '_', issue_title))
+            branch_name = f"{issue_number}-{branch_valid_title}"
+            self.set('branch_name', branch_name)
+            self.__develop(issue_number=issue_number, branch_name=branch_name)
+
+        # at this point the branch should exist and is checked out - either through a local branch, a remote branch or a new branch
+
+        # TODO Update the data used for metrics: 1) assignee, 2) add to project 3) update project field
+
+        # assign the issue to the current user
         if self.get('assign'):
-            [output, result] = Gitter(
-                cmd=f"gh issue edit {issue_number} --add-assignee '@me'",
-                verbose=self.props['verbose'],
-                msg=f"Assign @me to the issue").run(cache=False)   
-            
-        project = Project( verbose=self.get('verbose'))
-        issue_url = project.get_url_from_issue(issue=issue_number)
-        project.update_field( url=issue_url, field=project.get('workon_field'), field_value=project.get('workon_field_value')  ) 
+            issue.assign(assignee='@me')
 
-    def create_issue(self, title=str, body=None):
-        """Create a new issue with the title"""
-        issue_number = None
-        
+        # add the issue to the project and set the Status to "In Progess"
+        project = Project()
+        workon_field = project.get('workon_field')
+        workon_field_value = project.get('workon_field_value')
+        # TODO get the values from the config
+        project.update_field(url=issue.get(
+            'url'), field=workon_field, field_value=workon_field_value)
+
+        if not reuse:
+            # Get 'today' in YYYY-MM-DD format
+            today = datetime.today().strftime('%Y-%m-%d')
+            project.update_field(url=issue.get(
+                'url'), field='Start', field_value=today, field_type='Date')
+
+    def deliver(self, title=None):
+        """Create the pull request for the current issue"""
+
+        issue = Issue(number=self.get('issue_number'))
+
+        if title == None:
+            title = issue.get('title')
+
+        # Create a pull request for the current branch
         [output, result] = Gitter(
-            cmd=f"gh issue create --title '{title}' -b '{body}'",
-            verbose=self.props['verbose'],
-            msg=f"Create a new issue with the title '{title}'").run(cache=False)
-        
-        match_obj = re.search(r'^https://.*/issues/(\d+)', output, re.MULTILINE)
-        if match_obj:
-            issue_number = match_obj.group(1)
-            return issue_number
-        else:
-            print("ERROR: Issue number not found", file=sys.stderr)
-            
-        
-    
-                  
+            cmd=f"gh pr create --title '{title}' --body '' --base {self.get('default_branch')} --assignee '@me'",
+            die_on_error=False,
+            msg="Create a pull request for the current branch").run()
 
+        # Get the last line of the output, it contains the URL of the pull request
+        # and update self.props['pull_request_url']
+        # but die if the last line does not contain the URL
+        success = False
+        if result.returncode == 0:
+            match_obj = re.search(
+                r'^https://.*/pull/(\d+)', output, re.MULTILINE)
+            if match_obj:
+                self.set('pull_request_url', match_obj.group(0))
+                success = True
+        # If a pull request already exists, it will be returned in the stderr
+        # so we need to check the stderr for the URL
+        else:
+            match_obj = re.search(r'^https://.*/pull/(\d+)',
+                                  result.stderr.strip(), re.MULTILINE)
+            if match_obj:
+                self.set('pull_request_url', match_obj.group(0))
+                success = True
+
+        if not success:
+            print(
+                f"ERROR: Could not create the pull request\n{result.stderr}", file=sys.stderr)
+            sys.exit(1)
+
+        project = Project()
+
+        project.update_field(url=issue.get('url'), field=project.get(
+            'deliver_field'), field_value=project.get('deliver_field_value'))
+
+        print(f"{self.get('pull_request_url')}")
+        return self.get('pull_request_url')

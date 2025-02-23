@@ -19,6 +19,7 @@
   forward = !git checkout $(git log --all --ancestry-path ^HEAD --format=format:%H | tail -n 1)
 
 [project]
-  owner = thetechcollective
-  number = 12
-  workon = Status:In Progress
+  owner   = thetechcollective
+  number  = 12
+  workon  = Status:In Progress
+  deliver = Status:Delivery Initiated
