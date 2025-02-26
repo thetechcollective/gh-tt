@@ -264,7 +264,7 @@ class Project(Lazyload):
         # split the workon action on : into field and value
         # only override the default values if both field and value are sucesfully read
         try:
-            [deliver_field, deliver_field_value] = workon_action.split(':')
+            [deliver_field, deliver_field_value] = deliver_action.split(':')
             if not deliver_field == '' and not deliver_field_value == '':
                 self.set('deliver_field', deliver_field)
                 self.set('deliver_field_value', deliver_field_value)
