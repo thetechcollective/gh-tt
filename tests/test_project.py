@@ -5,6 +5,7 @@ import json
 from unittest.mock import patch, MagicMock
 from unittest.mock import Mock
 import pytest
+from io import StringIO
 
 class_path = os.path.dirname(os.path.abspath(__file__)) + "/../classes"
 sys.path.append(class_path)
@@ -13,12 +14,18 @@ from project import Project
 
 class TestProject(unittest.TestCase):
 
+
     @pytest.mark.unittest
     @patch('project.Gitter')
     def test_update_field_success(self, MockGitter):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
+            ['/workspaces/gh-tt', Mock(returncode=0, stderr='', stdout='')],  # get_project_root
+            ['lakruzz', None],  # get_project_owner
+            ['13', None],  # get_project_number
+            ['Status:In Progress', None],  # get_project_workon_field:value
+            ['Status:Pull Request Created', None], # get_project_deliver_field:value
             ["PVT_kwHOAAJfZM4AxVEK", None],  # get_project_id
             ["PVTI_lAHOAAJfZM4AxVEKzgXJ6P4", None],     # add_issue
             [json.dumps({
@@ -43,6 +50,11 @@ class TestProject(unittest.TestCase):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
+            ['/workspaces/gh-tt', Mock(returncode=0, stderr='', stdout='')],  # get_project_root
+            ['lakruzz', None],  # get_project_owner
+            ['13', None],  # get_project_number
+            ['Status:In Progress', None],  # get_project_workon_field:value
+            ['Status:Pull Request Created', None], # get_project_deliver_field:value 
             ["PVT_kwHOAAJfZM4AxVEK", None],  # get_project_id
             ["PVTI_lAHOAAJfZM4AxVEKzgXJ6P4", None],     # add_issue
             [json.dumps({
@@ -68,6 +80,11 @@ class TestProject(unittest.TestCase):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
+            ['/workspaces/gh-tt', Mock(returncode=0, stderr='', stdout='')],  # get_project_root
+            ['lakruzz', None],  # get_project_owner
+            ['13', None],  # get_project_number
+            ['Status:In Progress', None],  # get_project_workon_field:value
+            ['Status:Pull Request Created', None], # get_project_deliver_field:value            
             ["PVT_kwHOAAJfZM4AxVEK", None],  # get_project_id
             ["PVTI_lAHOAAJfZM4AxVEKzgXJ6P4", None],     # add_issue
             [json.dumps({
@@ -88,6 +105,11 @@ class TestProject(unittest.TestCase):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
+            ['/workspaces/gh-tt', Mock(returncode=0, stderr='', stdout='')],  # get_project_root
+            ['lakruzz', None],  # get_project_owner
+            ['13', None],  # get_project_number
+            ['Status:In Progress', None],  # get_project_workon_field:value
+            ['Status:Pull Request Created', None], # get_project_deliver_field:value
             ["PVT_kwHOAAJfZM4AxVEK", None],  # get_project_id
             ["PVTI_lAHOAAJfZM4AxVEKzgXJ6P4", None],     # add_issue
             [json.dumps({
@@ -108,6 +130,11 @@ class TestProject(unittest.TestCase):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
+            ['/workspaces/gh-tt', Mock(returncode=0, stderr='', stdout='')],  # get_project_root
+            ['lakruzz', None],  # get_project_owner
+            ['13', None],  # get_project_number
+            ['Status:In Progress', None],  # get_project_workon_field:value
+            ['Status:Pull Request Created', None], # get_project_deliver_field:value
             ["PVT_kwHOAAJfZM4AxVEK", None],  # get_project_id
             ["PVTI_lAHOAAJfZM4AxVEKzgXJ6P4", None],     # add_issue
             # get_field_description empty return value
@@ -127,6 +154,11 @@ class TestProject(unittest.TestCase):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
+            ['/workspaces/gh-tt', Mock(returncode=0, stderr='', stdout='')],  # get_project_root
+            ['lakruzz', None],  # get_project_owner
+            ['13', None],  # get_project_number
+            ['Status:In Progress', None],  # get_project_workon_field:value
+            ['Status:Pull Request Created', None], # get_project_deliver_field:value
             ["PVT_kwHOAAJfZM4AxVEK", None],  # get_project_id
             ["PVTI_lAHOAAJfZM4AxVEKzgXJ6P4", None],     # add_issue
             [json.dumps({
@@ -147,6 +179,11 @@ class TestProject(unittest.TestCase):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
+            ['/workspaces/gh-tt', Mock(returncode=0, stderr='', stdout='')],  # get_project_root
+            ['lakruzz', None],  # get_project_owner
+            ['13', None],  # get_project_number
+            ['Status:In Progress', None],  # get_project_workon_field:value
+            ['Status:Pull Request Created', None], # get_project_deliver_field:value
             ["PVT_kwHOAAJfZM4AxVEK", None],  # get_project_id
             ["PVTI_lAHOAAJfZM4AxVEKzgXJ6P4", None],     # add_issue
             [json.dumps({
@@ -167,6 +204,11 @@ class TestProject(unittest.TestCase):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
+            ['/workspaces/gh-tt', Mock(returncode=0, stderr='', stdout='')],  # get_project_root
+            ['lakruzz', None],  # get_project_owner
+            ['13', None],  # get_project_number
+            ['Status:In Progress', None],  # get_project_workon_field:value
+            ['Status:Pull Request Created', None], # get_project_deliver_field:value
             ["PVT_kwHOAAJfZM4AxVEK", None],  # get_project_id
             ["PVTI_lAHOAAJfZM4AxVEKzgXJ6P4", None],     # add_issue
             [json.dumps({
@@ -181,38 +223,28 @@ class TestProject(unittest.TestCase):
             project.update_field(owner="lakruzz", number="13", url="https://github.com/lakruzz/gitsquash_lab/issues/7",
                                  field="Blaha", field_value="In Progress")  # bad field name
 
-
-        # Setup
-        mock_gitter_instance = MockGitter.return_value
-        mock_gitter_instance.run.side_effect = []
-
-        project = Project(owner="lakruzz", number="13")
-        self.assertEqual(project.props['project_owner'], "lakruzz")
-        self.assertEqual(project.props['project_number'], "13")
-
     @pytest.mark.unittest
-    @patch('subprocess.run')
     @patch('project.Gitter')
-    def test_project_constructor_invalid_gitroot(self, MockGitter, MockSubprocessRun):
+    def test_project_constructor_invalid_gitroot(self, MockGitter):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
             ['', Mock(returncode=1, stderr='', stdout='')],  # get_project_root
-
         ]
 
-        # Mock subprocess.run to return an empty result
-        MockSubprocessRun.return_value = Mock(
-            stdout='', stderr='', returncode=1)
+        with self.assertRaises(SystemExit) as cm:
+            with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
+                project = Project()
+       # Assertions
+        self.assertEqual(cm.exception.code, 1)
+        self.assertIn("Could not determine the git root directory", mock_stderr.getvalue()) 
 
-        with self.assertRaises(FileNotFoundError) as e:
-            project = Project()
-        self.assertRegex(str(e.exception),
-                         r"Could not determine the git root directory")
+
+
 
     @pytest.mark.unittest
     @patch('project.Gitter')
-    def test_project_constructor_read_config_success(self, MockGitter):
+    def test_project_constructor_read_entire_config_success(self, MockGitter):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
@@ -232,74 +264,46 @@ class TestProject(unittest.TestCase):
 
     @pytest.mark.unittest
     @patch('project.Gitter')
-    def test_project_constructor_read_config_no_owner(self, MockGitter):
-        # Setup
-        mock_gitter_instance = MockGitter.return_value
-        mock_gitter_instance.run.side_effect = [
-            ['/workspaces/gh-tt', Mock(returncode=0, stderr='', stdout='')],  # get_project_root
-            ['', Mock(return_value=1, stderr='Error')],  # get_project_owner
-        ]
-
-        with self.assertRaises(ValueError) as e:
-            project = Project()
-        self.assertRegex(str(e.exception),
-                         r"Project owner not found in the git config")
-
-    @pytest.mark.unittest
-    @patch('project.Gitter')
-    def test_project_constructor_read_config_no_project_number(self, MockGitter):
-        # Setup
-        mock_gitter_instance = MockGitter.return_value
-        mock_gitter_instance.run.side_effect = [
-            ['/workspaces/gh-tt', Mock(returncode=0, stderr='', stdout='')],  # get_project_root
-            ['lakruzz', None],  # get_project_owner
-            ['', Mock(return_value=1, stderr='Error')],  # get_project_owner
-        ]
-
-        with self.assertRaises(ValueError) as e:
-            project = Project()
-        self.assertRegex(str(e.exception),
-                         r"Project number not found in the git config")
-
-    @pytest.mark.unittest
-    @patch('project.Gitter')
-    def test_project_constructor_read_config_no_workon_trigger(self, MockGitter):
+    def test_project_constructor_read_partial_config_success(self, MockGitter):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
             ['/workspaces/gh-tt', Mock(returncode=0, stderr='', stdout='')],  # get_project_root
             ['lakruzz', None],  # get_project_owner
             ['13', None],  # get_project_number
-            ['', Mock(return_value=1, stderr='Error')],  # get_project_owner
-            # # get_project_deliver_field:value
-            ['Status:Pull Request Created', None]
-
+            ['', Mock(returncode=1, stderr='Error', stdout='')],  # get_project_workon_field:value
+            ['', Mock(returncode=1, stderr='Error', stdout='')]# get_project_deliver_field:value
+            
         ]
 
-        with self.assertRaises(ValueError) as e:
-            project = Project()
-        self.assertRegex(str(
-            e.exception), r"Failed to read workon_field and workon_field_value from the .gitconfig")
+        project = Project()
+        self.assertEqual(project.props['project_owner'], "lakruzz")
+        self.assertEqual(project.props['project_number'], "13")
+        self.assertEqual(project.props['workon_field'], "Status")
+        self.assertEqual(project.props['workon_field_value'], "In Progress")
+
 
     @pytest.mark.unittest
     @patch('project.Gitter')
-    def test_project_constructor_read_config_no_deliver_trigger(self, MockGitter):
+    def test_project_constructor_read_config_failure(self, MockGitter):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
             ['/workspaces/gh-tt', Mock(returncode=0, stderr='', stdout='')],  # get_project_root
-            ['lakruzz', None],  # get_project_owner
-            ['13', None],  # get_project_number
-            ['Status:In Progress', None],  # get_project_workon_field:value
-            # get_project_deliver_field:value
-            ['', Mock(return_value=1, stderr='Error')],
-
+            ['', Mock(returncode=1, stderr='Error', stdout='')],  # get_project_owner
+            ['', Mock(returncode=1, stderr='Error', stdout='')],  # get_project_number
+            ['', Mock(returncode=1, stderr='Error', stdout='')],  # get_project_workon_field:value
+            ['', Mock(returncode=1, stderr='Error', stdout='')]# get_project_deliver_field:value
+            
         ]
 
-        with self.assertRaises(ValueError) as e:
-            project = Project()
-        self.assertRegex(str(
-            e.exception), r"Failed to read deliver_field and deliver_field_value from the .gitconfig")
+        with self.assertRaises(SystemExit) as cm:
+            with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
+                project = Project()
+       # Assertions
+        self.assertEqual(cm.exception.code, 1)
+        self.assertIn("Project owner or number not set - null values are currently not supported", mock_stderr.getvalue())  
+
 
 
 if __name__ == '__main__':
