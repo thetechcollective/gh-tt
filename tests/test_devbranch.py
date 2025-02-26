@@ -126,7 +126,28 @@ class TestDevbranch(unittest.TestCase):
         value = devbranch._Devbranch__get_commit_count() # 2nd time get the value from the class props
         self.assertEqual(value, '2')
         self.assertEqual(devbranch.get(key), value)
+
+    @pytest.mark.unittest
+    @patch('devbranch.Gitter')
+    def test__check_rebase_success(self, MockDevbranchGitter):
+        # Setup
+        mock_gitter_instance = MockDevbranchGitter.return_value
+        mock_gitter_instance.run.side_effect = [
+            ['', Mock(returncode=0)],             # git fetch
+            ['main', None],                       # gh repo view defaultBranchRef
+            ['origin', None],                     # git remote
+            ['17-Add_a_deliver_subcommand',None], # git branch
+            ['e5f2dc1389414523fa20f54c819841d9f360114d', Mock(returncode=0, stderr='', stdout='')], # Get the commit count
+        ]         
         
+        devbranch = Devbranch()
+        
+
+        with patch('sys.stdout', new_callable=StringIO) as mock_stdout:
+            devbranch._Devbranch__check_rebase()
+       # Assertions
+        self.assertIn("WARNING:\nThe main branch has commits your branch has never seen. A rebase is required. Do it now!", mock_stdout.getvalue()) 
+       
     @pytest.mark.unittest
     @patch('devbranch.Gitter')
     def test__get_commit_message_success(self, MockDevbranchGitter):
