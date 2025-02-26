@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Function to check if puython is installed
-ensure_python() {
+ensure_python3() {
     if ! command -v python3 &> /dev/null; then
         echo "Python 3 not found. Please install Python 3."
         exit 1
@@ -34,19 +34,26 @@ check_pipenv() {
 # Attempt to get the virtual environment path
 export PIPENV_VERBOSITY=-1
 export PIPENV_VENV_IN_PROJECT=0
-export PIPENV_CUSTOM_VENV_NAME=gh-semver
+export PIPENV_CUSTOM_VENV_NAME=gh-tt
 export PIPENV_PIPFILE=$(dirname "$0")/Pipfile
 
-ensure_python
-check_pipenv
+ensure_python3
 
-# Check if a virtual environment exists
-pipenv --venv > /dev/null 2>&1
-
-# If pipenv --venv failed, it means no virtual environment exists
-if [ $? -ne 0 ]; then
-    echo "First time around - Setting up pipenv environment..."
-    pipenv sync --bare -q > /dev/null 2>&1
-fi
-
-pipenv run python3 $(dirname "$0")/gh_tt.py "$@"
+# Check if we should use pipenv (GH_TT_PIPENV=1) 
+if [ "$GH_TT_PIPENV" = "1" ]; then
+    echo "Running in pipenv mode..."
+    check_pipenv # Exit if pipenv is not installed
+  
+    # Check if a virtual environment exists
+    pipenv --venv > /dev/null 2>&1
+    
+    # If pipenv --venv failed, it means no virtual environment exists
+    if [ $? -ne 0 ]; then
+        echo "First time around - Setting up pipenv environment..."
+        pipenv sync --bare -q > /dev/null 2>&1
+    fi
+    
+    pipenv run python3 $(dirname "$0")/gh_tt.py "$@"
+else
+    python3 $(dirname "$0")/gh_tt.py "$@"
+fi  
