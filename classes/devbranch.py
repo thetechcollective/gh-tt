@@ -243,15 +243,15 @@ class Devbranch(Lazyload):
 
     def __check_rebase(self):
         # Get the SHA1 of the default branch
-        [self.props['default_sha1'], result] = Gitter(
+        [default_sha1, result] = Gitter(
             f"git rev-parse {self.get('default_branch')}",
             msg="Get the SHA1 of the default branch").run()
+        self.set('default_sha1', default_sha1)
 
         # Check if the default branch is ahead of the merge-base
-        if self.get('default_sha1') != self.get('merge_base'):
+        if default_sha1 != self.get('merge_base'):
             # rebase the default branch
-            print(f"WARNING:\nThe {
-                  self.get('default_branch')} branch has commits your branch has never seen. A rebase is required. Do it now!")
+            print(f"WARNING:\nThe {self.get('default_branch')} branch has commits your branch has never seen. A rebase is required. Do it now!")
             return False
         else:
             return True
