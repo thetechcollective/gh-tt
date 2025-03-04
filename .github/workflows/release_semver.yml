@@ -1,0 +1,32 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: Release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: read
+
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Create GitHub Release
+      run: |
+        SEMVER_TAG="${GITHUB_REF#refs/tags/}"
+        if git branch --contains "$SEMVER_TAG" main | grep -q "main"; then
+          gh release create "$SEMVER_TAG" --generate-notes --verify-tag --latest
+        else
+          echo "Tag $SEMVER_TAG is not on main, skipping release creation."
+          exit 1
+        fi
