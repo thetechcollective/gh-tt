@@ -167,7 +167,7 @@ class Gitter(Lazyload):
         #    - Token scopes: 'gist', 'read:org', 'project', 'repo', 'workflow'
         if f"'{scope}'" not in stdout:
             print(
-                f"gh token does not have the required scope '{scope}'", file=sys.stderr)
+                f"gh token does not have the required scope '{scope}'\nfix it by running:\n   gh auth refresh --scopes '{scope}'", file=sys.stderr)
             exit(1)
 
         return True
