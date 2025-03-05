@@ -222,7 +222,7 @@ class Project(Lazyload):
 
         # Check if the project owner can be read from .gitconfig
         [project_owner, result] = Gitter(
-            cmd=f"git config get -f {self.get('config_file')} project.owner",
+            cmd=f"git config --get -f {self.get('config_file')} project.owner",
             msg="Get the project owner from .gitconfig",
             die_on_error=False).run()
         # only override the default values if sucesfully read
@@ -231,7 +231,7 @@ class Project(Lazyload):
 
         # Check if the project number can be read from .gitconfig
         [project_number, result] = Gitter(
-            cmd=f"git config get -f {self.get('config_file')} project.number",
+            cmd=f"git config --get -f {self.get('config_file')} project.number",
             msg="Get the project number from .gitconfig",
             die_on_error=False).run()
         # only override the default values if sucesfully read
@@ -243,7 +243,7 @@ class Project(Lazyload):
 
         # Check if the workon action trigger can be read from .gitconfig
         [workon_action, result] = Gitter(
-            cmd=f"git config get -f {self.get('config_file')} project.workon",
+            cmd=f"git config --get -f {self.get('config_file')} project.workon",
             msg="Get the workon trigger action from .gitconfig",
             die_on_error=False).run()
         # split the workon action on : into field and value
@@ -258,7 +258,7 @@ class Project(Lazyload):
            
         # Check if the workon action trigger can be read from .gitconfig                  
         [deliver_action, result] = Gitter(
-            cmd=f"git config get -f {self.get('config_file')} project.deliver",
+            cmd=f"git config --get -f {self.get('config_file')} project.deliver",
             msg="Get the deliver trigger action from .gitconfig",
             die_on_error=False).run()
         # split the workon action on : into field and value
