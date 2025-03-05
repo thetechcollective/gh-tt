@@ -1,4 +1,4 @@
-name: Release
+name: Push Release to GitHub
 
 on:
   push:
@@ -9,9 +9,6 @@ permissions:
   contents: write
   packages: write
   deployments: write
-
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   build:
@@ -26,18 +23,38 @@ jobs:
     - name: Create GitHub Release
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
       run: |
-        set +e
-        SEMVER_TAG="${GITHUB_REF#refs/tags/}"
+        set +x
+        if git branch --contains "${{github.ref_name}}" main | grep -q "main"; then
+          
+          echo "Release:     ${{github.ref_name}}"     >  version.txt
+          echo "GitHub repo: ${{github.repository}}"   >> version.txt
+          echo "SHA1:        ${{github.sha}}"          >> version.txt
 
-        echo "Creating release for tag '$SEMVER_TAG'"
-        git tag
-        git branch
+          cat version.txt
+          
+          URL=$(gh release create "${{github.ref_name}}" --generate-notes --verify-tag --latest)          
+          gh release upload ${{github.ref_name}} version.txt
 
-        if git branch --contains "$SEMVER_TAG" main | grep -q "main"; then
-          gh release create "$SEMVER_TAG" --generate-notes --verify-tag --latest
+          echo '**version.txt:**'                                          >> $GITHUB_STEP_SUMMARY
+          echo '```'                                                       >> $GITHUB_STEP_SUMMARY 
+          cat version.txt                                                  >> $GITHUB_STEP_SUMMARY
+          echo '```'                                                       >> $GITHUB_STEP_SUMMARY 
+          echo                                                             >> $GITHUB_STEP_SUMMARY
+          echo "[See the release '${{github.ref_name}}'' on GitHub]($URL)" >> $GITHUB_STEP_SUMMARY
+          echo                                                             >> $GITHUB_STEP_SUMMARY
+          echo 'Use `gh` CLI to download the release:'                      >> $GITHUB_STEP_SUMMARY 
+          echo '```shell'                                                  >> $GITHUB_STEP_SUMMARY 
+          echo "gh release download ${{github.ref_name}} -p 'version.txt' --repo ${{github.repository}}" >> $GITHUB_STEP_SUMMARY
+          echo "gh release download ${{github.ref_name}} --archive tar.gz --repo ${{github.repository}}" >> $GITHUB_STEP_SUMMARY
+          echo "gh release download ${{github.ref_name}} --archive zip    --repo ${{github.repository}}" >> $GITHUB_STEP_SUMMARY
+          echo '```'                                                       >> $GITHUB_STEP_SUMMARY 
+
         else
-          echo "Tag $SEMVER_TAG is not on main, skipping release creation."
+
+          echo "Tag ${{github.ref_name}} is not on main, skipping release creation."
+          echo "Tag ${{github.ref_name}} is not on main"                  >> $GITHUB_STEP_SUMMARY
+          echo "Skipping release creation."                               >> $GITHUB_STEP_SUMMARY
           exit 1
+
         fi
