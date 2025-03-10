@@ -17,6 +17,9 @@
   tree = log --graph --full-history --all --color --date=short --pretty=format:\"%Cred%x09%h %Creset%ad%Cblue%d %Creset %s %C(bold)(%an)%Creset\"
   backward = checkout HEAD^1
   forward = !git checkout $(git log --all --ancestry-path ^HEAD --format=format:%H | tail -n 1)
+  sweep = "!f() { git fetch --prune && for branch in $(git branch -vv | grep ': gone]' | awk \"{print \\$1}\"); do git branch -D \"$branch\"; done; }; f"
+  sweep-verbose = "!f() { git fetch --prune && branches=$(git branch -vv | grep ': gone]' | awk '{print $1}'); if [ -z \"$branches\" ]; then echo \"No remote-tracking branches to prune.\"; else echo \"Pruning branches: $branches\"; echo \"$branches\" | xargs git branch -d; fi; }; f"
+ 
 
 [project]
   owner   = thetechcollective
