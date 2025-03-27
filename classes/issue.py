@@ -53,7 +53,7 @@ class IssueType(Enum):
 class Issue(Lazyload):
     """Class used to represent a GitHub issue - in context of the current development branch"""
 
-    def __init__(self, number: int, issue_type: str | IssueType | None):
+    def __init__(self, number: int, issue_type: str | IssueType | None = None):
         super().__init__()
 
         if isinstance(issue_type, str):
@@ -68,7 +68,7 @@ class Issue(Lazyload):
 
         result = None
         gitter = Gitter(
-            cmd=f"gh api -H \"Accept: application/vnd.github+json\" /repos/:owner/:repo/issues/{number} | jq '{{url, title, type: .type.name}}'"
+            cmd=f"gh api -H \"Accept: application/vnd.github+json\" /repos/:owner/:repo/issues/{number} | jq '{{url: .html_url, title, type: .type.name}}'"
         )
         [output, result] = gitter.run()
         if result.returncode != 0:
@@ -106,7 +106,7 @@ class Issue(Lazyload):
 
         if self.get('issue_type') is not None and self.get('issue_type').value != issue_json.get('type'):
             gitter = Gitter(
-                cmd=f"gh api --method PATCH -H \"Accept: application/vnd.github+json\" /repos/:owner/:repo/issues/{number} -f \"type={self.get('issue_type').value}\" | jq '{{url, title, type: .type.name}}'"
+                cmd=f"gh api --method PATCH -H \"Accept: application/vnd.github+json\" /repos/:owner/:repo/issues/{number} -f \"type={self.get('issue_type').value}\" | jq '{{url: .html_url, title, type: .type.name}}'"
             )
             [output, result] = gitter.run()
 
@@ -131,7 +131,7 @@ class Issue(Lazyload):
         issue_type = IssueType.from_str(issue_type)
 
         gitter = Gitter(
-            cmd=f"gh api --method POST -H \"Accept: application/vnd.github+json\" /repos/:owner/:repo/issues -f \"title={title}\" {body_switch} -f \"type={issue_type.value}\" | jq '{{url, title, type: type.name}}'",
+            cmd=f"gh api --method POST -H \"Accept: application/vnd.github+json\" /repos/:owner/:repo/issues -f \"title={title}\" {body_switch} -f \"type={issue_type.value}\" | jq '{{url: .html_url, title, type: type.name}}'",
             msg="Create a new issue"
         )
         [output, result] = gitter.run()
