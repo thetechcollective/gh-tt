@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import json
 import os
 import sys
 import argparse
@@ -39,6 +40,7 @@ def parse(args=None):
 
     # Add workon subcommand
     workon_parser = subparsers.add_parser('workon', parents=[parent_parser], help='Set the issue number context to work on')
+    workon_parser.add_argument('--type', type=str.lower, choices=['ad_hoc', 'bug_fix', 'dev_task', 'documentation', 'feature', 'functional_test', 'infrastructure', 'refactor', 'unittest', 'user_story_arla'], help='Issue type of the issue')
     workon_group = workon_parser.add_mutually_exclusive_group()
     workon_group.add_argument('-i', '--issue', type=int, help='Issue number')
     workon_group.add_argument('-t', '--title', type=str, help='Title for the new issue')
@@ -75,10 +77,10 @@ if __name__ == "__main__":
     
     if args.command == 'workon':
         if args.issue:
-            devbranch.set_issue(issue_number=args.issue, assign=args.assignee)
+            devbranch.set_issue(issue_number=args.issue, assign=args.assignee, issue_type=args.type)
             
         elif args.title:
-            issue =  Issue.create_new(title=args.title)
+            issue =  Issue.create_new(title=args.title, issue_type=args.type)
             devbranch.set_issue(issue_number=issue.get('number'), assign=args.assignee)
           
     if args.command == 'wrapup':

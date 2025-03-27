@@ -11,28 +11,102 @@ class_path = os.path.dirname(os.path.abspath(__file__)) + "/../classes"
 sys.path.append(class_path)
 
 from issue import Issue
+from issue import IssueType
 from devbranch import Devbranch
 
 class TestIssue(unittest.TestCase):
 
     @pytest.mark.unittest
+    def test_issue_type_constructor_success(self):
+        issue_type = IssueType.from_str('ad_hoc')
+
+        self.assertEqual(issue_type, IssueType.AD_HOC)
+    
+    @pytest.mark.unittest
+    def test_issue_type_constructor_wrong_type(self):
+
+        with self.assertRaises(AttributeError):
+            IssueType.from_str(10)
+
+        with self.assertRaises(AttributeError):
+            IssueType.from_str(str)
+
+        with self.assertRaises(AttributeError):
+            IssueType.from_str(None)
+
+    @pytest.mark.unittest
+    def test_issue_type_constructor_unknown_value(self):
+
+        with self.assertRaises(ValueError):
+            IssueType.from_str("woehfeowfhowfheeowfh")
+
+
+    @pytest.mark.unittest
     @patch('issue.Gitter')
-    def test_issue_constructor_success(self, MockGitter):
+    def test_issue_constructor_success_with_matching_issue_type(self, MockGitter):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
             ["""{
                   "title": "Add a 'deliver' subcommand",
-                  "url": "https://github.com/thetechcollective/gh-tt/issues/17"
-                }""", Mock(returncode=0, stderr='', stdout='')],  # Get the url and title from the issue
+                  "url": "https://github.com/thetechcollective/gh-tt/issues/17",
+                  "type": "Documentation"
+                }""", Mock(returncode=0, stderr='', stdout='')],  # Get the url, title and type from the issue
         ]
                
-        issue = Issue(number='17')
+        issue = Issue(number='17', issue_type=IssueType.DOCUMENTATION)
 
         # Assertions
         self.assertEqual(issue.get('number'), '17')
         self.assertEqual(issue.get('url'), 'https://github.com/thetechcollective/gh-tt/issues/17')
         self.assertEqual(issue.get('title'), "Add a 'deliver' subcommand")
+        self.assertEqual(issue.get('issue_type').value, "Documentation")
+
+    @pytest.mark.unittest
+    @patch('issue.Gitter')
+    def test_issue_constructor_success_with_different_issue_type(self, MockGitter):
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = [
+            ["""{
+                  "title": "Add a 'deliver' subcommand",
+                  "url": "https://github.com/thetechcollective/gh-tt/issues/17",
+                  "type": "Documentation"
+                }""", Mock(returncode=0, stderr='', stdout='')],  # Get the url, title and type from the issue
+            ["""{
+                  "title": "Add a 'deliver' subcommand",
+                  "url": "https://github.com/thetechcollective/gh-tt/issues/17",
+                  "type": "Dev Task"
+                }""", Mock(returncode=0, stderr='', stdout='')]
+        ]
+               
+        issue = Issue(number='17', issue_type=IssueType.DEV_TASK)
+
+        # Assertions
+        self.assertEqual(issue.get('number'), '17')
+        self.assertEqual(issue.get('url'), 'https://github.com/thetechcollective/gh-tt/issues/17')
+        self.assertEqual(issue.get('title'), "Add a 'deliver' subcommand")
+        self.assertEqual(issue.get('issue_type').value, "Dev Task")
+
+    @pytest.mark.unittest
+    @patch('issue.Gitter')
+    def test_issue_constructor_missing_issue_type(self, MockGitter):
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = [[
+            """{
+                  "title": "Add a 'deliver' subcommand",
+                  "url": "https://github.com/thetechcollective/gh-tt/issues/17",
+                  "type": null
+                }""", Mock(returncode=0, stderr='', stdout='')]]
+               
+        with self.assertRaises(SystemExit) as cm:
+            with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
+                issue = Issue(number=10, issue_type=None)
+
+       # Assertions
+        self.assertEqual(cm.exception.code, 1)
+        self.assertIn("ERROR: Issue type is not set, and no issue type was passed via the --type argument.", mock_stderr.getvalue())
 
     @pytest.mark.unittest
     @patch('issue.Gitter')
@@ -45,7 +119,7 @@ class TestIssue(unittest.TestCase):
                
         with self.assertRaises(SystemExit) as cm:
             with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
-                issue = Issue(number=17)
+                issue = Issue(number=17, issue_type="documentation")
 
        # Assertions
         self.assertEqual(cm.exception.code, 1)
@@ -62,7 +136,7 @@ class TestIssue(unittest.TestCase):
         ]
         with self.assertRaises(SystemExit) as cm:
             with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
-                issue = Issue(number=17)
+                issue = Issue(number=17, issue_type="documentation")
        # Assertions
         self.assertEqual(cm.exception.code, 1)
         self.assertIn("ERROR: Could not get the issue url or title on issue number: '17", mock_stderr.getvalue())
@@ -78,7 +152,7 @@ class TestIssue(unittest.TestCase):
         ]
         with self.assertRaises(SystemExit) as cm:
             with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
-                issue = Issue(number=17)
+                issue = Issue(number=17, issue_type="documentation")
        # Assertions
         self.assertEqual(cm.exception.code, 1)
         self.assertIn("ERROR: Could not get the issue url or title from incomplete JSON", mock_stderr.getvalue())        
@@ -89,25 +163,27 @@ class TestIssue(unittest.TestCase):
         # Setup
         mock_gitter_instance = MockGitter.return_value
         mock_gitter_instance.run.side_effect = [
-            ["""
-             
-Creating issue in thetechcollective/gh-tt
-
-https://github.com/thetechcollective/gh-tt/issues/17
-             """, Mock(returncode=0, stderr='', stdout='')],  # Get the url and title from the issue
             ["""{
                   "title": "Add a 'deliver' subcommand",
-                  "url": "https://github.com/thetechcollective/gh-tt/issues/17"
-                }""", Mock(returncode=0, stderr='', stdout='')],  # Get the url and title from the issue
-            
+                  "url": "https://github.com/thetechcollective/gh-tt/issues/17",
+                  "type": "Dev Task"
+                }""", Mock(returncode=0, stderr='', stdout='')
+            ],
+            ["""{
+                  "title": "Add a 'deliver' subcommand",
+                  "url": "https://github.com/thetechcollective/gh-tt/issues/17",
+                  "type": "Dev Task"
+                }""", Mock(returncode=0, stderr='', stdout='')
+            ],
         ]
         
-        issue = Issue.create_new(title="Add a 'deliver' subcommand")
+        issue = Issue.create_new(title="Add a 'deliver' subcommand", issue_type="dev_task")
         
         # Assertions
         self.assertEqual(issue.get('url'), 'https://github.com/thetechcollective/gh-tt/issues/17')
         self.assertEqual(issue.get('title'), "Add a 'deliver' subcommand")
         self.assertEqual(issue.get('number'), '17')
+        self.assertEqual(issue.get('issue_type').value, IssueType.DEV_TASK.value)
 
     @pytest.mark.unittest
     @patch('issue.Gitter')
@@ -119,7 +195,7 @@ https://github.com/thetechcollective/gh-tt/issues/17
         ]
         with self.assertRaises(SystemExit) as cm:
             with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
-                issue = Issue.create_new(title="Add a 'deliver' subcommand")
+                issue = Issue.create_new(title="Add a 'deliver' subcommand", issue_type="documentation")
        # Assertions
         self.assertEqual(cm.exception.code, 1)
         self.assertIn("ERROR: Could not capture the issue URL from the output", mock_stderr.getvalue())        
@@ -132,12 +208,13 @@ https://github.com/thetechcollective/gh-tt/issues/17
         mock_gitter_instance.run.side_effect = [
             ["""{
                   "title": "Add a 'deliver' subcommand",
-                  "url": "https://github.com/thetechcollective/gh-tt/issues/17"
+                  "url": "https://github.com/thetechcollective/gh-tt/issues/17",
+                  "type": "Documentation"
                 }""", Mock(returncode=0, stderr='', stdout='')],  # Get the url and title from the issue
             ['PVTI_lAHOAAJfZM4AxVEKzgXi48Q', Mock(returncode=0, stderr='', stdout='')], # Add the issue to the project
         ]
                
-        issue = Issue(number='17')
+        issue = Issue(number='17', issue_type="documentation")
         item_id = issue.add_to_project(owner='lakruzz', number='12')
 
         # Assertions
@@ -151,12 +228,13 @@ https://github.com/thetechcollective/gh-tt/issues/17
         mock_gitter_instance.run.side_effect = [
             ["""{
                   "title": "Add a 'deliver' subcommand",
-                  "url": "https://github.com/thetechcollective/gh-tt/issues/17"
+                  "url": "https://github.com/thetechcollective/gh-tt/issues/17",
+                  "type": "Documentation"
                 }""", Mock(returncode=0, stderr='', stdout='')],  # Get the url and title from the issue
             ['', Mock(returncode=1, stderr='Error', stdout='')], # Add the issue to the project
         ]
                
-        issue = Issue(number='17')
+        issue = Issue(number='17', issue_type="documentation")
 
         with self.assertRaises(SystemExit) as cm:
             with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
@@ -173,12 +251,13 @@ https://github.com/thetechcollective/gh-tt/issues/17
         mock_gitter_instance.run.side_effect = [
             ["""{
                   "title": "Add a 'deliver' subcommand",
-                  "url": "https://github.com/thetechcollective/gh-tt/issues/17"
+                  "url": "https://github.com/thetechcollective/gh-tt/issues/17",
+                  "type": "Documentation"
                 }""", Mock(returncode=0, stderr='', stdout='')],  # Get the url and title from the issue        
             ["https://github.com/thetechcollective/gh-tt/issues/17", Mock(returncode=0, stderr='', stdout='')],  # Assign the issue
         ]
         
-        issue = Issue(number=17)
+        issue = Issue(number=17, issue_type="documentation")
         issue.assign(assignee='@me')
         
         # Assertions
