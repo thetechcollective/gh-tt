@@ -196,8 +196,9 @@ Your branch is up to date with 'origin/17-Add_a_deliver_subcommand'.
         mock_gitter_instance.run.side_effect = [
             ["""{
                   "title": "Add a 'deliver' subcommand",
-                  "url": "https://github.com/thetechcollective/gh-tt/issues/17"
-                }""", Mock(returncode=0, stderr='', stdout='')],  # Get the url and title from the issue
+                  "url": "https://github.com/thetechcollective/gh-tt/issues/17",
+                  "type": "Documentation"
+                }""", Mock(returncode=0, stderr='', stdout='')],  # Get the url, title and type from the issue
             ["https://github.com/thetechcollective/gh-tt/issues/17", Mock(returncode=0, stderr='', stdout='')], # Assign @me to the issue
         ]     
         
@@ -222,7 +223,7 @@ Your branch is up to date with 'origin/17-Add_a_deliver_subcommand'.
               
         
         devbranch = Devbranch()
-        devbranch.set_issue(issue_number='17', assign=True)
+        devbranch.set_issue(issue_number='17', assign=True, issue_type="documentation")
         self.assertEqual(devbranch.get('issue_number'), "17")
 
     @pytest.mark.unittest
@@ -261,8 +262,9 @@ From https://thetechcollective/gh-tt
         mock_gitter_instance.run.side_effect = [
             ["""{
                   "title": "Add a 'deliver' subcommand",
-                  "url": "https://github.com/thetechcollective/gh-tt/issues/17"
-                }""", Mock(returncode=0, stderr='', stdout='')],  # Get the url and title from the issue
+                  "url": "https://github.com/thetechcollective/gh-tt/issues/17",
+                  "type": "Documentation"
+                }""", Mock(returncode=0, stderr='', stdout='')],  # Get the url, title and type from the issue
             ["https://github.com/thetechcollective/gh-tt/issues/17", Mock(returncode=0, stderr='', stdout='')], # Assign @me to the issue
         ]     
         
@@ -294,7 +296,7 @@ From https://thetechcollective/gh-tt
               
         
         devbranch = Devbranch()
-        devbranch.set_issue(issue_number='17', assign=True)
+        devbranch.set_issue(issue_number='17', assign=True, issue_type="documentation")
         self.assertEqual(devbranch.get('issue_number'), "17")
         
     @pytest.mark.unittest
@@ -333,7 +335,8 @@ Your branch is up to date with 'origin/17-Add_a_deliver_subcommand'.
         mock_gitter_instance.run.side_effect = [
             ["""{
                   "title": "Add a 'deliver' subcommand",
-                  "url": "https://github.com/thetechcollective/gh-tt/issues/17"
+                  "url": "https://github.com/thetechcollective/gh-tt/issues/17",
+                  "type": "Documentation"
                 }""", Mock(returncode=0, stderr='', stdout='')],  # Get the url and title from the issue
             ["https://github.com/thetechcollective/gh-tt/issues/17", Mock(returncode=0, stderr='', stdout='')], # Assign @me to the issue
         ]     
@@ -358,7 +361,7 @@ Your branch is up to date with 'origin/17-Add_a_deliver_subcommand'.
               
         
         devbranch = Devbranch()
-        devbranch.set_issue(issue_number='17', assign=True)
+        devbranch.set_issue(issue_number='17', assign=True, issue_type="documentation")
         self.assertEqual(devbranch.get('issue_number'), "17")
    
 

@@ -38,25 +38,37 @@ You can always use the switch `--verbose` to have the extensions print out all u
 
 `workon` takes an `--issue` switch. you can use if you want to work on a specific issue in the current repo
 
-E.g. `gh workon --issue 13`
+E.g. `gh workon --issue 13` or `gh workon -i 13`
 
 Or you can use the `--title` switch if you want to work on an issue that doesn't yet exist, you apply the title for the issue you want created.
 
 e.g. `gh workon --title "Some new issue"`
 
+The issue that you select/create must have an issue type set. You can set an issue type by using the `--type` switch and passing one of the valid types.
+
+> [!NOTE]
+> Options for the `--type` switch are currently hardcoded and might drift from what is available through the GitHub web interface. Please raise a PR if you notice such a drift.
+
+
 ```shell
-usage: gh tt workon [-h] [-v] [-i ISSUE | -t TITLE]
+usage: gh tt workon [-h] [-v]
+                    [--type {ad_hoc,bug_fix,dev_task,documentation,feature,functional_test,infrastructure,refactor,unittest,user_story_arla}]
+                    [-i ISSUE | -t TITLE] [--assign | --no-assign]
 
 options:
   -h, --help            show this help message and exit
   -v, --verbose         Enable verbose output
+  --type {ad_hoc,bug_fix,dev_task,documentation,feature,functional_test,infrastructure,refactor,unittest,user_story_arla}
+                        Issue type of the issue
   -i ISSUE, --issue ISSUE
                         Issue number
   -t TITLE, --title TITLE
                         Title for the new issue
+  --assign              Assign @me to the issue (default)
+  --no-assign           Do not assign anybody to the issue
 ```
 
-In either case you will end up on a development branch referencing the issue. If a branch already exist either locally or remote, you'll reuse that if not a new branch will be created on the issue.
+After running `workon` will end up on a development branch referencing the issue. If a branch already exist either locally or remote, `workon` will reuse that branch. If no branch exists, a new branch will be created on the issue.
 
 `Workon` will set the `Status` in the GitHub Project to `In Progress` and the `Start` date to today.
 
@@ -94,7 +106,7 @@ options:
 
 ## Feature request and discussions
 
-The Issues are open on the repo: [`thetechcollective.gh-tt`](https://github.com/thetechcollective/gh-tt/issues). If you experiencve any erros, misbekaviour or if you have feature requests, feel free to join the discussion.
+The Issues are open on the repo: [`thetechcollective.gh-tt`](https://github.com/thetechcollective/gh-tt/issues). If you experiencve any erros, misbehaviour or if you have feature requests, feel free to join the discussion.
 
 ## Note
 It's written in Python and runs in a `pipenv` so it doesn't leave any footprint or alterization to your own, current Python setup. All requirements besides `python3` are managed independenly by the script itself.

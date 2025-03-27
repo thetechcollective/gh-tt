@@ -372,11 +372,11 @@ class Devbranch(Lazyload):
                     break
         return match
 
-    def set_issue(self, issue_number=int, assign=True):
+    def set_issue(self, issue_number=int, assign=True, issue_type=str):
         """Set the issue number context to work on"""
         self.set('issue_number', issue_number)
         self.set('assign', assign)
-        issue = Issue(number=issue_number)
+        issue = Issue(number=issue_number, issue_type=issue_type)
 
         reuse = self.__reuse_issue_branch(issue_number=issue_number)
         if not reuse:
