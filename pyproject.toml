@@ -1,0 +1,20 @@
+[project]
+name = "gh-tt"
+version = "0.1.0"
+description = "GitHub extension automating trunk-based development"
+requires-python = ">=3.13"
+
+dependencies = [
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest",
+    "pytest-cov",
+]
