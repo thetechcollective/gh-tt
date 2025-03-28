@@ -8,5 +8,6 @@
         "${workspaceFolder}/classes",
         "${workspaceFolder}/tests",
         "${workspaceFolder}"
-    ]
+    ],
+    "python.defaultInterpreterPath": ".venv/bin/python"
 }
