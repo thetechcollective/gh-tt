@@ -24,10 +24,8 @@ jobs:
         python-version: "3.13"
     - name: Install dependencies
       run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        uv venv
-        source .venv/bin/activate
-        uv sync --dev
+        pip install pipenv
+        pipenv sync --dev
     - name: Test with pytest
       run: |
-        uv run pytest --cov=. --cov-config=.coveragerc -m unittest
+        pipenv run pytest --cov=. --cov-config=.coveragerc -m unittest
