@@ -26,7 +26,11 @@
 
 	// Mount the workspace folder one level higher than the git repo
 	"workspaceMount": "source=${localWorkspaceFolder}/../,target=/workspaces,type=bind",
-	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}"
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+
+    "remoteEnv": {
+        "UV_LINK_MODE": "copy"
+    }
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],

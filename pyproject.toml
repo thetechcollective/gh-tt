@@ -1,0 +1,15 @@
+[project]
+name = "gh-tt"
+# Note: SemVer is controlled by using tagging in the repository
+version = "0.0.0"
+description = "GitHub extension automating trunk-based development"
+requires-python = ">=3.13"
+
+dependencies = [
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+]
