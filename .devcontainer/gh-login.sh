@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# gh-login.sh
 
 # Usage: ./gh-login.sh {initialize|postcreate}"
 #
@@ -27,13 +28,15 @@ initialize() {
     echo "$PREFIX    at the time you start the devconatiner."
     echo "$PREFIX    And the devcontainer will be able to log you in without user intaraction."
   else
-    echo "$PREFIX Your host is authenticated with GitHub CLI."
-    echo "$(echo $(gh auth token) | base64 )" > $(dirname $0)/_temp.token
+    echo "$PREFIX Your host is authenticated with GitHub CLI - Capturing your token for reuse."
+    token=$(gh auth token)
+    echo $(echo $token) | base64 > $(dirname $0)/_temp.token
   fi
 }
 
 postcreate(){
   if [ -e $(dirname $0)/_temp.token ]; then
+      echo "$PREFIX $(dirname $0)/_temp.token exists, continuing with login"
       echo "$PREFIX ...using token from host"
       cat $(dirname $0)/_temp.token | base64 --decode | gh auth login --with-token
       echo "$PREFIX ...cleaning up after the initialize step"
@@ -48,14 +51,16 @@ postcreate(){
 
 ## MAIN
 
+PREFIX="🐙  "
 if [ "$1" = "initialize" ]; then
-  PREFIX="$(basename $0) initialize: "
+  echo "$PREFIX Running $(basename $0) initialize"  
   initialize
 elif [ "$1" = "postcreate" ]; then
-  PREFIX="$(basename $0) postcreate: "
+  echo "$PREFIX Running $(basename $0) postcreate"  
   postcreate
 else
   echo "Usage: $(basename $0) {initialize|postcreate}"
   exit 1
 fi
-echo "$PREFIX SUCCES"
+echo "$PREFIX SUCCESS"
+exit 0
