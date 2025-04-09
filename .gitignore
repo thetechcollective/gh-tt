@@ -1,8 +1,10 @@
 **/__pycache__/
 .pytest_cache/
 logs/
-gh_semver.egg-info
+*.egg-info
 *testbed
 .coverage
 .tt_cache
+**/.venv/
 _temp.token
+dist/
