@@ -404,12 +404,6 @@ class Devbranch(Lazyload):
         project.update_field(url=issue.get(
             'url'), field=workon_field, field_value=workon_field_value)
 
-        if not reuse:
-            # Get 'today' in YYYY-MM-DD format
-            today = datetime.today().strftime('%Y-%m-%d')
-            project.update_field(url=issue.get(
-                'url'), field='Start', field_value=today, field_type='Date')
-
     def deliver(self, title=None):
         """Create the pull request for the current issue"""
 
