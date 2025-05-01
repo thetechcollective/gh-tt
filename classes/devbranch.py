@@ -197,7 +197,7 @@ class Devbranch(Lazyload):
     def __rebase(self):
         # Rebase the branch to the remote
         [output, result] = Gitter(
-            cmd="git rebase",
+            cmd=f"git rebase {self.get('default_branch')}",
             die_on_error=False,
             msg="Rebase the branch").run()
         if result.returncode != 0:
