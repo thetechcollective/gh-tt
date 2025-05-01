@@ -8,10 +8,9 @@ Install:
 gh extension install thetechcollective/gh-tt
 ```
 
-The extension requires that you have write access to projects too
+The extension requires that you have write access to projects too (it will instruct you what to do, if you haven't)
 
 Run `gh tt -h` to learn the syntax
-
 
 The extension has three subcommands `workon`, `wrapup` and `deliver`. 
 
@@ -34,6 +33,7 @@ You can always use the switch `--help` to learn details about a specific syntax
 
 #### --verbose
 You can always use the switch `--verbose` to have the extensions print out all underlying calls to the OS.
+
 ## gh workon
 
 `workon` takes an `--issue` switch. you can use if you want to work on a specific issue in the current repo
@@ -58,10 +58,9 @@ options:
 
 In either case you will end up on a development branch referencing the issue. If a branch already exist either locally or remote, you'll reuse that if not a new branch will be created on the issue.
 
-`Workon` will set the `Status` in the GitHub Project to `In Progress` and the `Start` date to today.
+`Workon` will set the `Status` in the GitHub Project to `In Progress`.
 
 ## gh wrapup
-
 
 ```shell
 usage: gh tt wrapup [-h] [-v] 
@@ -72,7 +71,9 @@ options:
 
 `wrapup` will collapse you current branch into just one commit, and make sure that the commit message contains one of the closing keywords (e.g. "resolves #<issue>") so the issue will be closed when the commit arrives at the default branch (`main`).
 
-In order to deliver you should be aware that a `rebase` against the default branch (`main`) is also needed, but it's not included in the automated `wrapup` process, simply because this is potentially an operation that will change the content of your branch. For that reason you should take full responsibility of that process yourself. In other words make it a habit to run `rebase` before the `wrapup`:
+In order to deliver you should be aware that a `rebase` against the default branch (`main`) is needed. This reabse is included in the automated `wrapup` process, but pay attention tho the fact, that if this rebase isn't successful `wrapup` will exit and your brach will be in process of rebasing. You will need to fix and merge conflicts and continue `reabse --continue` or to abort the rebase `get rebase --abort` 
+
+Consider to make it a habit to run a `rebase` against the default integration branch (`main`|`master`) before the `wrapup`:
 
 ```shell
 git rebase main
