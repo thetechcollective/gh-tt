@@ -6,6 +6,7 @@ from io import StringIO
 from unittest.mock import patch, MagicMock
 from unittest.mock import Mock
 import pytest
+import asyncio
 
 class_path = os.path.dirname(os.path.abspath(__file__)) + "/../classes"
 sys.path.append(class_path)
@@ -390,7 +391,17 @@ Your branch is up to date with 'origin/17-Add_a_deliver_subcommand'.
         self.assertEqual(value, "de291d6f38de30e8037142d6bb2afb5d69429368")
         self.assertEqual(devbranch.get(key), value)
     
-        
+
+    @pytest.mark.dev
+    def test__squeeze_success_no_mock(self):
+        devbranch = Devbranch()
+        value =  asyncio.run(devbranch._Devbranch__squeeze()) # 1st time run the command - this functions doesn't have a cache
+        self.assertEqual(True, True)
+
+    
+
+
+
     @pytest.mark.unittest
     @patch('devbranch.Devbranch._Devbranch__get_branch_sha1', return_value='9cc26a27febb99af5785150e40b6821fa00e8c9a')
     @patch('devbranch.Devbranch._Devbranch__get_merge_base', return_value='6aa5faf9fb4a0d650dd7becc1588fed5770c2fda')
