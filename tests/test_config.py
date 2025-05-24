@@ -30,7 +30,7 @@ class TestProject(unittest.TestCase):
         self.assertEqual(config.get('workon')['policies']['rebase'], True)   
         self.assertEqual(config.get('workon')['policies']['allow-dirty'], True)   
 
-        self.assertEqual(config.get('squeeze')['policies']['rebase'], True)   
+        self.assertEqual(config.get('squeeze')['policies']['abort_for_rebase'], True)   
         self.assertEqual(config.get('squeeze')['policies']['allow-dirty'], True)   
         self.assertEqual(config.get('squeeze')['policies']['allow-staged'], False)
         self.assertEqual(config.get('squeeze')['policies']['quiet'], False)

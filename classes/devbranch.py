@@ -173,8 +173,11 @@ class Devbranch(Lazyload):
         # Adhere to the policies
 
         # rebase if we must
-        if self.get('config').get('squeeze')['policies']['rebase']:
-            await self.__rebase()
+        if self.get('config').get('squeeze')['policies']['abort_for_rebase']:
+            if self.get('default_sha1') != self.get('merge_base'):
+                print(
+                    f"ERROR: The {self.get('default_branch')} branch has commits your branch has never seen. A rebase is required. Do it now!", file=sys.stderr)
+                sys.exit(1)
 
         # check if the working directory is dirty
         if self.get('is_dirty'):
