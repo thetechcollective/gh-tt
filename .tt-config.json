@@ -13,6 +13,18 @@
         "allow-dirty": true
     }
   },
+  "squeeze": {
+    "policies":{
+        // "rebase:true" will rebase before the squeeze
+        "rebase": true,
+        // "allow-dirty:true" will run the squeeze, even with a dirty working directory. Will warn unless "quiet:true" 
+        "allow-dirty": true,
+        // "allow-staged:true" will run the squeeze, even with staged, uncommited changes. Will warn unless "quiet:true" 
+        "allow-staged": false,
+        // "quiet:true" will suppress the dirty/staged warnings
+        "quiet": false
+    }
+  },
   "wrapup": {
     // the status to set in the project when the wrapup subcommand is used
     "status": "Delivery Initiated",

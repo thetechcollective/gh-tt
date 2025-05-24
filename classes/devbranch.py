@@ -168,6 +168,38 @@ class Devbranch(Lazyload):
         """
         Squeeze the current branch into a single commit
         """
+        await self.__load_details()
+
+        # Adhere to the policies
+
+        # rebase if we must
+        if self.get('config').get('squeeze')['policies']['rebase']:
+            await self.__rebase()
+
+        # check if the working directory is dirty
+        if self.get('is_dirty'):
+            # check if dirty is allowed
+            if self.get('config').get('squeeze')['policies']['allow-dirty'] == False:
+                print(
+                    f"ERROR: The working directory is not clean:\n{self.get('unstaged_changes')}\n{self.get('staged_changes')}\n\nPlease commit or stash your changes before collapsing the branch", file=sys.stderr)
+                sys.exit(1)
+            #check if staged changes are allowed
+            else:
+                if self.get('config').get('squeeze')['policies']['allow-staged'] == False and len(self.get('staged_changes')) > 0:
+                    print(
+                        f"ERROR: There are staged changes:\n{self.get('staged_changes')}\n\nPlease commit your changes before the squeeze", file=sys.stderr)
+                    sys.exit(1)
+
+                # check if we should warn about dirty working directory    
+                if not self.get('config').get('squeeze')['policies']['quiet'] == True:
+                    print(
+                        f"WARNING: The working directory is not clean:\n{self.get('unstaged_changes')}\n{self.get('staged_changes')}\n\nThe branch will be squeezed, but the changes will not be included in the commit.", file=sys.stderr)
+ 
+        # check if there are staged changes and if that is allowed
+        if self.get('config').get('squeeze')['policies']['allow-staged'] == False and len(self.get('staged_changes')) > 0:
+            print(
+                f"ERROR: There are staged changes:\n{self.get('staged_changes')}\n\nPlease commit or stash your changes before collapsing the branch")
+            sys.exit(1)
 
         self.props['issue_title'] = await self.__load_prop(
             cmd=f"gh issue view {self.get('issue_number')} --json title --jq '.title'",
@@ -182,6 +214,7 @@ class Devbranch(Lazyload):
         
         await self.__compare_before_after_trees()
 
+        return self.get('squeeze_sha1')
     
     
     def __workspace_is_clean(self):
@@ -199,23 +232,31 @@ class Devbranch(Lazyload):
             sys.exit(1)
         return True        
 
-    def __rebase(self):
+    async def __rebase(self, autostash=True):
         """
         Rebase the branch to the default branch
         """
-        value=None
-        result=None
-        [value, result] = Gitter(
-            cmd=f"git rebase {self.get('remote')}/{self.get('default_branch')}",
+        await self.__load_details()
+
+        autostash_switch = ''
+        if autostash:
+            autostash_switch = '--autostash '
+
+        [_, result] = await Gitter(
+            cmd=f"git rebase {autostash_switch}{self.get('remote')}/{self.get('default_branch')}",
             die_on_error=False,
             msg="Rebase the branch").run()
         if result.returncode != 0:
+            ## abort the rebase
+            [_, _] = Gitter(
+                cmd="git rebase --abort",
+                msg="Abort the rebase").run()
             print(
                 f"ERROR: Could not rebase the branch\n{result.stderr}", file=sys.stderr)
             sys.exit(1)
-        return True  
-    
-    def __push(self, force=False):
+        return True
+
+    async def __push(self, force=False):
         # push the branch to the remote
         force_switch = ''   
         if force == True:
