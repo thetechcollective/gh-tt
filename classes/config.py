@@ -4,6 +4,8 @@ import os
 import sys
 import re
 import json
+import asyncio
+
 
 # Add directory of this class to the general class_path
 # to allow import of sibling classes
@@ -25,7 +27,7 @@ class Config(Lazyload):
         self.set('config_files', [])
 
         self.__locate_config_files(file)
-        self.__read_config()       
+        asyncio.run(self.__read_config())
 
     def __locate_config_files(self, file=None):
         """Locate the configuration files to use"""
@@ -50,12 +52,12 @@ class Config(Lazyload):
         self.set('config_files', config_files)
 
 
-    def __read_config(self):
+    async def __read_config(self):
         """Read the configuration file in order of priority"""
         
         complete=False
         # Get the git root directory and set the config file
-        [git_root, result] = Gitter(
+        [git_root, result] = await Gitter(
             cmd="git rev-parse --show-toplevel",
             msg="Get the git root directory").run()
         if not git_root or result.returncode != 0:

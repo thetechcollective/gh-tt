@@ -53,7 +53,7 @@ class Gitter(Lazyload):
                 print(f"# {self.get('msg')}")
             print(f"$ {self.get('cmd')}")
 
-    def run(self, cache=False):
+    async def run(self, cache=False):
 
         self.__verbose_print()
 
@@ -169,5 +169,22 @@ class Gitter(Lazyload):
             print(
                 f"gh token does not have the required scope '{scope}'\nfix it by running:\n   gh auth refresh --scopes '{scope}'", file=sys.stderr)
             exit(1)
+
+        return True
+
+    @classmethod
+    async def fetch(cls, prune=False):
+        """Fetch """
+
+        msg = "Fetch all branches and tags from all remotes"
+
+        prune_switch = "--prune --prune-tags" if prune else ""
+        if prune:
+            msg += " and prune local branches and tags)"
+
+
+        [stdout, result] = await Gitter(
+            cmd=f"git fetch --tags --all {prune_switch}",
+            msg=f"{msg}").run()
 
         return True

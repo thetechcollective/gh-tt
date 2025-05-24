@@ -7,8 +7,8 @@
     // the status to set in the project when the workon subcommand is used
     "status": "In Progress",
     "policies":{
-        // Run a rebase when an existing branch is found no rebase is performed if this is an empty string
-        "rebase": "origin/main",
+        // When an existing branch is found rebase:true will perform a rebase against the default_branch rebase:false will not
+        "rebase": true,
         // if "rebase" and "allow-dirty" are both set to true, A stash is done before the rebase and a stash pop after.
         "allow-dirty": true
     }
@@ -21,11 +21,11 @@
         // "collapse:false" will leave the branch as is
         "collapse": true,
         // The prefix to use for the collapsed branch - igonered if "collapse:false", required if "collapse:true"
-        "branch": "ready/",
+        "branch_prefix": "ready/",
         // The closing keyword to use when closing the issue in the project - ignored if a valid closing keyword is found in the commit message
         "close-keyword": "resolves",
-        // The branch to rebase onto - no rebase is performed if this is not set, or value is an empty string
-        "rebase": "origin/main"
+        // The branch to default_branch
+        "rebase": true
     }
   },
   "deliver": {

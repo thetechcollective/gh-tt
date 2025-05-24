@@ -6,12 +6,15 @@ import os
 import subprocess
 import sys
 import re
+import asyncio
 from datetime import datetime
 
 # Add directory of this class to the general class_path
 # to allow import of sibling classes
 class_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(class_path)
+
+from config import Config
 
 
 class Devbranch(Lazyload):
@@ -23,17 +26,24 @@ class Devbranch(Lazyload):
 
         self.set('workdir', os.getcwd())
         self.set('verbose', verbose)
+        self.set('config',Config())
+        # __load_details:
         self.set('default_branch', None)
         self.set('remote', None)
         self.set('branch_name', None)
-        self.set('sha1', None)
         self.set('issue_number', None)
+        self.set('sha1', None)
         self.set('merge_base', None)
+        self.set('default_sha1', None)
         self.set('commit_count', None)
         self.set('commit_message', None)
+
+        # squeze
         self.set('new_message', None)
         self.set('squeeze_sha1', None)
-        self.set('default_sha1', None)
+        self.set('issue_title', None)
+
+        self._details_loaded = False
 
         if workdir:
             # check if the directory exists
@@ -42,118 +52,78 @@ class Devbranch(Lazyload):
                 sys.exit(1)
             self.set('workdir', os.path.abspath(workdir))
 
-        # Git fetch
-        [output, result] = Gitter(
-            cmd='git fetch',
-            msg="Fetch all unknows from the remote").run()
-        if result.returncode != 0:
-            raise RuntimeError(f"Error: Unable to fetch from the remote")
-            sys.exit(1)
+        asyncio.run(self.__load_details())
 
-        # get the name of the default branch
-        value = None
-        result = None
-        [value, result] = Gitter(
-            cmd=f"gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'",
-            msg="Get the name of the default branch").run(cache=True)
-        self.set('default_branch', value)
 
-        # get the name of the remote
-        value = None
-        result = None
-        [value, result] = Gitter(
-            cmd='git remote',
-            msg="Get the name of the remote").run()
-        self.set('remote', value)
+    async def __load_details(self):
 
-        # Get the name of the current branch
-        value = None
-        result = None
-        [value, result] = Gitter(
-            cmd='git rev-parse --abbrev-ref HEAD',
-            msg="Get the name of the current branch").run()
-        self.set('branch_name', value)
+        if self._details_loaded:
+            return
 
-        # Set the issue number from the branch name
-        match = re.match(r'^(\d+).+', self.get('branch_name'))
-        if match:
-            self.set('issue_number', f"{match.group(1)}")
+        else:        
+            await Gitter.fetch()
+            
+            self.props['branch_name'] =  await self.__load_prop(
+                cmd='git rev-parse --abbrev-ref HEAD',
+                msg="Get the name of the current branch")
+            
+            match = re.match(r'^(\d+).+', self.get('branch_name'))
+            if match:
+                self.set('issue_number', f"{match.group(1)}")
+            else:
+                print(
+                    f"ERROR: The branch name '{self.get('branch_name')}' does not contain a valid issue number")
+                sys.exit(1)
+    
+            self.props['default_branch'] = await self.__load_prop(
+                cmd=f"gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'",
+                msg="Get the name of the default branch from GitHub")
 
-    def __get_branch_sha1(self):
-        # Get the SHA1 of the current branch
-        keyname = 'sha1'
-        value = self.get(keyname)
-        if value:
-            return value
+            self.props['remote'] = await self.__load_prop(
+                cmd='git remote',
+                msg="Get the name of the remote")
+            
+            self.props['sha1'] = await self.__load_prop(
+                cmd='git rev-parse HEAD',
+                msg="Get the SHA1 of the current branch")
+            
+            self.props['merge_base'] = await self.__load_prop(
+                cmd=f"git merge-base {self.get('branch_name')} {self.get('default_branch')}",
+                msg="Get the merge base of the current branch and the default branch")
+            
+            self.props['default_sha1'] = await self.__load_prop(
+                cmd=f"git rev-parse {self.get('default_branch')}",
+                msg="Get the SHA1 of the default branch")
 
-        [value, result] = Gitter(
-            cmd='git rev-parse HEAD',
-            workdir=self.get('workdir'),
+            self.props['commit_count'] = await self.__load_prop(
+                cmd=f"git rev-list --count {self.get('branch_name')} ^{self.get('default_branch')}",
+                msg="Get the number of commits in the current branch")
+            
+            self.props['commit_message'] = await self.__load_prop(
+                cmd=f"git show -s --format=%B {self.get('branch_name')}",
+                msg="Get the commit message of the current branch HEAD")
 
-            msg="Get the SHA1 of the current branch").run()
+        self._details_loaded = True
+        return
 
-        self.set(keyname, value)
-        return self.get(keyname)
 
-    def __get_merge_base(self):
-        # Get the merge base of the current branch and the default branch
-        keyname = 'merge_base'
-        value = self.get(keyname)
-        if value:
-            return value
+    async def __load_prop(self, key=str, cmd=str, msg=str):
+        """
+        Load a property and set the value on the properties
+        """
+        [value, result] = await Gitter(
+            cmd=f"{cmd}",
+            msg=f"{msg}",
+            die_on_error=True).run()
+        self.set(key, value)
+        return value
 
-        branch_name = self.get('branch_name')
-        default_branch = self.get('default_branch')
-
-        [value, result] = Gitter(
-            cmd=f"git merge-base {branch_name} {default_branch}",
-            workdir=self.get('workdir'),
-
-            msg="Get the merge base of the current branch and the default branch").run()
-
-        self.set(keyname, value)
-        return self.get(keyname)
-
-    def __get_commit_count(self):
-        # Get the number of commits in the current branch
-        keyname = 'commit_count'
-        value = self.get(keyname)
-        if value:
-            return value
-
-        branch_name = self.get('branch_name')
-        default_branch = self.get('default_branch')
-
-        [value, result] = Gitter(
-            cmd=f"git rev-list --count {self.get('branch_name')} ^{self.get('default_branch')}",
-            workdir=self.get('workdir'),
-
-            msg="Get the number of commits in the current branch").run()
-
-        self.set(keyname, value)
-        return self.get(keyname)
-
-    def __get_commit_message(self):
-        # Get the commit message of the HEAD of the current branch
-        keyname = 'commit_message'
-        value = self.get(keyname)
-        if value:
-            return value
-
-        branch_name = self.get('branch_name')
-
-        [value, result] = Gitter(
-            cmd=f"git show -s --format=%B {branch_name}",
-            workdir=self.get('workdir'),
-
-            msg="Get the commit message of the current branch HEAD").run()
-
-        self.set(keyname, value)
-        return self.get(keyname)
 
     def __validate_commit_message(self):
-        # Check if the commit message already contains the issue number , fix it if it doesn't
-        commit_message = self.__get_commit_message()
+        """
+        Check if the commit message already contains the issue number, fix it if it doesn't
+        """
+        commit_message = self.get('commit_message')
         issue_number = self.get('issue_number')
 
         if re.search(r'(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved) #'+issue_number, commit_message):
@@ -163,41 +133,86 @@ class Devbranch(Lazyload):
             self.set('new_message', commit_message +
                      f" - resolves #{issue_number}")
             return self.get('new_message')
-
-    def __squeeze(self):
-        # Squeeze the current branch into a single commit
-        keyname = 'squeeze_sha1'
-        value = None
-        branch_name = self.get('branch_name')
-        merge_base = self.__get_merge_base()
+         
+    def __build_commit_message(self):
+        """
+        Build the commit message for the new commit
+        """
+        issue_number = self.get('issue_number')
+        issue_title = self.get('issue_title')
         new_message = self.__validate_commit_message()
+        #TODO add the commit messages of the commits on the branch to the new message
+        return f"{issue_number} - {issue_title}\n\n{new_message}"
+    
+    async def __get_collapsed_commit_message(self):
+        """
+        Build the multiline commit message for the collapsed commit.
+        The first line is the issue title, followed by the commit messages
+        for each commit on the branch (excluding the merge base).
+        """
+        issue_title = self.get('issue_title')
+        branch_name = self.get('branch_name')
+        merge_base = self.get('merge_base')
 
-        [value, result] = Gitter(
-            cmd=f"git commit-tree {branch_name}^{{tree}} -p {merge_base} -m \"{new_message}\"",
-            workdir=self.get('workdir'),
+        # Get the commit messages for all commits on the branch, not including the merge base
+        [commit_messages, _] = await Gitter(
+            cmd=f"git log --format='%h: '%B {merge_base}..{branch_name}",
+            msg="Compile commit messages for collapsed commits"
+        ).run()
 
-            msg="Collapse the branch into a single commit").run()
+        # Clean up commit messages (remove trailing whitespace)
+        commit_messages = commit_messages.strip()
 
-        self.set(keyname, value)
-        return self.get(keyname)
+        close_keyword = self.get('config').get('wrapup')['policies']['close-keyword']
+
+        # Build the final message
+        multiline_message = f"{issue_title} – {close_keyword} #{self.get('issue_number')}\n\n{commit_messages}" 
+        return multiline_message
+
+    async def __squeeze(self):
+        """
+        Squeeze the current branch into a single commit
+        """
+
+        self.props['issue_title'] = await self.__load_prop(
+            cmd=f"gh issue view {self.get('issue_number')} --json title --jq '.title'",
+            msg="Get the title of the issue from GitHub")
+
+        keyname = 'squeeze_sha1'
+
+        #TODO The commit message should be set to the title of the issue in the first line, followed by the resolving keywaord and issue number - on the first line
+        #TODO Each commit meaasge on the branch should thne be applied a new line in the message
+        new_message = await self.__get_collapsed_commit_message()
+
+
+        self.props['squeeze_sha1'] = await self.__load_prop(
+            cmd=f"git commit-tree {self.get('branch_name')}^{{tree}} -p {self.get('merge_base')} -m \"{new_message}\"",
+            msg="Collapse the branch into a single commit")
+    
     
     def __workspace_is_clean(self):
         # check if status is clean
-        [output, result] = Gitter(
+        value=None
+        result=None
+        [val, result] = Gitter(
             cmd='git status --porcelain',
             die_on_error=False,
             msg="Check if the status is clean").run()
 
-        if output != '':
+        if value != '':
             print(
-                f"ERROR: The working directory is not clean:\n{output}\n\nPlease commit or stash your changes before delivering the issue")
+                f"ERROR: The working directory is not clean:\n{value}\n\nPlease commit or stash your changes before delivering the issue")
             sys.exit(1)
         return True        
 
     def __rebase(self):
-        # Rebase the branch to the remote
-        [output, result] = Gitter(
-            cmd=f"git rebase {self.get('default_branch')}",
+        """
+        Rebase the branch to the default branch
+        """
+        value=None
+        result=None
+        [value, result] = Gitter(
+            cmd=f"git rebase {self.get('remote')}/{self.get('default_branch')}",
             die_on_error=False,
             msg="Rebase the branch").run()
         if result.returncode != 0:
@@ -210,7 +225,7 @@ class Devbranch(Lazyload):
         # push the branch to the remote
         force_switch = ''   
         if force == True:
-            force_switch = '--force'
+            force_switch = '--force-with-lease'
             
         [output, result] = Gitter(
             cmd=f"git push {force_switch}",
@@ -219,6 +234,9 @@ class Devbranch(Lazyload):
         return True          
 
     def __compare_before_after_trees(self):
+        """
+        Verify that the new commit tree on the collapsed branch is identical to the old commit
+        """
 
         sha1 = self.get('sha1')
         squeeze_sha1 = self.get('squeeze_sha1')
@@ -233,31 +251,43 @@ class Devbranch(Lazyload):
         else:
             return True
 
-    def __reset_branch(self, squeeze_sha1):
-        [output, result] = Gitter(
-            cmd=f"git reset {squeeze_sha1}",
+    def __reset_branch(self, squeeze_sha1=None, prefix=None):
+        """
+        Reset the current branch to the new commit
+        If prefix is set, create a new branch with the same name as the current branch, but prefixed with prefix"""
 
+        if squeeze_sha1 == None:
+            squeeze_sha1 = self.get('squeeze_sha1')
+
+        branch_name = self.get('branch_name')
+
+        if prefix is not None:
+            branch_name = f"{prefix}{branch_name}"
+
+        value=None
+        result=None
+        [value, result] = Gitter(
+            cmd=f"git branch -f {branch_name} {squeeze_sha1}",
             workdir=self.get('workdir'),
-            msg="Set the branch to the new commit").run()
+            msg=f"Set the branch '{branch_name}' to the new commit").run()
         return squeeze_sha1
 
-    def __check_rebase(self):
+    async def __check_rebase(self):
         # Get the SHA1 of the default branch
-        [default_sha1, result] = Gitter(
-            f"git rev-parse {self.get('default_branch')}",
-            msg="Get the SHA1 of the default branch").run()
-        self.set('default_sha1', default_sha1)
+        await self.__load_details()
 
         # Check if the default branch is ahead of the merge-base
-        if default_sha1 != self.get('merge_base'):
+        if self.get('default_sha1') != self.get('merge_base'):
             # rebase the default branch
             print(f"WARNING:\nThe {self.get('default_branch')} branch has commits your branch has never seen. A rebase is required. Do it now!")
             return False
         else:
             return True
 
-    def collapse(self):
+    async def collapse(self):
         """Collapse the current branch into a single commit"""
+
+        await self.__load_details()
 
         # Check if the current branch is the default branch
         if self.get('branch_name') == self.get('default_branch'):
@@ -270,18 +300,9 @@ class Devbranch(Lazyload):
 
         # Rebase the branch to the remote
         self.__rebase() # will exit if rebase fails
-        
-        # Get the SHA1 of the current branch
-        sha1 = self.__get_branch_sha1()
-
-        # Get the merge base of the current branch and the default branch
-        merge_base = self.__get_merge_base()
 
         # Get the number of commits in the current branch
-        commit_count = self.__get_commit_count()
-
-        # get the most recent commit message
-        commit_message = self.__get_commit_message()
+        commit_count = self.get('commit_count')
 
         # Check if the commit message already contains the issue number
         issue_number = self.get('issue_number')
@@ -289,6 +310,7 @@ class Devbranch(Lazyload):
         # Check if the commit message already contains the valid issue reference
         new_message = self.__validate_commit_message()
 
+        # TODO don't do this check, just collapse!
         # Check if the collapse is even necessary
         if commit_count == '1':
             print(
@@ -320,10 +342,12 @@ class Devbranch(Lazyload):
                     f"Before and after the squeeze commit trees differ")
                 sys.exit(1)
 
+            #TODO Set then branch to a ready branch
             # move the branch to the new commit
-            self.__reset_branch(squeeze_sha1)
+            self.__reset_branch(prefix=self.get('config').get('wrapup')['policies']['branch_prefix'])
         
         # push the branch to the remote
+        # TODO be sure to push the right branch - if the ready branch is used, that's the one that should be pushed 
         self.__push(force=True)
         
 #        print(f"Branch {self.get('branch_name')} has been collapsed into a single commit (was: {self.get('sha1')[:7]} now: {self.get('squeeze_sha1')[:7]})")

@@ -27,13 +27,14 @@ class TestProject(unittest.TestCase):
         self.assertEqual(config.get('project')['number'], '')
 
         self.assertEqual(config.get('workon')['status'], 'In Progress')   
-        self.assertEqual(config.get('workon')['policies']['rebase'], 'origin/main')   
+        self.assertEqual(config.get('workon')['policies']['rebase'], True)   
         self.assertEqual(config.get('workon')['policies']['allow-dirty'], True)   
 
         self.assertEqual(config.get('wrapup')['status'], 'Delivery Initiated')   
         self.assertEqual(config.get('wrapup')['policies']['collapse'], True)
-        self.assertEqual(config.get('wrapup')['policies']['branch'], 'ready/')
-        self.assertEqual(config.get('wrapup')['policies']['rebase'], 'origin/main')
+        self.assertEqual(config.get('wrapup')['policies']['close-keyword'], 'resolves')
+        self.assertEqual(config.get('wrapup')['policies']['branch_prefix'], 'ready/')
+        self.assertEqual(config.get('wrapup')['policies']['rebase'], True)
 
         self.assertEqual(config.get('deliver')['policies']['model'], 'branch')
         self.assertEqual(config.get('deliver')['policies']['codeowner'], True)
