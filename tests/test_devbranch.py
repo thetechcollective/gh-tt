@@ -394,6 +394,7 @@ Your branch is up to date with 'origin/17-Add_a_deliver_subcommand'.
 
     @pytest.mark.dev
     def test__squeeze_success_no_mock(self):
+        Gitter.verbose = True
         devbranch = Devbranch()
         value =  asyncio.run(devbranch._Devbranch__squeeze()) # 1st time run the command - this functions doesn't have a cache
         self.assertEqual(True, True)

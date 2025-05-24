@@ -120,6 +120,7 @@ class Devbranch(Lazyload):
 
 
     def __validate_commit_message(self):
+        #TODO: Get rid of this
         """
         Check if the commit message already contains the issue number, fix it if it doesn't
         """
@@ -133,16 +134,7 @@ class Devbranch(Lazyload):
             self.set('new_message', commit_message +
                      f" - resolves #{issue_number}")
             return self.get('new_message')
-         
-    def __build_commit_message(self):
-        """
-        Build the commit message for the new commit
-        """
-        issue_number = self.get('issue_number')
-        issue_title = self.get('issue_title')
-        new_message = self.__validate_commit_message()
-        #TODO add the commit messages of the commits on the branch to the new message
-        return f"{issue_number} - {issue_title}\n\n{new_message}"
+
     
     async def __get_collapsed_commit_message(self):
         """
@@ -166,7 +158,10 @@ class Devbranch(Lazyload):
         close_keyword = self.get('config').get('wrapup')['policies']['close-keyword']
 
         # Build the final message
-        multiline_message = f"{issue_title} – {close_keyword} #{self.get('issue_number')}\n\n{commit_messages}" 
+
+        safe_title = issue_title.replace('"', '\\"').replace('`', '\\`')
+        safe_commit_messages = commit_messages.replace('"', '\\"').replace('`', '\\`')
+        multiline_message = f"{safe_title} – {close_keyword} #{self.get('issue_number')}\n\n{safe_commit_messages}"
         return multiline_message
 
     async def __squeeze(self):
@@ -178,16 +173,15 @@ class Devbranch(Lazyload):
             cmd=f"gh issue view {self.get('issue_number')} --json title --jq '.title'",
             msg="Get the title of the issue from GitHub")
 
-        keyname = 'squeeze_sha1'
-
-        #TODO The commit message should be set to the title of the issue in the first line, followed by the resolving keywaord and issue number - on the first line
-        #TODO Each commit meaasge on the branch should thne be applied a new line in the message
         new_message = await self.__get_collapsed_commit_message()
 
 
         self.props['squeeze_sha1'] = await self.__load_prop(
             cmd=f"git commit-tree {self.get('branch_name')}^{{tree}} -p {self.get('merge_base')} -m \"{new_message}\"",
             msg="Collapse the branch into a single commit")
+        
+        await self.__compare_before_after_trees()
+
     
     
     def __workspace_is_clean(self):
@@ -233,20 +227,20 @@ class Devbranch(Lazyload):
         
         return True          
 
-    def __compare_before_after_trees(self):
+    async def __compare_before_after_trees(self):
         """
         Verify that the new commit tree on the collapsed branch is identical to the old commit
         """
 
         sha1 = self.get('sha1')
         squeeze_sha1 = self.get('squeeze_sha1')
-        [output, result] = Gitter(
-            cmd=f"git diff-tree --no-commit-id --name-only -r {sha1} {squeeze_sha1}",
-
-            msg="Verify that the new commit tree is identical to the old commit").run()
+        [output, result] =  await Gitter(
+               cmd=f"git diff-tree --no-commit-id --name-only -r {sha1} {squeeze_sha1}",
+               msg="Verify that the new squeezed commit tree is identical to the one on the issue branch").run()
+    
         if output != '':
             print(
-                f"WARNING:\nNew commit tree ({sha1}) is not identical to the old commit tree ({squeeze_sha1})\n Diff:\n{output}")
+                f"WARNING:\nThe squeezed commit tree ({squeeze_sha1}) is not identical to the one on the issue branch ({sha1})\n Diff:\n{output}")
             return False
         else:
             return True
