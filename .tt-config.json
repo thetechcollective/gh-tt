@@ -15,8 +15,8 @@
   },
   "squeeze": {
     "policies":{
-        // "rebase:true" will rebase before the squeeze
-        "rebase": true,
+        // "abort_for_rebase:true" will abort the squeeze if the default_branch has commits that are not in the branch
+        "abort_for_rebase": true,
         // "allow-dirty:true" will run the squeeze, even with a dirty working directory. Will warn unless "quiet:true" 
         "allow-dirty": true,
         // "allow-staged:true" will run the squeeze, even with staged, uncommited changes. Will warn unless "quiet:true" 
