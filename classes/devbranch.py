@@ -63,7 +63,8 @@ class Devbranch(Lazyload):
         else:        
             await Gitter.fetch()
             
-            self.props['branch_name'] =  await self.__load_prop(
+            await self.load_prop(
+                prop='branch_name',
                 cmd='git rev-parse --abbrev-ref HEAD',
                 msg="Get the name of the current branch")
             
@@ -75,15 +76,18 @@ class Devbranch(Lazyload):
                     f"ERROR: The branch name '{self.get('branch_name')}' does not contain a valid issue number")
                 sys.exit(1)
     
-            self.props['default_branch'] = await self.__load_prop(
+            await self.load_prop(
+                prop='default_branch',
                 cmd=f"gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'",
                 msg="Get the name of the default branch from GitHub")
 
-            self.props['remote'] = await self.__load_prop(
+            await self.load_prop(
+                prop='remote',
                 cmd='git remote',
                 msg="Get the name of the remote")
         
-            self.props['sha1'] = await self.__load_prop(
+            await self.load_prop(
+                prop='sha1',
                 cmd='git rev-parse HEAD',
                 msg="Get the SHA1 of the current branch")
             
@@ -103,40 +107,32 @@ class Devbranch(Lazyload):
                 elif line.startswith('M ') or line.startswith('MM') or line.startswith('A '):
                     staged.append(line)
 
-            self.props['unstaged_changes'] = unstaged
-            self.props['staged_changes'] = staged
-            self.props['is_dirty'] = len(unstaged) > 0 or len(staged) > 0    
+            self.set('unstaged_changes', unstaged)
+            self.set('staged_changes', staged)
+            self.set('is_dirty',  len(unstaged) > 0 or len(staged) > 0 )
             
-            self.props['merge_base'] = await self.__load_prop(
+            await self.load_prop(
+                prop='merge_base',
                 cmd=f"git merge-base {self.get('branch_name')} {self.get('default_branch')}",
                 msg="Get the merge base of the current branch and the default branch")
             
-            self.props['default_sha1'] = await self.__load_prop(
+            await self.load_prop(
+                prop='default_sha1',
                 cmd=f"git rev-parse {self.get('default_branch')}",
                 msg="Get the SHA1 of the default branch")
 
-            self.props['commit_count'] = await self.__load_prop(
+            await self.load_prop(
+                prop='commit_count',
                 cmd=f"git rev-list --count {self.get('branch_name')} ^{self.get('default_branch')}",
                 msg="Get the number of commits in the current branch")
             
-            self.props['commit_message'] = await self.__load_prop(
+            await self.load_prop(
+                prop='commit_message',
                 cmd=f"git show -s --format=%B {self.get('branch_name')}",
                 msg="Get the commit message of the current branch HEAD")
 
         self._details_loaded = True
         return
-
-
-    async def __load_prop(self, key=str, cmd=str, msg=str):
-        """
-        Load a property and set the value on the properties
-        """
-        [value, result] = await Gitter(
-            cmd=f"{cmd}",
-            msg=f"{msg}",
-            die_on_error=True).run()
-        self.set(key, value)
-        return value
 
 
     def __validate_commit_message(self):
@@ -232,14 +228,16 @@ class Devbranch(Lazyload):
                 f"ERROR: There are staged changes:\n{self.get('staged_changes')}\n\nPlease commit or stash your changes before collapsing the branch")
             sys.exit(1)
 
-        self.props['issue_title'] = await self.__load_prop(
+        await self.load_prop(
+            prop='issue_title',
             cmd=f"gh issue view {self.get('issue_number')} --json title --jq '.title'",
             msg="Get the title of the issue from GitHub")
 
         new_message = await self.__get_collapsed_commit_message()
 
 
-        self.props['squeeze_sha1'] = await self.__load_prop(
+        await self.load_prop(
+            prop='squeeze_sha1',
             cmd=f"git commit-tree {self.get('branch_name')}^{{tree}} -p {self.get('merge_base')} -m \"{new_message}\"",
             msg="Collapse the branch into a single commit")
         

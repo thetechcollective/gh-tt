@@ -1,3 +1,9 @@
+import os
+import sys
+
+class_path = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(class_path)
+
 class Lazyload:
     """Base class for lazy loading properties"""
     
@@ -25,4 +31,17 @@ class Lazyload:
         """    
         assert key in self.props, f"Property {key} not found on class"
         return self.props[key]
+    
+    async def load_prop(self, prop: str, cmd: str, msg: str):
+        """
+        Load a property and set the value on the properties
+        """
+        from gitter import Gitter
+
+        [value, result] = await Gitter(
+            cmd=f"{cmd}",
+            msg=f"{msg}",
+            die_on_error=True).run()
+        self.set(prop, value)
+        return value
     
