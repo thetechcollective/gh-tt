@@ -82,16 +82,17 @@ class Devbranch(Lazyload):
             self.props['remote'] = await self.__load_prop(
                 cmd='git remote',
                 msg="Get the name of the remote")
+        
+            self.props['sha1'] = await self.__load_prop(
+                cmd='git rev-parse HEAD',
+                msg="Get the SHA1 of the current branch")
             
-            self.props['untracked_files'] = await self.__load_prop(
-                cmd='git ls-files --others --exclude-standard',
-                msg="Get the list of untracked files")
             
             # Get the status output from git
-            status_output = await self.__load_prop(
+            [status_output, _] = await Gitter(
                 cmd='git status --porcelain',
-                msg="Get the status of the working directory"
-            )
+                msg="Get the status of the working directory",
+                die_on_error=True).run()
 
             # Parse the status lines
             unstaged = []
@@ -99,14 +100,12 @@ class Devbranch(Lazyload):
             for line in status_output.splitlines():
                 if line.startswith('??') or line.startswith(' M'):
                     unstaged.append(line)
-                elif line.startswith('M '):
+                elif line.startswith('M ') or line.startswith('MM') or line.startswith('A '):
                     staged.append(line)
 
             self.props['unstaged_changes'] = unstaged
             self.props['staged_changes'] = staged
-            self.props['is_dirty'] = len(unstaged) > 0 or len(staged) > 0
-
-            
+            self.props['is_dirty'] = len(unstaged) > 0 or len(staged) > 0    
             
             self.props['merge_base'] = await self.__load_prop(
                 cmd=f"git merge-base {self.get('branch_name')} {self.get('default_branch')}",
@@ -193,7 +192,7 @@ class Devbranch(Lazyload):
 
         # Adhere to the policies
 
-        # rebase if we must
+        # abort for rebase if we must
         if self.get('config').get('squeeze')['policies']['abort_for_rebase']:
             if self.get('default_sha1') != self.get('merge_base'):
                 print(
@@ -204,21 +203,29 @@ class Devbranch(Lazyload):
         if self.get('is_dirty'):
             # check if dirty is allowed
             if self.get('config').get('squeeze')['policies']['allow-dirty'] == False:
-                print(
-                    f"ERROR: The working directory is not clean:\n{self.get('unstaged_changes')}\n{self.get('staged_changes')}\n\nPlease commit or stash your changes before collapsing the branch", file=sys.stderr)
+                print("ERROR: The working directory is not clean:", file=sys.stderr)
+                print('\n'.join(self.get('unstaged_changes')), file=sys.stderr)
+                print('\n'.join(self.get('staged_changes')), file=sys.stderr)
+                print("Commit or stash the changes.", file=sys.stderr)
+                
                 sys.exit(1)
             #check if staged changes are allowed
             else:
                 if self.get('config').get('squeeze')['policies']['allow-staged'] == False and len(self.get('staged_changes')) > 0:
-                    print(
-                        f"ERROR: There are staged changes:\n{self.get('staged_changes')}\n\nPlease commit your changes before the squeeze", file=sys.stderr)
+                    print("ERROR: There are staged changes:", file=sys.stderr)
+                    print('\n'.join(self.get('unstaged_changes')), file=sys.stderr)
+                    print('\n'.join(self.get('staged_changes')), file=sys.stderr)
+                    print("Commit or stash the changes.", file=sys.stderr)                    
                     sys.exit(1)
 
                 # check if we should warn about dirty working directory    
+                # check if we should warn about dirty working directory
                 if not self.get('config').get('squeeze')['policies']['quiet'] == True:
-                    print(
-                        f"WARNING: The working directory is not clean:\n{self.get('unstaged_changes')}\n{self.get('staged_changes')}\n\nThe branch will be squeezed, but the changes will not be included in the commit.", file=sys.stderr)
- 
+                    print("WARNING: The working directory is not clean:", file=sys.stderr)
+                    print('\n'.join(self.get('unstaged_changes')), file=sys.stderr)
+                    print('\n'.join(self.get('staged_changes')), file=sys.stderr)
+                    print("The branch will be squeezed, but the changes in the files listed above will not be included in the commit.", file=sys.stderr)
+
         # check if there are staged changes and if that is allowed
         if self.get('config').get('squeeze')['policies']['allow-staged'] == False and len(self.get('staged_changes')) > 0:
             print(

@@ -69,13 +69,13 @@ class Gitter(Lazyload):
             self.get('cmd'), capture_output=True, text=True, shell=True, cwd=self.get('workdir'))
 
         if self.get('verbose'):
-            print(f"{result.stdout.strip()}{result.stderr.strip()}")
+            print(f"{result.stdout.rstrip()}{result.stderr.rstrip()}")
 
         if self.get('die_on_error') and not result.returncode == 0:
             raise RuntimeError(f"{result.stderr}")
             sys.exit(1)
 
-        output = result.stdout.strip()
+        output = result.stdout.rstrip()
         if cache:
             self.set_cache(self.get('workdir'), self.get('cmd'), output)
         return output, result
