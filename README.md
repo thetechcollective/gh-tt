@@ -99,3 +99,7 @@ The Issues are open on the repo: [`thetechcollective.gh-tt`](https://github.com/
 
 ## Note
 It's written in Python and runs in a `pipenv` so it doesn't leave any footprint or alterization to your own, current Python setup. All requirements besides `python3` are managed independenly by the script itself.
+
+>[!NOTE]
+>This readme needs a good update
+>A lot has changed 

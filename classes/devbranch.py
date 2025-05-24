@@ -83,9 +83,30 @@ class Devbranch(Lazyload):
                 cmd='git remote',
                 msg="Get the name of the remote")
             
-            self.props['sha1'] = await self.__load_prop(
-                cmd='git rev-parse HEAD',
-                msg="Get the SHA1 of the current branch")
+            self.props['untracked_files'] = await self.__load_prop(
+                cmd='git ls-files --others --exclude-standard',
+                msg="Get the list of untracked files")
+            
+            # Get the status output from git
+            status_output = await self.__load_prop(
+                cmd='git status --porcelain',
+                msg="Get the status of the working directory"
+            )
+
+            # Parse the status lines
+            unstaged = []
+            staged = []
+            for line in status_output.splitlines():
+                if line.startswith('??') or line.startswith(' M'):
+                    unstaged.append(line)
+                elif line.startswith('M '):
+                    staged.append(line)
+
+            self.props['unstaged_changes'] = unstaged
+            self.props['staged_changes'] = staged
+            self.props['is_dirty'] = len(unstaged) > 0 or len(staged) > 0
+
+            
             
             self.props['merge_base'] = await self.__load_prop(
                 cmd=f"git merge-base {self.get('branch_name')} {self.get('default_branch')}",
