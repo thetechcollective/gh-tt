@@ -22,7 +22,7 @@
   sweep = "!f() { git fetch --prune && for branch in $(git branch -vv | grep ': gone]' | awk \"{print \\$1}\"); do git branch -D \"$branch\"; done; }; f"
   sweep-verbose = "!f() { git fetch --prune && branches=$(git branch -vv | grep ': gone]' | awk '{print $1}'); if [ -z \"$branches\" ]; then echo \"No remote-tracking branches to prune.\"; else echo \"Pruning branches: $branches\"; echo \"$branches\" | xargs git branch -d; fi; }; f"
   note-this = "!f() { git addremove && git recommit && git push && gh note \"$(git get-message) ($(git sha1))\"; }; f"
-  note-this2 = "!f() { git add -A && git commit -m \"$1 #$(issue-number)\" && git push; }; f"
+  note-this3 = "!f() { git add -A && git commit -m \"$1 #$(git issue-number)\" && git push; }; f"
   prerelease = "!f() { git push --tag && gh release create `gh semver` --latest --verify-tag --prerelease --generate-notes; }; f"
   my-pr = "!f() { gh pr list --head $(git rev-parse --abbrev-ref HEAD) --json number | jq -r '.[].number'; }; f"
   issue-number = "!f() { git rev-parse --abbrev-ref HEAD | grep -oE '^[0-9]+'; }; f"
