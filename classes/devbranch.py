@@ -1,3 +1,4 @@
+from config import Config
 from lazyload import Lazyload
 from issue import Issue
 from project import Project
@@ -14,8 +15,6 @@ from datetime import datetime
 class_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(class_path)
 
-from config import Config
-
 
 class Devbranch(Lazyload):
     """Class used to represent the Devbranch for a development contribution"""
@@ -24,35 +23,48 @@ class Devbranch(Lazyload):
     def __init__(self, workdir=None, verbose=False):
         super().__init__()
 
-        self.set('workdir', os.getcwd())
-        self.set('verbose', verbose)
-        self.set('config',Config())
-        # __load_details:
-        self.set('default_branch', None)
-        self.set('remote', None)
-        self.set('branch_name', None)
-        self.set('issue_number', None)
-        self.set('sha1', None)
-        self.set('merge_base', None)
-        self.set('default_sha1', None)
-        self.set('commit_count', None)
-        self.set('commit_message', None)
+        # valid properties
+        self.props = {
+            'config': None,
+            'default_branch': None,
+            'remote': None,
+            'branch_name': None,
+            'issue_number': None,
+            'sha1': None,
+            'merge_base': None,
+            'default_sha1': None,
+            'commit_count': None,
+            'commit_message': None,
+            'new_message': None,
+            'squeeze_sha1': None,
+            'issue_title': None,
+            'unstaged_changes': None,
+            'staged_changes': None,
+            'is_dirty': False,
+        }
 
-        # squeze
-        self.set('new_message', None)
-        self.set('squeeze_sha1', None)
-        self.set('issue_title', None)
+        self.set('config', Config())
 
-        self._details_loaded = False
+        self.set('issue_number', self.__validate_issue_branch() )
 
-        if workdir:
-            # check if the directory exists
-            if not os.path.exists(workdir):
-                raise FileNotFoundError(f"Directory {workdir} does not exist")
-                sys.exit(1)
-            self.set('workdir', os.path.abspath(workdir))
 
-        asyncio.run(self.__load_details())
+    def __validate_issue_branch(self):
+        # Depends on 'init' group being loaded
+        """Validate the current branch name to be a valid development branch
+        Returns:
+            str: The issue number extracted from the branch name
+        Raises:
+            AssertionError: If the branch name does not start with a valid issue number
+        Additional:
+            Loads 'init' group from the manifest
+        """
+
+    #    asyncio.run(super()._load_manifest(group='init'))
+        self._assert_props(['branch_name'])
+        match = re.match(r'^(\d+).+', self.get('branch_name'))
+        assert match, f"Branch name '{self.get('branch_name')}' does not constitute a valid development branch - Must be prefixed with a valid issue number"
+        return f"{match.group(1)}"
+        
 
 
     async def __load_details(self):
@@ -60,38 +72,9 @@ class Devbranch(Lazyload):
         if self._details_loaded:
             return
 
-        else:        
-            await Gitter.fetch()
-            
-            await self.load_prop(
-                prop='branch_name',
-                cmd='git rev-parse --abbrev-ref HEAD',
-                msg="Get the name of the current branch")
-            
-            match = re.match(r'^(\d+).+', self.get('branch_name'))
-            if match:
-                self.set('issue_number', f"{match.group(1)}")
-            else:
-                print(
-                    f"ERROR: The branch name '{self.get('branch_name')}' does not contain a valid issue number")
-                sys.exit(1)
-    
-            await self.load_prop(
-                prop='default_branch',
-                cmd=f"gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'",
-                msg="Get the name of the default branch from GitHub")
+        else:
 
-            await self.load_prop(
-                prop='remote',
-                cmd='git remote',
-                msg="Get the name of the remote")
-        
-            await self.load_prop(
-                prop='sha1',
-                cmd='git rev-parse HEAD',
-                msg="Get the SHA1 of the current branch")
-            
-            
+
             # Get the status output from git
             [status_output, _] = await Gitter(
                 cmd='git status --porcelain',
@@ -109,13 +92,13 @@ class Devbranch(Lazyload):
 
             self.set('unstaged_changes', unstaged)
             self.set('staged_changes', staged)
-            self.set('is_dirty',  len(unstaged) > 0 or len(staged) > 0 )
-            
+            self.set('is_dirty',  len(unstaged) > 0 or len(staged) > 0)
+
             await self.load_prop(
                 prop='merge_base',
                 cmd=f"git merge-base {self.get('branch_name')} {self.get('default_branch')}",
                 msg="Get the merge base of the current branch and the default branch")
-            
+
             await self.load_prop(
                 prop='default_sha1',
                 cmd=f"git rev-parse {self.get('default_branch')}",
@@ -125,7 +108,7 @@ class Devbranch(Lazyload):
                 prop='commit_count',
                 cmd=f"git rev-list --count {self.get('branch_name')} ^{self.get('default_branch')}",
                 msg="Get the number of commits in the current branch")
-            
+
             await self.load_prop(
                 prop='commit_message',
                 cmd=f"git show -s --format=%B {self.get('branch_name')}",
@@ -134,9 +117,8 @@ class Devbranch(Lazyload):
         self._details_loaded = True
         return
 
-
     def __validate_commit_message(self):
-        #TODO: Get rid of this
+        # TODO: Get rid of this
         """
         Check if the commit message already contains the issue number, fix it if it doesn't
         """
@@ -151,7 +133,6 @@ class Devbranch(Lazyload):
                      f" - resolves #{issue_number}")
             return self.get('new_message')
 
-    
     async def __get_collapsed_commit_message(self):
         """
         Build the multiline commit message for the collapsed commit.
@@ -171,12 +152,14 @@ class Devbranch(Lazyload):
         # Clean up commit messages (remove trailing whitespace)
         commit_messages = commit_messages.strip()
 
-        close_keyword = self.get('config').get('wrapup')['policies']['close-keyword']
+        close_keyword = self.get('config').get(
+            'wrapup')['policies']['close-keyword']
 
         # Build the final message
 
         safe_title = issue_title.replace('"', '\\"').replace('`', '\\`')
-        safe_commit_messages = commit_messages.replace('"', '\\"').replace('`', '\\`')
+        safe_commit_messages = commit_messages.replace(
+            '"', '\\"').replace('`', '\\`')
         multiline_message = f"{safe_title} – {close_keyword} #{self.get('issue_number')}\n\n{safe_commit_messages}"
         return multiline_message
 
@@ -203,24 +186,26 @@ class Devbranch(Lazyload):
                 print('\n'.join(self.get('unstaged_changes')), file=sys.stderr)
                 print('\n'.join(self.get('staged_changes')), file=sys.stderr)
                 print("Commit or stash the changes.", file=sys.stderr)
-                
+
                 sys.exit(1)
-            #check if staged changes are allowed
+            # check if staged changes are allowed
             else:
                 if self.get('config').get('squeeze')['policies']['allow-staged'] == False and len(self.get('staged_changes')) > 0:
                     print("ERROR: There are staged changes:", file=sys.stderr)
                     print('\n'.join(self.get('unstaged_changes')), file=sys.stderr)
                     print('\n'.join(self.get('staged_changes')), file=sys.stderr)
-                    print("Commit or stash the changes.", file=sys.stderr)                    
+                    print("Commit or stash the changes.", file=sys.stderr)
                     sys.exit(1)
 
-                # check if we should warn about dirty working directory    
+                # check if we should warn about dirty working directory
                 # check if we should warn about dirty working directory
                 if not self.get('config').get('squeeze')['policies']['quiet'] == True:
-                    print("WARNING: The working directory is not clean:", file=sys.stderr)
+                    print("WARNING: The working directory is not clean:",
+                          file=sys.stderr)
                     print('\n'.join(self.get('unstaged_changes')), file=sys.stderr)
                     print('\n'.join(self.get('staged_changes')), file=sys.stderr)
-                    print("The branch will be squeezed, but the changes in the files listed above will not be included in the commit.", file=sys.stderr)
+                    print(
+                        "The branch will be squeezed, but the changes in the files listed above will not be included in the commit.", file=sys.stderr)
 
         # check if there are staged changes and if that is allowed
         if self.get('config').get('squeeze')['policies']['allow-staged'] == False and len(self.get('staged_changes')) > 0:
@@ -235,21 +220,19 @@ class Devbranch(Lazyload):
 
         new_message = await self.__get_collapsed_commit_message()
 
-
         await self.load_prop(
             prop='squeeze_sha1',
             cmd=f"git commit-tree {self.get('branch_name')}^{{tree}} -p {self.get('merge_base')} -m \"{new_message}\"",
             msg="Collapse the branch into a single commit")
-        
+
         await self.__compare_before_after_trees()
 
         return self.get('squeeze_sha1')
-    
-    
+
     def __workspace_is_clean(self):
         # check if status is clean
-        value=None
-        result=None
+        value = None
+        result = None
         [val, result] = Gitter(
             cmd='git status --porcelain',
             die_on_error=False,
@@ -259,7 +242,7 @@ class Devbranch(Lazyload):
             print(
                 f"ERROR: The working directory is not clean:\n{value}\n\nPlease commit or stash your changes before delivering the issue")
             sys.exit(1)
-        return True        
+        return True
 
     async def __rebase(self, autostash=True):
         """
@@ -276,7 +259,7 @@ class Devbranch(Lazyload):
             die_on_error=False,
             msg="Rebase the branch").run()
         if result.returncode != 0:
-            ## abort the rebase
+            # abort the rebase
             [_, _] = Gitter(
                 cmd="git rebase --abort",
                 msg="Abort the rebase").run()
@@ -287,15 +270,15 @@ class Devbranch(Lazyload):
 
     async def __push(self, force=False):
         # push the branch to the remote
-        force_switch = ''   
+        force_switch = ''
         if force == True:
             force_switch = '--force-with-lease'
-            
+
         [output, result] = Gitter(
             cmd=f"git push {force_switch}",
-            msg="Push the branch to the remote").run()    
-        
-        return True          
+            msg="Push the branch to the remote").run()
+
+        return True
 
     async def __compare_before_after_trees(self):
         """
@@ -304,10 +287,10 @@ class Devbranch(Lazyload):
 
         sha1 = self.get('sha1')
         squeeze_sha1 = self.get('squeeze_sha1')
-        [output, result] =  await Gitter(
-               cmd=f"git diff-tree --no-commit-id --name-only -r {sha1} {squeeze_sha1}",
-               msg="Verify that the new squeezed commit tree is identical to the one on the issue branch").run()
-    
+        [output, result] = await Gitter(
+            cmd=f"git diff-tree --no-commit-id --name-only -r {sha1} {squeeze_sha1}",
+            msg="Verify that the new squeezed commit tree is identical to the one on the issue branch").run()
+
         if output != '':
             print(
                 f"WARNING:\nThe squeezed commit tree ({squeeze_sha1}) is not identical to the one on the issue branch ({sha1})\n Diff:\n{output}")
@@ -328,11 +311,10 @@ class Devbranch(Lazyload):
         if prefix is not None:
             branch_name = f"{prefix}{branch_name}"
 
-        value=None
-        result=None
+        value = None
+        result = None
         [value, result] = Gitter(
             cmd=f"git branch -f {branch_name} {squeeze_sha1}",
-            workdir=self.get('workdir'),
             msg=f"Set the branch '{branch_name}' to the new commit").run()
         return squeeze_sha1
 
@@ -343,7 +325,8 @@ class Devbranch(Lazyload):
         # Check if the default branch is ahead of the merge-base
         if self.get('default_sha1') != self.get('merge_base'):
             # rebase the default branch
-            print(f"WARNING:\nThe {self.get('default_branch')} branch has commits your branch has never seen. A rebase is required. Do it now!")
+            print(
+                f"WARNING:\nThe {self.get('default_branch')} branch has commits your branch has never seen. A rebase is required. Do it now!")
             return False
         else:
             return True
@@ -360,10 +343,10 @@ class Devbranch(Lazyload):
             sys.exit(1)
 
         # check if status is clean
-        self.__workspace_is_clean() # will exit if not clean
+        self.__workspace_is_clean()  # will exit if not clean
 
         # Rebase the branch to the remote
-        self.__rebase() # will exit if rebase fails
+        self.__rebase()  # will exit if rebase fails
 
         # Get the number of commits in the current branch
         commit_count = self.get('commit_count')
@@ -406,17 +389,16 @@ class Devbranch(Lazyload):
                     f"Before and after the squeeze commit trees differ")
                 sys.exit(1)
 
-            #TODO Set then branch to a ready branch
+            # TODO Set then branch to a ready branch
             # move the branch to the new commit
-            self.__reset_branch(prefix=self.get('config').get('wrapup')['policies']['branch_prefix'])
-        
+            self.__reset_branch(prefix=self.get('config').get(
+                'wrapup')['policies']['branch_prefix'])
+
         # push the branch to the remote
-        # TODO be sure to push the right branch - if the ready branch is used, that's the one that should be pushed 
+        # TODO be sure to push the right branch - if the ready branch is used, that's the one that should be pushed
         self.__push(force=True)
-        
+
 #        print(f"Branch {self.get('branch_name')} has been collapsed into a single commit (was: {self.get('sha1')[:7]} now: {self.get('squeeze_sha1')[:7]})")
-
-
 
 
     def __develop(self, issue_number=int, branch_name=str):

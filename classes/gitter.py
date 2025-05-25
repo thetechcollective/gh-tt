@@ -4,6 +4,7 @@ import sys
 import subprocess
 from pprint import pprint
 import json
+import asyncio
 
 # Add directory of this class to the general class_path
 # to allow import of sibling classes
@@ -20,6 +21,7 @@ class Gitter(Lazyload):
     die_on_error = True
     workdir = os.getcwd()
     use_cache = False
+    fetched = False  # Flag to indicate if the repository has been fetched
     class_cache = {}  # Dictionary to store class cache data
     result = subprocess.run("git rev-parse --show-toplevel",
                             capture_output=True, text=True, shell=True)
@@ -125,16 +127,17 @@ class Gitter(Lazyload):
         cls.verbose = verbose
 
     @classmethod
-    def validate_gh_version(cls, verbose=False):
+    def validate_gh_version(cls):
         """Check if the user has sufficient access to the github cli
 
         Returns:
             [result (bool), status (str)] : True/'' if the validation is OK, False/Error message if the validation fails
         """
-        gitter = Gitter(
-            cmd="gh --version",
-            msg="Check if the user has access to right version of gh CLI")
-        [stdout, result] = gitter.run()
+        [stdout, _] = asyncio.run(
+            Gitter(
+                cmd="gh --version",
+                msg="Check if the user has access to right version of gh CLI").run()
+        )
 
         # Validate that the version is => 2.55.0
         # The command returns something like this:
@@ -173,8 +176,11 @@ class Gitter(Lazyload):
         return True
 
     @classmethod
-    async def fetch(cls, prune=False):
+    async def fetch(cls, prune=False, again=False):
         """Fetch """
+
+        if cls.fetched and not again:
+            return True
 
         msg = "Fetch all branches and tags from all remotes"
 
@@ -182,9 +188,10 @@ class Gitter(Lazyload):
         if prune:
             msg += " and prune local branches and tags)"
 
-
-        [stdout, result] = await Gitter(
+        [_, _] = await Gitter(
             cmd=f"git fetch --tags --all {prune_switch}",
             msg=f"{msg}").run()
+
+        cls.fetched = True
 
         return True
