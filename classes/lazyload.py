@@ -74,7 +74,7 @@ class Lazyload:
         self.set(prop, value)
         return value
 
-    def _assert_props(self, props: list[str] ):
+    async def _assert_props(self, props: list[str] ):
         """
         Assert that all properties in the list are loaded, and if no then initiate the load
         Args:
@@ -87,7 +87,7 @@ class Lazyload:
         for prop in props:
             if prop not in self.props or self.props[prop] is None:
                 dep_group = self._get_manifest_group(self._caller(), prop)    
-                asyncio.run(self._load_manifest(dep_group))
+                await self._load_manifest(dep_group)
 
     def _caller(self):
         """Get the class name in lowercase to match the manifest"""
@@ -161,17 +161,15 @@ class Lazyload:
 
     def _get_manifest_group(self, caller: str, prop: str):
         """Get the group of a property from the manifest file
+        If the the property is not found in the manifest file, return 'init' as the default group.
         Args:
             caller (str): The class name in lowercase
             prop (str): The property to get the group for
         Returns:
             str: The group of the property
-        Raises:
-            AssertionError: If the property is not found in the manifest file
         """
         try:
             return self._manifest[caller][prop].get('group', 'init')
         except KeyError:
-            assert self._manifest[caller][
-                prop], f"ERROR: Property '{prop}' not found in manifest '{self._manifest_file}' for class '{caller}'"
-            return None
+            return 'init'  # Default group if not found
+

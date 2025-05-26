@@ -13,6 +13,8 @@ sys.path.append(class_path)
 
 from devbranch import Devbranch
 from gitter import Gitter
+from config import Config
+
 
 class TestDevbranch(unittest.TestCase):
 
@@ -395,6 +397,7 @@ Your branch is up to date with 'origin/17-Add_a_deliver_subcommand'.
     @pytest.mark.dev
     def test__squeeze_success_no_mock(self):
         Gitter.verbose = True
+        Config.add_config('tests/data/.tt-config-squeeze.json')
         devbranch = Devbranch()
         value =  asyncio.run(devbranch._Devbranch__squeeze()) # 1st time run the command - this functions doesn't have a cache
         self.assertEqual(True, True)

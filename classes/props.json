@@ -46,6 +46,12 @@
       "msg": "Get the SHA1 of the default branch",
       "group": "remote"
     },
+    "issue_title": {
+      "cmd": "gh issue view {issue_number} --json title --jq '.title'",
+      "msg": "Get the title of the issue from GitHub",
+      "group": "remote"
+
+    },
     "commit_count": {
       "cmd": "git rev-list --count {branch_name} ^{remote}/{default_branch}",
       "msg": "Get the number of commits in the current branch",

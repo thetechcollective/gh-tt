@@ -25,7 +25,6 @@ class Devbranch(Lazyload):
 
         # valid properties
         self.props = {
-            'config': None,
             'default_branch': None,
             'remote': None,
             'branch_name': None,
@@ -43,10 +42,7 @@ class Devbranch(Lazyload):
             'is_dirty': False,
         }
 
-        self.set('config', Config())
-
-        self.set('issue_number', self.__validate_issue_branch() )
-
+        self.set('issue_number', self.__validate_issue_branch())
 
     def __validate_issue_branch(self):
         # Depends on 'init' group being loaded
@@ -60,12 +56,10 @@ class Devbranch(Lazyload):
         """
 
     #    asyncio.run(super()._load_manifest(group='init'))
-        self._assert_props(['branch_name'])
+        asyncio.run(self._assert_props(['branch_name']))
         match = re.match(r'^(\d+).+', self.get('branch_name'))
         assert match, f"Branch name '{self.get('branch_name')}' does not constitute a valid development branch - Must be prefixed with a valid issue number"
         return f"{match.group(1)}"
-        
-
 
     async def __load_details(self):
 
@@ -73,7 +67,6 @@ class Devbranch(Lazyload):
             return
 
         else:
-
 
             # Get the status output from git
             [status_output, _] = await Gitter(
@@ -139,6 +132,8 @@ class Devbranch(Lazyload):
         The first line is the issue title, followed by the commit messages
         for each commit on the branch (excluding the merge base).
         """
+        await self._assert_props(['issue_title', 'branch_name', 'merge_base'])
+
         issue_title = self.get('issue_title')
         branch_name = self.get('branch_name')
         merge_base = self.get('merge_base')
@@ -152,8 +147,7 @@ class Devbranch(Lazyload):
         # Clean up commit messages (remove trailing whitespace)
         commit_messages = commit_messages.strip()
 
-        close_keyword = self.get('config').get(
-            'wrapup')['policies']['close-keyword']
+        close_keyword = Config.config()['wrapup']['policies']['close-keyword']
 
         # Build the final message
 
@@ -167,21 +161,25 @@ class Devbranch(Lazyload):
         """
         Squeeze the current branch into a single commit
         """
-        await self.__load_details()
 
-        # Adhere to the policies
-
-        # abort for rebase if we must
-        if self.get('config').get('squeeze')['policies']['abort_for_rebase']:
+        # Abort for rebase if we must
+        await self._assert_props([
+            'merge_base',
+            'default_sha1',
+            'default_branch'
+        ])
+        if Config.config()['squeeze']['policies']['abort_for_rebase']:
             if self.get('default_sha1') != self.get('merge_base'):
                 print(
                     f"ERROR: The {self.get('default_branch')} branch has commits your branch has never seen. A rebase is required. Do it now!", file=sys.stderr)
                 sys.exit(1)
 
         # check if the working directory is dirty
+        # assert 'status', 'is_dirty', 'unstaged_changes' and 'staged_changes' 
+        await self._load_status()
         if self.get('is_dirty'):
             # check if dirty is allowed
-            if self.get('config').get('squeeze')['policies']['allow-dirty'] == False:
+            if Config.config()['squeeze']['policies']['allow-dirty'] == False:
                 print("ERROR: The working directory is not clean:", file=sys.stderr)
                 print('\n'.join(self.get('unstaged_changes')), file=sys.stderr)
                 print('\n'.join(self.get('staged_changes')), file=sys.stderr)
@@ -190,7 +188,7 @@ class Devbranch(Lazyload):
                 sys.exit(1)
             # check if staged changes are allowed
             else:
-                if self.get('config').get('squeeze')['policies']['allow-staged'] == False and len(self.get('staged_changes')) > 0:
+                if Config.config()['squeeze']['policies']['allow-staged'] == False and len(self.get('staged_changes')) > 0:
                     print("ERROR: There are staged changes:", file=sys.stderr)
                     print('\n'.join(self.get('unstaged_changes')), file=sys.stderr)
                     print('\n'.join(self.get('staged_changes')), file=sys.stderr)
@@ -198,8 +196,7 @@ class Devbranch(Lazyload):
                     sys.exit(1)
 
                 # check if we should warn about dirty working directory
-                # check if we should warn about dirty working directory
-                if not self.get('config').get('squeeze')['policies']['quiet'] == True:
+                if not Config.config()['squeeze']['policies']['quiet'] == True:
                     print("WARNING: The working directory is not clean:",
                           file=sys.stderr)
                     print('\n'.join(self.get('unstaged_changes')), file=sys.stderr)
@@ -207,20 +204,10 @@ class Devbranch(Lazyload):
                     print(
                         "The branch will be squeezed, but the changes in the files listed above will not be included in the commit.", file=sys.stderr)
 
-        # check if there are staged changes and if that is allowed
-        if self.get('config').get('squeeze')['policies']['allow-staged'] == False and len(self.get('staged_changes')) > 0:
-            print(
-                f"ERROR: There are staged changes:\n{self.get('staged_changes')}\n\nPlease commit or stash your changes before collapsing the branch")
-            sys.exit(1)
-
-        await self.load_prop(
-            prop='issue_title',
-            cmd=f"gh issue view {self.get('issue_number')} --json title --jq '.title'",
-            msg="Get the title of the issue from GitHub")
 
         new_message = await self.__get_collapsed_commit_message()
 
-        await self.load_prop(
+        await self._load_prop(
             prop='squeeze_sha1',
             cmd=f"git commit-tree {self.get('branch_name')}^{{tree}} -p {self.get('merge_base')} -m \"{new_message}\"",
             msg="Collapse the branch into a single commit")
@@ -391,15 +378,14 @@ class Devbranch(Lazyload):
 
             # TODO Set then branch to a ready branch
             # move the branch to the new commit
-            self.__reset_branch(prefix=self.get('config').get(
-                'wrapup')['policies']['branch_prefix'])
+            self.__reset_branch(prefix=Config.config()[
+                                'wrapup']['policies']['branch_prefix'])
 
         # push the branch to the remote
         # TODO be sure to push the right branch - if the ready branch is used, that's the one that should be pushed
         self.__push(force=True)
 
 #        print(f"Branch {self.get('branch_name')} has been collapsed into a single commit (was: {self.get('sha1')[:7]} now: {self.get('squeeze_sha1')[:7]})")
-
 
     def __develop(self, issue_number=int, branch_name=str):
         # create a new branch, link it to it's upstream , it's issue issue and then check it out
@@ -442,6 +428,27 @@ class Devbranch(Lazyload):
                     break
         return match
 
+    async def _load_status(self):
+        """Load the status of the current branch sets the following properties:
+        - 'status': The output of `git status --porcelain`
+        - 'is_dirty': True if there are unstaged or staged changes
+        - 'unstaged_changes': List of unstaged changes
+        - 'staged_changes': List of staged changes"""
+
+        if self.get('is_dirty') and self.get('unstaged_changes') and self.get('staged_changes'):
+            # If the status is already loaded, return
+            return
+        
+        await self._assert_props(['status'])
+        self.props['unstaged_changes'] = []
+        self.props['staged_changes'] = []
+        for line in self.get('status').splitlines():
+            if line.startswith('??') or line.startswith(' M'):
+                self.props['unstaged_changes'].append(line)
+            elif line.startswith('M ') or line.startswith('MM') or line.startswith('A '):
+                self.props['staged_changes'].append(line)
+        self.set('is_dirty',  len(self.props['unstaged_changes']) > 0 or len(self.props['staged_changes']) > 0)
+
     def set_issue(self, issue_number=int, assign=True):
         """Set the issue number context to work on"""
         self.set('issue_number', issue_number)
@@ -470,6 +477,7 @@ class Devbranch(Lazyload):
         project = Project()
         workon_field = project.get('workon_field')
         workon_field_value = project.get('workon_field_value')
+
         # TODO get the values from the config
         project.update_field(url=issue.get(
             'url'), field=workon_field, field_value=workon_field_value)
