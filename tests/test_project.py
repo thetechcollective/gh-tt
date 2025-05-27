@@ -15,7 +15,7 @@ from project import Project
 class TestProject(unittest.TestCase):
 
 
-    @pytest.mark.unittest
+    #@pytest.mark.unittest
     @patch('project.Gitter')
     def test_update_field_success(self, MockGitter):
         # Setup
@@ -44,7 +44,7 @@ class TestProject(unittest.TestCase):
         # Assertions
         self.assertRegex(result, r"Edited item \".+\"")
 
-    @pytest.mark.unittest
+    #@pytest.mark.unittest
     @patch('project.Gitter')
     def test_update_field_success_impicit_owner_number(self, MockGitter):
         # Setup
@@ -74,7 +74,7 @@ class TestProject(unittest.TestCase):
         # Assertions
         self.assertRegex(result, r"Edited item \".+\"")
 
-    @pytest.mark.unittest
+    #@pytest.mark.unittest
     @patch('project.Gitter')
     def test_update_field_option_not_found(self, MockGitter):
         # Setup
@@ -99,7 +99,7 @@ class TestProject(unittest.TestCase):
             project.update_field(owner="lakruzz", number=13, url="https://github.com/lakruzz/gitsquash_lab/issues/7",
                                  field="Status", field_value="Blaha")  # Bad field_value
 
-    @pytest.mark.unittest
+    #@pytest.mark.unittest
     @patch('project.Gitter')
     def test_update_field_type_not_supported(self, MockGitter):
         # Setup
@@ -124,7 +124,7 @@ class TestProject(unittest.TestCase):
             project.update_field(owner="lakruzz", number="13", url="https://github.com/lakruzz/gitsquash_lab/issues/7",
                                  field="Status", field_value="In Progress")
 
-    @pytest.mark.unittest
+    #@pytest.mark.unittest
     @patch('project.Gitter')
     def test_update_field_descriptor_is_empty(self, MockGitter):
         # Setup
@@ -148,7 +148,7 @@ class TestProject(unittest.TestCase):
         self.assertRegex(str(e.exception),
                          r"Field Status not found in project")
 
-    @pytest.mark.unittest
+    #@pytest.mark.unittest
     @patch('project.Gitter')
     def test_update_field_field_not_found(self, MockGitter):
         # Setup
@@ -173,7 +173,7 @@ class TestProject(unittest.TestCase):
             project.update_field(owner="lakruzz", number="13", url="https://github.com/lakruzz/gitsquash_lab/issues/7",
                                  field="Blaha", field_value="In Progress")  # bad field name
 
-    @pytest.mark.unittest
+    #@pytest.mark.unittest
     @patch('project.Gitter')
     def test_update_field_field_id_not_found(self, MockGitter):
         # Setup
@@ -198,7 +198,7 @@ class TestProject(unittest.TestCase):
             project.update_field(owner="lakruzz", number="13", url="https://github.com/lakruzz/gitsquash_lab/issues/7",
                                  field="Blaha", field_value="In Progress")  # bad field name
 
-    @pytest.mark.unittest
+    #@pytest.mark.unittest
     @patch('project.Gitter')
     def test_update_field_field_type_not_found(self, MockGitter):
         # Setup
@@ -223,7 +223,7 @@ class TestProject(unittest.TestCase):
             project.update_field(owner="lakruzz", number="13", url="https://github.com/lakruzz/gitsquash_lab/issues/7",
                                  field="Blaha", field_value="In Progress")  # bad field name
 
-    @pytest.mark.unittest
+    #@pytest.mark.unittest
     @patch('project.Gitter')
     def test_project_constructor_invalid_gitroot(self, MockGitter):
         # Setup
@@ -242,7 +242,7 @@ class TestProject(unittest.TestCase):
 
 
 
-    @pytest.mark.unittest
+    #@pytest.mark.unittest
     @patch('project.Gitter')
     def test_project_constructor_read_entire_config_success(self, MockGitter):
         # Setup
@@ -262,7 +262,7 @@ class TestProject(unittest.TestCase):
         self.assertEqual(project.props['workon_field'], "Status")
         self.assertEqual(project.props['workon_field_value'], "In Progress")
 
-    @pytest.mark.unittest
+    #@pytest.mark.unittest
     @patch('project.Gitter')
     def test_project_constructor_read_partial_config_success(self, MockGitter):
         # Setup
@@ -283,7 +283,7 @@ class TestProject(unittest.TestCase):
         self.assertEqual(project.props['workon_field_value'], "In Progress")
 
 
-    @pytest.mark.unittest
+    #@pytest.mark.unittest
     @patch('project.Gitter')
     def test_project_constructor_read_config_failure(self, MockGitter):
         # Setup

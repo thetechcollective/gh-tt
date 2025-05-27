@@ -6,6 +6,7 @@ import subprocess
 import sys
 import re
 import json
+import asyncio
 
 # Add directory of this class to the general class_path
 # to allow import of sibling classes
@@ -26,11 +27,12 @@ class Issue(Lazyload):
         self.set('assignee', None)
 
         result = None
-        gitter = Gitter(
+        [output, result] = asyncio.run( Gitter(
             cmd=f"gh issue view {number} --json url,title",
             msg="Get the url and title from the issue",
-            die_on_error=False)
-        [output, result] = gitter.run()
+            die_on_error=False).run()
+        )
+
         if result.returncode != 0:
             print(
                 f"ERROR: Issue '{number}' doesn't exit in current git context\n{result.stderr}", file=sys.stderr)
@@ -124,9 +126,10 @@ class Issue(Lazyload):
 
         issue_number = self.get('number')
 
-        [output, result] = Gitter(
+        [output, result] = asyncio.run(Gitter(
             cmd=f"gh issue edit {issue_number} --add-assignee '{assignee}'",
             msg=f"Assign @me to the issue").run()
+        )
 
         self.set('assignee', assignee)
         return output

@@ -84,5 +84,13 @@
       "msg": "Get the number of commits in the current branch",
       "group": "pre-deliver"
     }
+  },
+  "issue": {
+    // init
+    "issue_number": {
+      "cmd": "gh issue list --json number --jq '.[0].number'",
+      "msg": "Get the number of the first issue in the current repository",
+      "group": "init"
+    }
   }
 }

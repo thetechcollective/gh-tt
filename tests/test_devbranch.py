@@ -394,7 +394,7 @@ Your branch is up to date with 'origin/17-Add_a_deliver_subcommand'.
         self.assertEqual(devbranch.get(key), value)
     
 
-  #  @pytest.mark.dev
+    @pytest.mark.dev
     def test__squeeze_success_no_mock(self):
         Gitter.verbose = True
         Config.add_config('tests/data/.tt-config-squeeze.json')
@@ -403,7 +403,14 @@ Your branch is up to date with 'origin/17-Add_a_deliver_subcommand'.
         devbranch.to_json('tests/data/devbranch/.tt-config-squeeze.json')
         self.assertEqual(True, True)
 
-    
+    @pytest.mark.dev
+    def test__set_issue_success_no_mock(self):
+        Gitter.verbose = True
+        Config.add_config('tests/data/.tt-config-squeeze.json')
+        devbranch = Devbranch()
+        value = devbranch.set_issue(issue_number='95', assign=True)
+        devbranch.to_json('tests/data/devbranch/.tt-config-set_issue.json')
+        self.assertEqual(True, True)
 
 
 

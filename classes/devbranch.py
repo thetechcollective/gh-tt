@@ -30,7 +30,8 @@ class Devbranch(Lazyload):
             'is_dirty': False,
         }
 
-        self.set('issue_number', self.__validate_issue_branch())
+        # TODO This object can be loaded from main, så the validation is premature
+        # self.set('issue_number', self.__validate_issue_branch())
 
     def __validate_issue_branch(self):
         # Depends on 'init' group being loaded
@@ -122,18 +123,19 @@ class Devbranch(Lazyload):
         await self._assert_props([
             'issue_title',
             'commit_log'
-            ])
-
+        ])
 
         # Build the final message
         close_keyword = Config.config()['wrapup']['policies']['close-keyword']
         issue_number = self.get('issue_number')
 
-
         # Escape quotes and backticks for safe inclusion in the commit message
-        safe_title = self.get('issue_title').replace('"', '\\"').replace('`', '\\`')
-        safe_commit_log = self.get('commit_log').replace('"', '\\"').replace('`', '\\`')
-        self.set('squeeze_message', f"{safe_title} – {close_keyword} #{issue_number}\n\n{safe_commit_log}")
+        safe_title = self.get('issue_title').replace(
+            '"', '\\"').replace('`', '\\`')
+        safe_commit_log = self.get('commit_log').replace(
+            '"', '\\"').replace('`', '\\`')
+        self.set('squeeze_message',
+                 f"{safe_title} – {close_keyword} #{issue_number}\n\n{safe_commit_log}")
         return self.get('squeeze_message')
 
     async def __squeeze(self):
@@ -185,7 +187,7 @@ class Devbranch(Lazyload):
 
         await self.__load_squeezed_commit_message()
 
-        #await self._load_prop(
+        # await self._load_prop(
         #    prop='squeeze_sha1',
         #    cmd=f"git commit-tree {self.get('branch_name')}^{{tree}} -p {self.get('merge_base')} -m \"{squeeze_message}\"",
         #    msg="Collapse the branch into a single commit")
@@ -369,23 +371,27 @@ class Devbranch(Lazyload):
 
     def __develop(self, issue_number=int, branch_name=str):
         # create a new branch, link it to it's upstream , it's issue issue and then check it out
-        [output, result] = Gitter(
-            cmd=f"gh issue develop {issue_number} -b {self.get('default_branch')} -n {branch_name} -c",
+        
+        [output, result] = asyncio.run(Gitter(
+            cmd=f"gh issue develop {issue_number} -b {self.get('default_branch')} -n {self.get('branch_name')} -c",
             msg=f"gh develop {issue_number} on new branch {branch_name}").run()
+        )
 
     def __reuse_issue_branch(self, issue_number=int):
         # check if there is a local branch with the issue number
-        [local_branches, result] = Gitter(
+        [local_branches, result] = asyncio.run(Gitter(
             cmd='git branch --format="%(refname:short)"',
             msg=f"Get all local branches").run()
+        )
         match = False
         for branch in local_branches.split('\n'):
             if re.match(f"^{issue_number}.+", branch):
                 self.set('branch_name', branch)
-                [output, result] = Gitter(
+                [output, result] = asyncio.run(Gitter(
                     cmd=f"git checkout {self.get('branch_name')}",
                     die_on_error=False,
                     msg=f"Switch to the branch {self.get('branch_name')}").run()
+                )
                 if result.returncode != 0:
                     print(f"Error: {result.stderr}", file=sys.stderr)
                     sys.exit(1)
@@ -394,28 +400,29 @@ class Devbranch(Lazyload):
 
         if not match:
             # check if there is a remote branch with the issue number
-            [remote_branches, result] = Gitter(
+            [remote_branches, result] = asyncio.run(Gitter(
                 cmd='git branch -r --format="%(refname:short)"',
                 msg=f"Get all remote branches").run()
+            )
             for branch in remote_branches.split('\n'):
                 match_obj = re.match(f"^origin/({issue_number}.+)", branch)
                 if match_obj:
                     self.set('branch_name', match_obj.group(1))
-                    [output, result] = Gitter(
+                    [output, result] = asyncio.run(Gitter(
                         cmd=f"git checkout -b {self.get('branch_name')} {self.get('remote')}/{self.get('branch_name')}",
                         msg=f"Switch to the branch {self.props['branch_name']}").run()
+                    )
                     match = True
                     break
         return match
 
-    def wrapup(self, message:str):
+    def wrapup(self, message: str):
         """Mapped to the 'wrapup' subcommand."""
         # Implements similar behavior to the "note-this" alias:
         # - Stage all changes if nothing is staged
         # - Commit with message "<message> #<issue_number>"
         # - Push the branch
 
-        
         asyncio.run(self._load_status())
 
         if not self.get('is_dirty'):
@@ -430,25 +437,24 @@ class Devbranch(Lazyload):
                 msg="Nothin is staged. Staging all changes").run()
             )
 
-        
         # TODO - list staged files in this commit
         # git diff --name-only --cached
-        
+
         msg = f"{message} - #{self.get('issue_number')}"
 
-        [_, result] = asyncio.run( Gitter(
+        [_, result] = asyncio.run(Gitter(
             cmd=f'git commit -m "{msg}"',
             msg="Commit changes").run()
         )
 
-        [_, _] = asyncio.run( Gitter(
+        [_, _] = asyncio.run(Gitter(
             cmd="git push",
             msg="Push branch").run()
         )
 
-        print(f"\n\n👍 Branch has got a new commit that mentions issue '#{self.get('issue_number')}' and it's pushed\n💡 Try to run: gh browse {self.get('issue_number')}")
+        print(
+            f"\n\n👍 Branch has got a new commit that mentions issue '#{self.get('issue_number')}' and it's pushed\n💡 Try to run: gh browse {self.get('issue_number')}")
         return True
-
 
     async def _load_status(self):
         """Load the status of the current branch sets the following properties:
@@ -474,8 +480,12 @@ class Devbranch(Lazyload):
 
     def set_issue(self, issue_number=int, assign=True):
         """Set the issue number context to work on"""
+        asyncio.run(self._assert_props(['remote', 'default_branch']))
+
+
         self.set('issue_number', issue_number)
         self.set('assign', assign)
+
         issue = Issue(number=issue_number)
 
         reuse = self.__reuse_issue_branch(issue_number=issue_number)
@@ -512,14 +522,14 @@ class Devbranch(Lazyload):
         remote = self.get('remote')
         branch_name = self.get('branch_name')
         ready_prefix = Config.config()['deliver']['policies']['branch_prefix']
-        
-        
-        [output, result] = asyncio.run( Gitter(
+
+        [output, result] = asyncio.run(Gitter(
             cmd=f"git push --force-with-lease {remote} {squeeze_sha}:refs/heads/{ready_prefix}/{branch_name}",
             die_on_error=True,
             msg="Push the squeezed sha to the remase as a 'ready' branch").run()
         )
 
-        print(f"\n\n👍\nBranch '{branch_name}' has been squeezed into one commit; '{squeeze_sha[:7]}' and pushed to {remote} as '{ready_prefix}/{branch_name}'")
+        print(
+            f"\n\n👍\nBranch '{branch_name}' has been squeezed into one commit; '{squeeze_sha[:7]}' and pushed to {remote} as '{ready_prefix}/{branch_name}'")
 
         return squeeze_sha
