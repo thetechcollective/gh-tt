@@ -52,6 +52,29 @@ class Lazyload:
         """
         assert key in self.props, f"Property {key} not found on class"
         return self.props[key]
+    
+    def to_json(self, file: str = None) -> bool:
+        """Prints out the 'props' dict as json
+        Args:
+            file (str): Optional file to write the output to. If not provided, prints to stdout.
+        Returns:
+            bool: True if the operation was successful, False otherwise.
+        """
+        try:
+            output = json.dumps(self.props, indent=4)
+            if file:
+                # Ensure the directory exists
+                os.makedirs(os.path.dirname(file), exist_ok=True)
+                with open(file, 'w') as f:
+                    f.write(output)
+            else:
+                print(output)
+            return True
+        except Exception as e:
+            print(f"ERROR: Could not write to file {file}: {e}", file=sys.stderr)
+            return False
+
+
 
     async def _load_prop(self, prop: str, cmd: str, msg: str):
         """
@@ -130,21 +153,30 @@ class Lazyload:
                 # load the dependency first
                 await self._load_manifest(dependency)
 
-            # Check if the command has implicit dependencies, that are not loaded yet
-            # Find all occurrences of {.*} in cmd (e.g., {someprop})
+            # Find occurrences of {.*} in text (e.g., {someprop} and replace them with the property values)
+            # The regex uses negative lookbehind (?<!{) and negative lookahead (?!{) assertions to ensure 
+            # that the curly braces are not part of a double curly brace sequence ({{ or }}). 
+            # This effectively ignores {{tree}} while still matching {branch_name}, {merge_base}, {squeeze_message} etc.
             cmd = self._manifest[caller][prop].get('cmd')
-            matches = re.findall(r'\{(.*?)\}', cmd)
+            matches = re.findall(r'(?<!{)\{(?!{)(.*?)\}', cmd)
             for match in matches:
                 # Enforce the rule: No command can expect value substitution for props within the same group
                 dep_group = self._get_manifest_group(caller, match)
                 assert group != dep_group, f"ERROR: Property '{prop}' in group '{group}' defined in {self._manifest_file} implicitly depends on property '{match}'. They both belong to the same dependency group '{group}'. Value substitution within the same group is not allowed."
                 if dep_group not in self._loaded:
                     await self._load_manifest(dep_group)
+
             # When all dependencies are loaded compile the final command by replacing
             # the dependency values are replaced e.g., {someprop} -> self.get('someprop')
+            
             for match in matches:
                 cmd = cmd.replace(f"{{{match}}}", str(self.get(match)))
 
+            # Find and expand occurrences of {{.*}} in text (e.g., {{tree}})  and replace them with just a single '{' '}' e.g. {tree}
+            matches = re.findall(r'{{(.*?)}}', cmd)
+            for match in matches:
+                cmd = cmd.replace(f"{{{{{match}}}}}", f"{{{match}}}")
+            
             msg = self._manifest[caller][prop].get('msg', '')
 
             # Append the coroutine to the list
@@ -172,4 +204,4 @@ class Lazyload:
             return self._manifest[caller][prop].get('group', 'init')
         except KeyError:
             return 'init'  # Default group if not found
-
+   

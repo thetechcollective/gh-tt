@@ -400,6 +400,7 @@ Your branch is up to date with 'origin/17-Add_a_deliver_subcommand'.
         Config.add_config('tests/data/.tt-config-squeeze.json')
         devbranch = Devbranch()
         value =  asyncio.run(devbranch._Devbranch__squeeze()) # 1st time run the command - this functions doesn't have a cache
+        devbranch.to_json('tests/data/devbranch/.tt-config-squeeze.json')
         self.assertEqual(True, True)
 
     
@@ -488,26 +489,99 @@ Your branch is up to date with 'origin/17-Add_a_deliver_subcommand'.
        # Assertions
         self.assertEqual(cm.exception.code, 1)
         self.assertIn("ERROR: Cannot collapse the default branch: (main)\nSwitch to a development branch", mock_stderr.getvalue())            
-        
 
-#    @pytest.mark.unittest
-#    @patch('devbranch.Gitter')
-#    def test_deliver_success(self, MockGitter):
-#        # Setup
-#        mock_gitter_instance = MockGitter.return_value
-#        mock_gitter_instance.run.side_effect = [
-#            ['', Mock(returncode=0)], # git fetch
-#            ['main', None], # gh repo view defaultBranchRef
-#            ['origin', None], # git remote
-#            ['17-Add_a_deliver_subcommand',None], # git branch
-#            ['https://github.com/thetechcollective/gh-tt/issues/17', Mock(returncode=0, stderr='', stdout='')], #Get the url from the issue
-#            ["Add a 'deliver' subcommand", Mock(returncode=0, stderr='', stdout='')], #Get the title of the issue
-#        ]
-#
-#        devbranch = Devbranch()
-#        devbranch.deliver()
-#        self.assertEqual(devbranch.props['default_branch'], 'main')
-#        self.assertEqual(devbranch.props['remote'], 'origin')
+    @pytest.mark.unittest
+    @patch('devbranch.Gitter')
+    def test___validate_issue_branch_valid(self, MockGitter):
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = [
+            ['', Mock(returncode=0)],  # git fetch
+            ['main', None],            # gh repo view defaultBranchRef
+            ['origin', None],          # git remote
+            ['42-Implement_feature_x', None],  # git branch
+        ]
+        devbranch = Devbranch()
+        # Should extract '42' from '42-Implement_feature_x'
+        issue_number = devbranch._Devbranch__validate_issue_branch()
+        self.assertEqual(issue_number, '42')
+
+        @pytest.mark.unittest
+        @patch('devbranch.Gitter')
+        def test___validate_issue_branch_invalid(self, MockGitter):
+            # Setup
+            mock_gitter_instance = MockGitter.return_value
+            mock_gitter_instance.run.side_effect = [
+                ['', Mock(returncode=0)],  # git fetch
+                ['main', None],            # gh repo view defaultBranchRef
+                ['origin', None],          # git remote
+                ['feature_without_issue_prefix', None],  # git branch
+            ]
+            devbranch = Devbranch()
+            with self.assertRaises(AssertionError) as e:
+                devbranch._Devbranch__validate_issue_branch()
+            self.assertIn("does not constitute a valid development branch", str(e.exception))
+
+    @pytest.mark.unittest
+    @patch('devbranch.Gitter')
+    def test___validate_issue_branch_issue_at_start(self, MockGitter):
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = [
+            ['', Mock(returncode=0)],  # git fetch
+            ['main', None],            # gh repo view defaultBranchRef
+            ['origin', None],          # git remote
+            ['12345_some_fix', None],  # git branch
+        ]
+        devbranch = Devbranch()
+        issue_number = devbranch._Devbranch__validate_issue_branch()
+        self.assertEqual(issue_number, '12345')
+        @pytest.mark.unittest
+        @patch('devbranch.Gitter')
+        def test___validate_issue_branch_valid(self, MockGitter):
+            # Setup
+            mock_gitter_instance = MockGitter.return_value
+            mock_gitter_instance.run.side_effect = [
+                ['', Mock(returncode=0)],  # git fetch
+                ['main', None],            # gh repo view defaultBranchRef
+                ['origin', None],          # git remote
+                ['42-Implement_feature_x', None],  # git branch
+            ]
+            devbranch = Devbranch()
+            # Should extract '42' from '42-Implement_feature_x'
+            issue_number = devbranch._Devbranch__validate_issue_branch()
+            self.assertEqual(issue_number, '42')
+
+    @pytest.mark.unittest
+    @patch('devbranch.Gitter')
+    def test___validate_issue_branch_invalid(self, MockGitter):
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = [
+            ['', Mock(returncode=0)],  # git fetch
+            ['main', None],            # gh repo view defaultBranchRef
+            ['origin', None],          # git remote
+            ['feature_without_issue_prefix', None],  # git branch
+        ]
+        devbranch = Devbranch()
+        with self.assertRaises(AssertionError) as e:
+            devbranch._Devbranch__validate_issue_branch()
+        self.assertIn("does not constitute a valid development branch", str(e.exception))
+
+    @pytest.mark.unittest
+    @patch('devbranch.Gitter')
+    def test___validate_issue_branch_issue_at_start(self, MockGitter):
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = [
+            ['', Mock(returncode=0)],  # git fetch
+            ['main', None],            # gh repo view defaultBranchRef
+            ['origin', None],          # git remote
+            ['12345_some_fix', None],  # git branch
+        ]
+        devbranch = Devbranch()
+        issue_number = devbranch._Devbranch__validate_issue_branch()
+        self.assertEqual(issue_number, '12345')
 
 if __name__ == '__main__':
     unittest.main()

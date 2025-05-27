@@ -18,49 +18,71 @@
 {
   "devbranch": {
     // init
+    // cheep to run - doesn'nt depend on external com
+    // has no dependencies
     "branch_name": {
       "cmd": "git rev-parse --abbrev-ref HEAD",
-      "msg": "Get the name of the current branch"
+      "msg": "Get the name of the current branch",
+      "group": "init"
     },
     "sha1": {
       "cmd": "git rev-parse HEAD",
-      "msg": "Get the SHA1 of the current branch"
+      "msg": "Get the SHA1 of the current branch",
+      "group": "init"
     },
     "status": {
       "cmd": "git status --porcelain",
-      "msg": "Get the status of the working directory"
+      "msg": "Get the status of the working directory",
+      "group": "init"
     },
-    // remote
+    "remote": {
+      "cmd": "git remote",
+      "msg": "Get the name of the remote",
+      "group": "init"
+    },
+    // init-remote
+    // More costly, will depend on coms with GitHub
+    // But has no dependencies
     "default_branch": {
       "cmd": "gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'",
       "msg": "Get the name of the default branch from GitHub",
       "group": "remote-init"
     },
-    "remote": {
-      "cmd": "git remote",
-      "msg": "Get the name of the remote",
-      "group": "remote-init"
+    // init-last
+    // In itself cheap to run - doesn't do external coms
+    // But has dependencies on the previous elements
+    "merge_base": {
+      "cmd": "git merge-base {branch_name} {remote}/{default_branch}",
+      "msg": "Get the merge base of the current branch and the default branch",
+      "group": "init-last"
     },
     "default_sha1": {
       "cmd": "git rev-parse {remote}/{default_branch}",
       "msg": "Get the SHA1 of the default branch",
-      "group": "remote"
+      "group": "init-last"
     },
+    // pre-squeeze
+    // Only relevant to a squeeze
     "issue_title": {
       "cmd": "gh issue view {issue_number} --json title --jq '.title'",
       "msg": "Get the title of the issue from GitHub",
-      "group": "remote"
-
+      "group": "pre-squeeze"
     },
+    "commit_log": {
+      "cmd": "git log --format='%h: '%B {merge_base}..{branch_name}",
+      "msg": "Get the commit log of the current branch since the merge base",
+      "group": "pre-squeeze"
+    },
+    "squeeze_sha1": {
+      "cmd": "git commit-tree {sha1}^{{tree}} -p {merge_base} -m \"{squeeze_message}\"",
+      "msg": "Collapse the branch, since the merge base into a single commit",
+      "group": "squeeze"
+    },
+    // pre-deliver
     "commit_count": {
       "cmd": "git rev-list --count {branch_name} ^{remote}/{default_branch}",
       "msg": "Get the number of commits in the current branch",
-      "group": "squeeze"
-    },
-    "merge_base": {
-      "cmd": "git merge-base {branch_name} {remote}/{default_branch}",
-      "msg": "Get the merge base of the current branch and the default branch",
-      "group": "squeeze"
+      "group": "pre-deliver"
     }
   }
 }

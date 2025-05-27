@@ -1,10 +1,9 @@
 {
     "python.testing.pytestArgs": [
-        "tests",
-        "-m",
-        "dev",
-        "-m",
-        "unittest"
+        "tests"
+    //    ,"-m unittest"
+    //    ,"-m dev"
+        
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,

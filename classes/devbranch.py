@@ -23,20 +23,8 @@ class Devbranch(Lazyload):
     def __init__(self, workdir=None, verbose=False):
         super().__init__()
 
-        # valid properties
+        # Init properties that are not defined in props.json
         self.props = {
-            'default_branch': None,
-            'remote': None,
-            'branch_name': None,
-            'issue_number': None,
-            'sha1': None,
-            'merge_base': None,
-            'default_sha1': None,
-            'commit_count': None,
-            'commit_message': None,
-            'new_message': None,
-            'squeeze_sha1': None,
-            'issue_title': None,
             'unstaged_changes': None,
             'staged_changes': None,
             'is_dirty': False,
@@ -55,7 +43,6 @@ class Devbranch(Lazyload):
             Loads 'init' group from the manifest
         """
 
-    #    asyncio.run(super()._load_manifest(group='init'))
         asyncio.run(self._assert_props(['branch_name']))
         match = re.match(r'^(\d+).+', self.get('branch_name'))
         assert match, f"Branch name '{self.get('branch_name')}' does not constitute a valid development branch - Must be prefixed with a valid issue number"
@@ -126,36 +113,28 @@ class Devbranch(Lazyload):
                      f" - resolves #{issue_number}")
             return self.get('new_message')
 
-    async def __get_collapsed_commit_message(self):
+    async def __load_squeezed_commit_message(self):
         """
         Build the multiline commit message for the collapsed commit.
         The first line is the issue title, followed by the commit messages
         for each commit on the branch (excluding the merge base).
         """
-        await self._assert_props(['issue_title', 'branch_name', 'merge_base'])
+        await self._assert_props([
+            'issue_title',
+            'commit_log'
+            ])
 
-        issue_title = self.get('issue_title')
-        branch_name = self.get('branch_name')
-        merge_base = self.get('merge_base')
-
-        # Get the commit messages for all commits on the branch, not including the merge base
-        [commit_messages, _] = await Gitter(
-            cmd=f"git log --format='%h: '%B {merge_base}..{branch_name}",
-            msg="Compile commit messages for collapsed commits"
-        ).run()
-
-        # Clean up commit messages (remove trailing whitespace)
-        commit_messages = commit_messages.strip()
-
-        close_keyword = Config.config()['wrapup']['policies']['close-keyword']
 
         # Build the final message
+        close_keyword = Config.config()['wrapup']['policies']['close-keyword']
+        issue_number = self.get('issue_number')
 
-        safe_title = issue_title.replace('"', '\\"').replace('`', '\\`')
-        safe_commit_messages = commit_messages.replace(
-            '"', '\\"').replace('`', '\\`')
-        multiline_message = f"{safe_title} – {close_keyword} #{self.get('issue_number')}\n\n{safe_commit_messages}"
-        return multiline_message
+
+        # Escape quotes and backticks for safe inclusion in the commit message
+        safe_title = self.get('issue_title').replace('"', '\\"').replace('`', '\\`')
+        safe_commit_log = self.get('commit_log').replace('"', '\\"').replace('`', '\\`')
+        self.set('squeeze_message', f"{safe_title} – {close_keyword} #{issue_number}\n\n{safe_commit_log}")
+        return self.get('squeeze_message')
 
     async def __squeeze(self):
         """
@@ -175,7 +154,7 @@ class Devbranch(Lazyload):
                 sys.exit(1)
 
         # check if the working directory is dirty
-        # assert 'status', 'is_dirty', 'unstaged_changes' and 'staged_changes' 
+        # assert 'status', 'is_dirty', 'unstaged_changes' and 'staged_changes'
         await self._load_status()
         if self.get('is_dirty'):
             # check if dirty is allowed
@@ -204,13 +183,14 @@ class Devbranch(Lazyload):
                     print(
                         "The branch will be squeezed, but the changes in the files listed above will not be included in the commit.", file=sys.stderr)
 
+        await self.__load_squeezed_commit_message()
 
-        new_message = await self.__get_collapsed_commit_message()
+        #await self._load_prop(
+        #    prop='squeeze_sha1',
+        #    cmd=f"git commit-tree {self.get('branch_name')}^{{tree}} -p {self.get('merge_base')} -m \"{squeeze_message}\"",
+        #    msg="Collapse the branch into a single commit")
 
-        await self._load_prop(
-            prop='squeeze_sha1',
-            cmd=f"git commit-tree {self.get('branch_name')}^{{tree}} -p {self.get('merge_base')} -m \"{new_message}\"",
-            msg="Collapse the branch into a single commit")
+        await self._assert_props(['squeeze_sha1'])
 
         await self.__compare_before_after_trees()
 
@@ -438,7 +418,7 @@ class Devbranch(Lazyload):
         if self.get('is_dirty') and self.get('unstaged_changes') and self.get('staged_changes'):
             # If the status is already loaded, return
             return
-        
+
         await self._assert_props(['status'])
         self.props['unstaged_changes'] = []
         self.props['staged_changes'] = []
@@ -447,7 +427,8 @@ class Devbranch(Lazyload):
                 self.props['unstaged_changes'].append(line)
             elif line.startswith('M ') or line.startswith('MM') or line.startswith('A '):
                 self.props['staged_changes'].append(line)
-        self.set('is_dirty',  len(self.props['unstaged_changes']) > 0 or len(self.props['staged_changes']) > 0)
+        self.set('is_dirty',  len(self.props['unstaged_changes']) > 0 or len(
+            self.props['staged_changes']) > 0)
 
     def set_issue(self, issue_number=int, assign=True):
         """Set the issue number context to work on"""
