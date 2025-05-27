@@ -47,8 +47,8 @@ def parse(args=None):
     workon_parser.set_defaults(assignee=True, exclusive_groups=['workon'])
     
     # Add wrapup subcommand
-    wrapup_parser = subparsers.add_parser('wrapup', parents=[parent_parser], help='Collapse dev branch into one commit, check or set the commit message')
-#   wrapup_parser.add_argument('-m', '--message', type=str, help='Message for the commit')
+    wrapup_parser = subparsers.add_parser('wrapup', parents=[parent_parser], help='Commit the stat of the current issue branch and push it to the remote',)
+    wrapup_parser.add_argument('-m', '--message', type=str, help='Message for the commit', required=True)
 
     # Add deliver subcommand
     deliver_parser = subparsers.add_parser(
@@ -82,7 +82,7 @@ if __name__ == "__main__":
             devbranch.set_issue(issue_number=issue.get('number'), assign=args.assignee)
           
     if args.command == 'wrapup':
-        devbranch.collapse()
+        devbranch.wrapup(message=args.message)
     
     if args.command == 'deliver':
         devbranch.deliver()

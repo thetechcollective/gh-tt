@@ -408,6 +408,48 @@ class Devbranch(Lazyload):
                     break
         return match
 
+    def wrapup(self, message:str):
+        """Mapped to the 'wrapup' subcommand."""
+        # Implements similar behavior to the "note-this" alias:
+        # - Stage all changes if nothing is staged
+        # - Commit with message "<message> #<issue_number>"
+        # - Push the branch
+
+        
+        asyncio.run(self._load_status())
+
+        if not self.get('is_dirty'):
+            print("Nothing to commit. The working directory is clean.")
+            return
+
+        # If nothing is staged, stage all changes
+        if not len(self.get('staged_changes')) > 0:
+            # Stage all changes if nothing is staged
+            [_, _] = asyncio.run(Gitter(
+                cmd="git add -A",
+                msg="Nothin is staged. Staging all changes").run()
+            )
+
+        
+        # TODO - list staged files in this commit
+        # git diff --name-only --cached
+        
+        msg = f"{message} - #{self.get('issue_number')}"
+
+        [_, result] = asyncio.run( Gitter(
+            cmd=f'git commit -m "{msg}"',
+            msg="Commit changes").run()
+        )
+
+        [_, _] = asyncio.run( Gitter(
+            cmd="git push",
+            msg="Push branch").run()
+        )
+
+        print(f"\n\n👍\nBranch has got a new commit that mentions issue '{self.get('issue_number')} and it's pushed")
+        return True
+
+
     async def _load_status(self):
         """Load the status of the current branch sets the following properties:
         - 'status': The output of `git status --porcelain`
