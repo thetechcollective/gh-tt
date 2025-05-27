@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   check:
@@ -61,3 +62,28 @@ jobs:
         git merge --ff-only ${{ github.sha }}
         git push origin main
         echo "Successfully fast-forward merged '${{ github.sha }}' into main"  >> $GITHUB_STEP_SUMMARY
+
+  close_issue:
+    needs: merge
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Set up git config
+      run: |
+        git config --global user.name "GitHub Action: ready"
+        git config --global user.email "tt-ready@thetechcollective.eu"
+
+    - name: Cloose the issue
+      env:
+        GITHUB_TOKEN: ${{ secrets.READY_PUSHER }}
+
+        # checkout the main branch, fast-forward merge the changes from the ready branch and push the changes to origin
+      run: |
+        # Read the github.ref_name to get the branch name
+        # The branch name is in the format 'ready/123.*'
+        # get the number from the branch name after 'ready/'
+        ISSUE_NUMBER=$(echo "${{ github.ref_name }}" | grep -oP '(?<=ready/)\d+')
+
+        gh issue close "$ISSUE_NUMBER" --repo "${{ github.repository }}" --comment "Merged into main branch with commit ${{ github.sha }}"

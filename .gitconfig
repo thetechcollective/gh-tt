@@ -5,7 +5,7 @@
   default = current
 
 [pull]
-  rebase = true
+  fast-forward = only
 
 [alias]
   undo-commit = reset --soft HEAD^
