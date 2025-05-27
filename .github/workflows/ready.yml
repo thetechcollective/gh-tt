@@ -88,4 +88,4 @@ jobs:
 
         gh issue close "$ISSUE_NUMBER" --repo "${{ github.repository }}" --comment "Merged into main branch with commit ${{ github.sha }}"
 
-        echo "Closed issue [${ISSUE_NUMBER}](https://github.com/${{ github.repository }}/issues/${ISSUE_NUMBER})  >> $GITHUB_STEP_SUMMARY
+        echo "Closed issue [$(ISSUE_NUMBER)](https://github.com/${{ github.repository }}/issues/$(ISSUE_NUMBER))  >> $GITHUB_STEP_SUMMARY
