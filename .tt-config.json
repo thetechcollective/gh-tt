@@ -32,8 +32,6 @@
         // "collapse:true" will rebase the branch onto itself - essentially collapsing the commits into one
         // "collapse:false" will leave the branch as is
         "collapse": true,
-        // The prefix to use for the collapsed branch - igonered if "collapse:false", required if "collapse:true"
-        "branch_prefix": "ready/",
         // The closing keyword to use when closing the issue in the project - ignored if a valid closing keyword is found in the commit message
         "close-keyword": "resolves",
         // The branch to default_branch
@@ -47,7 +45,9 @@
         "model": "branch",
         // "codeowner:true" will add read the CODEOWNERS file and require a review if commit contains files with ownership
         // Ignored if model "model:pr" is used
-        "codeowner": true
+        "codeowner": true,
+        // The prefix to use for the collapsed branch - igonered if "collapse:false", required if "collapse:true"
+        "branch_prefix": "ready"
     }
   }
 }

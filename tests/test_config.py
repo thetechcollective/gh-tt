@@ -32,10 +32,10 @@ class TestProject(unittest.TestCase):
         self.assertEqual(config['wrapup']['status'], 'Delivery Initiated')   
         self.assertEqual(config['wrapup']['policies']['collapse'], True)
         self.assertEqual(config['wrapup']['policies']['close-keyword'], 'resolves')
-        self.assertEqual(config['wrapup']['policies']['branch_prefix'], 'ready/')
         self.assertEqual(config['wrapup']['policies']['rebase'], True)
         self.assertEqual(config['deliver']['policies']['model'], 'branch')
         self.assertEqual(config['deliver']['policies']['codeowner'], True)
+        self.assertEqual(config['deliver']['policies']['branch_prefix'], 'ready')
 
 
     @pytest.mark.unittest
