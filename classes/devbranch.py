@@ -31,7 +31,7 @@ class Devbranch(Lazyload):
         }
 
         # TODO This object can be loaded from main, så the validation is premature
-        # self.set('issue_number', self.__validate_issue_branch())
+        self.set('issue_number', self.__validate_issue_branch())
 
     def __validate_issue_branch(self):
         # Depends on 'init' group being loaded
@@ -46,7 +46,10 @@ class Devbranch(Lazyload):
 
         asyncio.run(self._assert_props(['branch_name']))
         match = re.match(r'^(\d+).+', self.get('branch_name'))
-        assert match, f"Branch name '{self.get('branch_name')}' does not constitute a valid development branch - Must be prefixed with a valid issue number"
+        #assert match, f"Branch name '{self.get('branch_name')}' does not constitute a valid development branch - Must be prefixed with a valid issue number"
+        if not match:
+            return None
+        
         return f"{match.group(1)}"
 
     async def __load_details(self):
