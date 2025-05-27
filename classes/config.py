@@ -1,89 +1,96 @@
-from lazyload import Lazyload
 from gitter import Gitter
 import os
 import sys
 import re
 import json
+import asyncio
+
 
 # Add directory of this class to the general class_path
 # to allow import of sibling classes
 class_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(class_path)
 
+def deep_update(dict1, dict2):
+    """Recursively update dict1 with dict2 without deleting keys."""
+    for key, value in dict2.items():
+        if isinstance(value, dict) and key in dict1 and isinstance(dict1[key], dict):
+            deep_update(dict1[key], value)
+        else:
+            dict1[key] = value
+    return dict1
 
-class Config(Lazyload):
-    """Class used to represent the project configuration and policies for the subcommands."""
+def add_config(config_file: str, config_dict: dict):
 
-    # Instance methods
+    """Helper function to update the configuration dictionary and add it to the input paramaeter
+    Args:
+        file (str): The path to the config file to add
+    Raises:
+        FileNotFoundError: If the file does not exist
+        JSONDecodeError: If the file is not a valid JSON file
+    """
+    with open(config_file, 'r') as f:
+        try:
+            lines = f.readlines()
+            lines = [line for line in lines if not re.match(r'^\s*//', line)]
+            config_data = ''.join(lines)
+            json_data = json.loads(config_data)
+            deep_update(config_dict, json_data)
+        except json.JSONDecodeError as e:
+            print(f"Could not parse JSON from {config_file}: {e}", file=sys.stderr)
+            sys.exit(1)              
+    return config_dict
 
-    def __init__(self, file=None):
-        super().__init__()
+class Config():
+    """Class used to represent the project configuration and policies for the subcommands.
+    
+    Purely static class, all methods are class methods.
+    It reads the configuration from a JSON file, which may contain comments.
+    The configuration file is expected to be in the root directory of the git repository.
+    The configuration file is expected to be a JSON file with comments (lines beginning with '//').
+    """
 
+    # Class-level configuration dictionary
+    _config_dict = {}
+    _config_files = []  # List to hold the configuration files in the order they are read
+    _config_file_name = '.tt-config.json'
 
-        self.set('default_configfile', '.tt-config.json' )
-        self.set('workdir', os.getcwd())
-        self.set('config_files', [])
+    # Default configuration file name MUST exist in the source code root directory (one level up from this file)
+    _app_config_file = os.path.dirname(os.path.abspath(__file__)) + f"/../{_config_file_name}"
+    assert os.path.exists(_app_config_file), f"Application config file '{_app_config_file}' not found."
 
-        self.__locate_config_files(file)
-        self.__read_config()       
+    _config_dict = add_config(_app_config_file, _config_dict)
+    _config_files.append(_app_config_file)  
 
-    def __locate_config_files(self, file=None):
-        """Locate the configuration files to use"""
+    # Add the project default config file if it exists
+    _project_config_file = f"{Gitter.git_root}/{_config_file_name}"
+    if os.path.exists(_project_config_file):
+        _config_dict = add_config(_project_config_file, _config_dict)
+        _config_files.append(_project_config_file)  
 
-        # read the application default config file
-        app_config_file = os.path.dirname(os.path.abspath(__file__)) + "/../.tt-config.json"
-        if os.path.exists(app_config_file):
-            config_files = [app_config_file]
+    @classmethod
+    def config_files(cls):
+        """Reveals the configuration files used by the class.
+        Returns:
+            list: List of configuration files in the order they are loaded
+        """
+        return cls._config_files
 
-        # add the default config file if it exists
-        if os.path.exists(f"{self.get('workdir')}/{self.get('default_configfile')}"):
-            config_files.append(f"{self.get('workdir')}/{self.get('default_configfile')}")
+    @classmethod
+    def config(cls) -> dict:
+        """Public class property to get the config dict"""
+        return cls._config_dict
+    
+    @classmethod
+    def add_config(cls, config_file: str):
+        """Public classmethod to update the configuration dictionary and add a config file to the list of config files
+        Args:
+            file (str): The path to the config file to add
+        Raises:
+            FileNotFoundError: If the file does not exist
+            JSONDecodeError: If the file is not a valid JSON file
+        """
 
-        # add the config file passed as input if it exists
-        if file:
-            if os.path.exists(file):
-                config_files.append(file)
-            else:
-                print(f"ERROR: The config file '{file}' does not exist", file=sys.stderr)
-                sys.exit(1)
-
-        self.set('config_files', config_files)
-
-
-    def __read_config(self):
-        """Read the configuration file in order of priority"""
-        
-        complete=False
-        # Get the git root directory and set the config file
-        [git_root, result] = Gitter(
-            cmd="git rev-parse --show-toplevel",
-            msg="Get the git root directory").run()
-        if not git_root or result.returncode != 0:
-            print(f"Could not determine the git root directory", file=sys.stderr)
-            sys.exit(1)
-
-
-        # For each config file, read the json and set the properties, let each config file override the previous one
-        for config_file in self.get('config_files'):
-            if not os.path.exists(config_file):
-                continue
-
-            with open(config_file, 'r') as f:
-                try:
-                    # the config file is a json file but It may contain comments - lines beginning with '//' (may have whitespace before)
-                    # so we need to remove them before parsing the json
-                    # read the file and remove comments
-                    lines = f.readlines()
-                    lines = [line for line in lines if not re.match(r'^\s*//', line)]
-                    # join the lines back together
-                    config_data = ''.join(lines)
-                    # parse the json
-                    json_data = json.loads(config_data)
-                    for key, value in json_data.items():
-                        self.set(key, value)
-                except json.JSONDecodeError as e:
-                    print(f"Could not parse JSON from {config_file}: {e}", file=sys.stderr)
-                    sys.exit(1)
-
-        complete=True
-        return complete
+        add_config(config_file, cls._config_dict)
+        cls._config_files.append(config_file)
+        return cls._config_dict

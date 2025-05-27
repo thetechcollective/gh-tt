@@ -1,0 +1,25 @@
+{
+    "unstaged_changes": [
+        " M .vscode/settings.json",
+        " M classes/devbranch.py",
+        " M classes/lazyload.py",
+        " M classes/props.json",
+        " M tests/test_devbranch.py",
+        "?? tests/data/.tt-config-project.json",
+        "?? tests/data/devbranch/"
+    ],
+    "staged_changes": [],
+    "is_dirty": true,
+    "branch_name": "91-Add_support_for_ready_branches_and_add_workflow_to_trigger_it",
+    "sha1": "0b8dae3926feafa457e0d90d71cffa031ef0877b",
+    "status": " M .vscode/settings.json\n M classes/devbranch.py\n M classes/lazyload.py\n M classes/props.json\n M tests/test_devbranch.py\n?? tests/data/.tt-config-project.json\n?? tests/data/devbranch/",
+    "remote": "origin",
+    "issue_number": "91",
+    "default_branch": "main",
+    "merge_base": "66c2750f4fe2892996beeca3871b6074f78ce3e5",
+    "default_sha1": "66c2750f4fe2892996beeca3871b6074f78ce3e5",
+    "issue_title": "Add support for `ready` branches and add workflow to trigger it",
+    "commit_log": "0b8dae3: Looks like the squeeze is done #91\n\nf2ce705: LazyLoad has become a 1st class citizen, it can now truly lazy load. it's all controlled from props.json and heavily supported bu Gitter #91\n\nd5d7d1a: the unittest discovery can not read the devmarks in the pytest.ini, but a workaround is defined in the python.testing.pytestArgs #91\n\na201d0f: load_prop moved to a function on the super class LazyLoad #91\n\nb547bf9: refining the screening and output on allowing squeeze to work with staged and unstaged changes #91\n\n646e178: index on main: 66c2750 policy file added - resolves #90\n\n9671987: Change the squeeze policy for rebase #91\n\n7545bf2: changed the rebase squeeze to abort for rebase, not actually try to perform it #91\n\n470da17: added policies for the squeeze #91\n\nba96ce3: add a comparison for the squeezed commit, and added verbose output to the test #91\n\n1bc4c38: Finally got the note-this alias right #91\n\nd5ea6d0: Updated the gitconfig file #91\n\n72c5728: At this point the squeeze funtion works #",
+    "squeeze_message": "Add support for \\`ready\\` branches and add workflow to trigger it \u2013 resolves #91\n\n0b8dae3: Looks like the squeeze is done #91\n\nf2ce705: LazyLoad has become a 1st class citizen, it can now truly lazy load. it's all controlled from props.json and heavily supported bu Gitter #91\n\nd5d7d1a: the unittest discovery can not read the devmarks in the pytest.ini, but a workaround is defined in the python.testing.pytestArgs #91\n\na201d0f: load_prop moved to a function on the super class LazyLoad #91\n\nb547bf9: refining the screening and output on allowing squeeze to work with staged and unstaged changes #91\n\n646e178: index on main: 66c2750 policy file added - resolves #90\n\n9671987: Change the squeeze policy for rebase #91\n\n7545bf2: changed the rebase squeeze to abort for rebase, not actually try to perform it #91\n\n470da17: added policies for the squeeze #91\n\nba96ce3: add a comparison for the squeezed commit, and added verbose output to the test #91\n\n1bc4c38: Finally got the note-this alias right #91\n\nd5ea6d0: Updated the gitconfig file #91\n\n72c5728: At this point the squeeze funtion works #",
+    "squeeze_sha1": "feeb7b5db6b2d79df740b2f1cec81aa77f23803f"
+}
