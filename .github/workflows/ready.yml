@@ -75,7 +75,7 @@ jobs:
         git config --global user.name "GitHub Action: ready"
         git config --global user.email "tt-ready@thetechcollective.eu"
 
-    - name: Cloose the issue
+    - name: Close the issue
       env:
         GITHUB_TOKEN: ${{ secrets.READY_PUSHER }}
 
@@ -87,3 +87,5 @@ jobs:
         ISSUE_NUMBER=$(echo "${{ github.ref_name }}" | grep -oP '(?<=ready/)\d+')
 
         gh issue close "$ISSUE_NUMBER" --repo "${{ github.repository }}" --comment "Merged into main branch with commit ${{ github.sha }}"
+
+        echo "Closed issue [${ISSUE_NUMBER}](https://github.com/${{ github.repository }}/issues/${ISSUE_NUMBER})  >> $GITHUB_STEP_SUMMARY
