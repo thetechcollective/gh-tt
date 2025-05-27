@@ -51,13 +51,13 @@ jobs:
         git config --global user.name "GitHub Action: ready"
         git config --global user.email "tt-ready@thetechcollective.eu"
 
-    - name: CommFast-Forward merge back to main
+    - name: Fast-Forward merge back to main
       env:
         GITHUB_TOKEN: ${{ secrets.READY_PUSHER }}
 
         # checkout the main branch, fast-forward merge the changes from the ready branch and push the changes to origin
       run: |
         git checkout main
-        git merge --ff-only ${{ github.ref }}
+        git merge --ff-only ${{ github.sha }}
         git push origin main
-        echo "Successfully fast-forward merged the '${{ github.ref }}' branch into main"  >> $GITHUB_STEP_SUMMARY
+        echo "Successfully fast-forward merged '${{ github.sha }}' into main"  >> $GITHUB_STEP_SUMMARY
