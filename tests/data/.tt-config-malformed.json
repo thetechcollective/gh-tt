@@ -1,0 +1,12 @@
+{
+  "project": {
+    "owner": "thetechcollective",
+    "number": "12"
+  },
+  "workon": {
+    "policies":{
+        "rebase": false,
+        "allow-dirty": false
+    }
+  },
+}

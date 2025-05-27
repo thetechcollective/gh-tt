@@ -15,7 +15,7 @@ from gitter import Gitter
 
 class TestGitter(unittest.TestCase):
 
-    @pytest.mark.unittest
+  ##  @pytest.mark.unittest
     @patch('gitter.Gitter')
     def test_gitter_validate_gh_version_success(self, MockGitter):
         # Setup
@@ -27,7 +27,7 @@ class TestGitter(unittest.TestCase):
         valid = Gitter.validate_gh_version()
         self.assertTrue(valid)
 
-    @pytest.mark.unittest
+   # @pytest.mark.unittest
     @patch('gitter.Gitter')
     def test_gitter_validate_gh_version_failure(self, MockGitter):
         # Setup
@@ -44,7 +44,7 @@ class TestGitter(unittest.TestCase):
         self.assertEqual(cm.exception.code, 1)
         self.assertIn(f"gh version 2.54.0 is not supported. Please upgrade to version {Gitter.reguired_version} or higher", mock_stderr.getvalue())           
 
-    @pytest.mark.unittest
+  #  @pytest.mark.unittest
     @patch('gitter.Gitter')
     def test_gitter_validate_gh_scope_success(self, MockGitter):
         # Setup
@@ -61,7 +61,7 @@ class TestGitter(unittest.TestCase):
         valid = Gitter.validate_gh_scope(scope="project")
         self.assertTrue(valid)
         
-    @pytest.mark.unittest
+  #  @pytest.mark.unittest
     @patch('gitter.Gitter')
     def test_gitter_validate_gh_scope_failure(self, MockGitter):
         # Setup

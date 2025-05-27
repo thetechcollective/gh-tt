@@ -7,10 +7,22 @@
     // the status to set in the project when the workon subcommand is used
     "status": "In Progress",
     "policies":{
-        // Run a rebase when an existing branch is found no rebase is performed if this is an empty string
-        "rebase": "origin/main",
+        // When an existing branch is found rebase:true will perform a rebase against the default_branch rebase:false will not
+        "rebase": true,
         // if "rebase" and "allow-dirty" are both set to true, A stash is done before the rebase and a stash pop after.
         "allow-dirty": true
+    }
+  },
+  "squeeze": {
+    "policies":{
+        // "abort_for_rebase:true" will abort the squeeze if the default_branch has commits that are not in the branch
+        "abort_for_rebase": true,
+        // "allow-dirty:true" will run the squeeze, even with a dirty working directory. Will warn unless "quiet:true" 
+        "allow-dirty": true,
+        // "allow-staged:true" will run the squeeze, even with staged, uncommited changes. Will warn unless "quiet:true" 
+        "allow-staged": false,
+        // "quiet:true" will suppress the dirty/staged warnings
+        "quiet": false
     }
   },
   "wrapup": {
@@ -20,12 +32,10 @@
         // "collapse:true" will rebase the branch onto itself - essentially collapsing the commits into one
         // "collapse:false" will leave the branch as is
         "collapse": true,
-        // The prefix to use for the collapsed branch - igonered if "collapse:false", required if "collapse:true"
-        "branch": "ready/",
         // The closing keyword to use when closing the issue in the project - ignored if a valid closing keyword is found in the commit message
         "close-keyword": "resolves",
-        // The branch to rebase onto - no rebase is performed if this is not set, or value is an empty string
-        "rebase": "origin/main"
+        // The branch to default_branch
+        "rebase": true
     }
   },
   "deliver": {
@@ -35,7 +45,9 @@
         "model": "branch",
         // "codeowner:true" will add read the CODEOWNERS file and require a review if commit contains files with ownership
         // Ignored if model "model:pr" is used
-        "codeowner": true
+        "codeowner": true,
+        // The prefix to use for the collapsed branch - igonered if "collapse:false", required if "collapse:true"
+        "branch_prefix": "ready"
     }
   }
 }

@@ -1,0 +1,13 @@
+{
+  "project": {
+    "owner": "thetechcollective",
+    "number": "12"
+  },
+  "squeeze": {
+    "policies":{
+        "abort_for_rebase": false,
+        "allow-dirty": true,
+        "allow-staged": false
+    }
+  }
+}
