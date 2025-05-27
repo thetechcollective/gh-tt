@@ -1,6 +1,6 @@
 
 name: Ready
-# This workflow is triggered on run on 'ready' branches 
+# This workflow is triggered by 'ready' branches 
 
 on:
   workflow_dispatch:
@@ -9,25 +9,55 @@ on:
       - 'ready/*'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  build:
-
+  check:
     runs-on: ubuntu-latest
-
     steps:
+
     - uses: actions/checkout@v4
+
     - name: Set up Python 3.13
       uses: actions/setup-python@v3
       with:
         python-version: "3.13"
+
     - name: Install uv and dependencies
       run: |
         curl -LsSf https://astral.sh/uv/install.sh | sh
         uv venv
         source .venv/bin/activate
         uv sync --extra dev
+
     - name: Test with pytest
       run: |
         uv run pytest --cov=. --cov-config=.coveragerc -m unittest
+
+  merge:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: main
+        token: ${{ secrets.READY_PUSHER }}
+        # This token is used to commit the changes back to the main branch
+
+    - name: Set up git config
+      run: |
+        git config --global user.name "GitHub Action: ready"
+        git config --global user.email "tt-ready@thetechcollective.eu"
+
+    - name: CommFast-Forward merge back to main
+      env:
+        GITHUB_TOKEN: ${{ secrets.READY_PUSHER }}
+
+        # checkout the main branch, fast-forward merge the changes from the ready branch and push the changes to origin
+      run: |
+        git checkout main
+        git merge --ff-only ${{ github.ref }}
+        git push origin main
+        echo "Successfully fast-forward merged the '${{ github.ref }}' branch into main"  >> $GITHUB_STEP_SUMMARY
