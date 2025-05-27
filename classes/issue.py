@@ -75,10 +75,10 @@ class Issue(Lazyload):
         body_switch = f"--body '{body}'" if body is not None else "--body ''"
         assign_switch = f"--assignee '{assign}'" if assign is not None else ""
 
-        gitter = Gitter(
+        [output, result] = asyncio.run (Gitter(
             cmd=f"gh issue create --title '{title}' {body_switch} {assign_switch}",
-            msg="Create a new issue")
-        [output, result] = gitter.run()
+            msg="Create a new issue").run()
+        )
 
         # The output is a mulitiline string like this:
         #
