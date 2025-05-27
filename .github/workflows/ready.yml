@@ -1,5 +1,5 @@
 
-name: Wrapup
+name: Ready
 # This workflow is triggered on run on 'ready' branches 
 
 on:
@@ -30,4 +30,4 @@ jobs:
         uv sync --extra dev
     - name: Test with pytest
       run: |
-        pytest --cov=. --cov-config=.coveragerc -m unittest
+        uv run pytest --cov=. --cov-config=.coveragerc -m unittest
