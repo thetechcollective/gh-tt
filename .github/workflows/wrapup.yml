@@ -1,12 +1,14 @@
 # This workflow will install Python dependencies, run tests and lint with a single version of Python
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-name: Python application
+name: Wrapup
+# This workflow is triggered on push to branches that begins with a number (issue-branches)
 
 on:
   workflow_dispatch:
   push:
-    branches: [ "**" ]
+    branches: 
+      - '[0-9]*'
 
 permissions:
   contents: read
@@ -18,11 +20,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python 3.10
+    - name: Set up Python 3.13
       uses: actions/setup-python@v3
       with:
         python-version: "3.13"
-    - name: Install dependencies
+    - name: Install uv and dependencies
       run: |
         curl -LsSf https://astral.sh/uv/install.sh | sh
         uv venv
@@ -30,4 +32,4 @@ jobs:
         uv sync --extra dev
     - name: Test with pytest
       run: |
-        uv run pytest --cov=. --cov-config=.coveragerc -m unittest
+        pytest --cov=. --cov-config=.coveragerc -m unittest
