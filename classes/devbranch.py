@@ -446,7 +446,7 @@ class Devbranch(Lazyload):
             msg="Push branch").run()
         )
 
-        print(f"\n\n👍\nBranch has got a new commit that mentions issue '{self.get('issue_number')} and it's pushed")
+        print(f"\n\n👍\nBranch has got a new commit that mentions issue '{self.get('issue_number')} and it's pushed\n💡 Try: \`gh browse {issue_number}\`")
         return True
 
 
