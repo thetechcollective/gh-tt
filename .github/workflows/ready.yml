@@ -1,0 +1,33 @@
+
+name: Wrapup
+# This workflow is triggered on run on 'ready' branches 
+
+on:
+  workflow_dispatch:
+  push:
+    branches: 
+      - 'ready/*'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.13"
+    - name: Install uv and dependencies
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        uv venv
+        source .venv/bin/activate
+        uv sync --extra dev
+    - name: Test with pytest
+      run: |
+        pytest --cov=. --cov-config=.coveragerc -m unittest

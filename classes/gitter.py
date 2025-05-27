@@ -156,9 +156,9 @@ class Gitter(Lazyload):
     def validate_gh_scope(cls, scope=str):
         """Check if the user has sufficient access to the github cli"""
 
-        [stdout, result] = Gitter(
+        [stdout, result] = asyncio.run(Gitter(
             cmd="gh auth status",
-            msg="Check if the user has sufficient access to update projects").run()
+            msg="Check if the user has sufficient access to update projects").run())
 
         # Valiadate that we have reaacce to projects
         # The command returns something like this:

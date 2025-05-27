@@ -463,48 +463,21 @@ class Devbranch(Lazyload):
         project.update_field(url=issue.get(
             'url'), field=workon_field, field_value=workon_field_value)
 
-    def deliver(self, title=None):
-        """Create the pull request for the current issue"""
+    def deliver(self):
+        """Mapped to the 'deliver' subcommand."""
 
-        issue = Issue(number=self.get('issue_number'))
+        squeeze_sha = asyncio.run(self.__squeeze())
+        remote = self.get('remote')
+        branch_name = self.get('branch_name')
+        ready_prefix = Config.config()['deliver']['policies']['branch_prefix']
+        
+        
+        [output, result] = asyncio.run( Gitter(
+            cmd=f"git push --force-with-lease {remote} {squeeze_sha}:refs/heads/{ready_prefix}/{branch_name}",
+            die_on_error=True,
+            msg="Push the squeezed sha to the remase as a 'ready' branch").run()
+        )
 
-        if title == None:
-            title = issue.get('title')
+        print(f"\n\n👍\nBranch '{branch_name}' has been squeezed into one commit; '{squeeze_sha[:7]}' and pushed to {remote} as '{ready_prefix}/{branch_name}'")
 
-        # Create a pull request for the current branch
-        [output, result] = Gitter(
-            cmd=f"gh pr create --title '{title}' --body '' --base {self.get('default_branch')} --assignee '@me'",
-            die_on_error=False,
-            msg="Create a pull request for the current branch").run()
-
-        # Get the last line of the output, it contains the URL of the pull request
-        # and update self.props['pull_request_url']
-        # but die if the last line does not contain the URL
-        success = False
-        if result.returncode == 0:
-            match_obj = re.search(
-                r'^https://.*/pull/(\d+)', output, re.MULTILINE)
-            if match_obj:
-                self.set('pull_request_url', match_obj.group(0))
-                success = True
-        # If a pull request already exists, it will be returned in the stderr
-        # so we need to check the stderr for the URL
-        else:
-            match_obj = re.search(r'^https://.*/pull/(\d+)',
-                                  result.stderr.strip(), re.MULTILINE)
-            if match_obj:
-                self.set('pull_request_url', match_obj.group(0))
-                success = True
-
-        if not success:
-            print(
-                f"ERROR: Could not create the pull request\n{result.stderr}", file=sys.stderr)
-            sys.exit(1)
-
-        project = Project()
-
-        project.update_field(url=issue.get('url'), field=project.get(
-            'deliver_field'), field_value=project.get('deliver_field_value'))
-
-        print(f"{self.get('pull_request_url')}")
-        return self.get('pull_request_url')
+        return squeeze_sha

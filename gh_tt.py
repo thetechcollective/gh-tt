@@ -31,12 +31,11 @@ def parse(args=None):
             the GitHub API `gh` to interact with GtiHub and therefore it's provided as a gh extension. 
             GitHub Project integration is supporte4d. It enabels the issues to autoamtically 
             propregate through the columns in the (kanban) board. Please consult the README.md file 
-            for more information on how to enable this feature - and many more neat tricks.  
+            in 'thetechcollective/gh-tt' for more information on how to enable this feature 
+            - and many more neat tricks.  
             """,)
 
-    # Create two subcommands - bump and config
     subparsers = parser.add_subparsers(dest='command')
-
     # Add workon subcommand
     workon_parser = subparsers.add_parser('workon', parents=[parent_parser], help='Set the issue number context to work on')
     workon_group = workon_parser.add_mutually_exclusive_group()
@@ -54,12 +53,13 @@ def parse(args=None):
     # Add deliver subcommand
     deliver_parser = subparsers.add_parser(
         'deliver', 
-        parents=[parent_parser], help='Create the pull request for the current issue. Rebase and push the branch',
+        parents=[parent_parser], help="Create a collapsed 'ready' branch for the current issue branch and push it to the remote",
         description="""
-            Create the pull request for the issue related to the currently checked out branch. The 
-            command will fail if the current branch name does not begin with and integer.""")
-    deliver_parser.add_argument('--title', type=str, help='Title for the pull request - default is the issue title')
-
+            It squeezes the issue branch into just one commit and pushes it to the remote, with the same name as the issue brance as base, 
+            but prefixed with 'ready/*'. A seperate workflow should be defined for ready branches. It dosen't take any parameters; Policies 
+            for the delivery can be set in the configuration file '.tt-config.json'. Consult the README in 'thetechcollective/gh-tt' for 
+            details.""")
+    
     args = parser.parse_args(args)
     return args
 
@@ -85,7 +85,7 @@ if __name__ == "__main__":
         devbranch.collapse()
     
     if args.command == 'deliver':
-        devbranch.deliver(title=args.title)
+        devbranch.deliver()
             
     Gitter.write_cache()            
     exit(0)
