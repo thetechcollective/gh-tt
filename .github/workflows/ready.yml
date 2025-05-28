@@ -33,7 +33,8 @@ jobs:
 
     - name: Test with pytest
       run: |
-        uv run pytest --cov=. --cov-config=.coveragerc -m unittest
+        source .venv/bin/activate
+        pytest --cov=. --cov-config=.coveragerc -m unittest
 
   merge:
     needs: check
@@ -89,3 +90,6 @@ jobs:
         gh issue close "$ISSUE_NUMBER" --repo "${{ github.repository }}" --comment "Merged into main branch with commit ${{ github.sha }}"
 
         echo "Closed issue [${ISSUE_NUMBER}](https://github.com/${{ github.repository }}/issues/${ISSUE_NUMBER})"  >> $GITHUB_STEP_SUMMARY
+
+        git push origin ":${{ github.ref_name }}"
+        echo "Deleted branch '${{ github.ref_name }}' from remote"  >> $GITHUB_STEP_SUMMARY
