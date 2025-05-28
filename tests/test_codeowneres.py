@@ -23,3 +23,12 @@ class TestCodeowners(unittest.TestCase):
 
         self.assertTrue(True)
 
+    @pytest.mark.dev
+    def test_parse_codeowners(self):
+        """Test app defaults"""
+        codeowners = Codeowners().codeowner_parse(
+            changeset=["README.md", "src/main.py", "docs/index.md"],
+            exclude=["@someone"]
+        )
+
+        self.assertTrue(True)
