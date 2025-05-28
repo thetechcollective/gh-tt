@@ -32,4 +32,5 @@ jobs:
         uv sync --extra dev
     - name: Test with pytest
       run: |
-        uv run pytest --cov=. --cov-config=.coveragerc -m unittest
+        . .venv/bin/activate 
+        pytest --cov=. --cov-config=.coveragerc -m unittest
