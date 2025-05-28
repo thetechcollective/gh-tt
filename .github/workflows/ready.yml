@@ -93,3 +93,7 @@ jobs:
 
         git push origin ":${{ github.ref_name }}"
         echo "Deleted branch '${{ github.ref_name }}' from remote"  >> $GITHUB_STEP_SUMMARY
+
+        ISSUE_BRANCH=$(echo "${{ github.ref_name }}" | sed 's/ready\///')
+        git push origin ":${ISSUE_BRANCH}"
+        echo "Deleted branch '${ISSUE_BRANCH}' from remote"  >> $GITHUB_STEP_SUMMARY
