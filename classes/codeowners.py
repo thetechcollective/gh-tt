@@ -48,20 +48,23 @@ def codeowners_file_to_dict(codeowner_file: str) -> dict:
         owners = [o.strip() for o in owners]    
 
         # Convert the glob pattern to a regular expression
-        # replace '/' with '\/' to escape slashes
+        # replace '/' with '|' to process later 
         file_glob = re.sub(r'\/', r'|', file_glob)
 
         # use negeative and positive lookbehind and lookahead to make replace solitoire '* with @ ...for later processing 
         file_glob = re.sub(r'(?<!\*)\*(?!\*)', '@', file_glob)
 
-        # Repalce '**' with '.*\/' (to match any string the ends with a slash)
+        # Repplace '.' with '\.' (to match a literal dot)
+        file_glob = re.sub(r'\.', r'[.]', file_glob) 
+
+        # Replace '**' with '.*' (to match any string)
         file_glob = re.sub(r'(?<!\*)\*\*(?!\*)', '.*', file_glob)
 
-        # Repalce '@' with '.*\/' (to match any string the ends with a slash)
+        # Replace '@' - originally '*' with '[^/]*' (to match any string that does not contain a slash)
         file_glob = re.sub(r'@', '[^/]*', file_glob)
 
         # Repalce '@' with '.*\/' (to match any string the ends with a slash)
-        file_glob = re.sub(r'\|', '', file_glob)
+        file_glob = re.sub(r'\|', '[\\/]?', file_glob)
 
         
         
@@ -150,7 +153,7 @@ class Codeowners():
                         o for o in pattern_owners if o not in exclude]
                     if filtered_owners:
                         result.append(f"{file_path} ({','.join(filtered_owners)})")
-                        break 
+                    break 
         return result
 
     @classmethod

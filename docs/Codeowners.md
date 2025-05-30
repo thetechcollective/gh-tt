@@ -49,29 +49,31 @@ Each line has the following format:
 
 Where:
   - `<file-pattern>` is a glob pattern that matches files in the repository
-  - `<owner1>, <owner2>, ..., <ownerN>` are GitHub usernames, team names or emails 
+  - `<owner1>, <owner2>, ..., <ownerN>` are GitHub user names, team names or emails 
 
 user names and team names must be prefixed with `@` and team names must be fully qualified with `@<org>/<team-name>`.
 
 Glob patterns:
 
-The glob patterns are used to match files in the repository. is consistent with how git handles glob patterns in 
-the `.gitignore` file. Globbing is simple (at first) only two globs are supported:
+The glob patterns are used to match files in the repository. It is consistent with how git handles glob patterns in the `.gitignore` file – but it only implements a very small subset of the feature.
+
+Globbing is simple (at first) only two globs are supported:
 
   - '*'  matches zero or more characters, but not across directory boundaries.
   - '**' matches zero or more directories.
 
 The simplifed (but complete)  break down of the glob patterns is as follows:
 
-'*' is requvivlanetn to the RegExp [^/]*. With offset i the `<repo-root> it will match files and directories in the same directory but it won't descend into subdirectories.
+`*` is equvivalent to the RegExp `[^/^\]*.`(matches any char - except slash or backslashes). With offset in the `<repo-root> it will match _files_ but consequently not _directories_.
 
-'**' is equivalent to the RegExp .*\/. It will match files and directories in the same directory as the .gitignore file, as well as any files and directories in subdirectories, and so on recursively.
+'**' is equivalent to the RegExp `.*` It will match _any character_ includding slashes, so contrary to `*` the `**` glob will match _directories_ and _files_ alike.
+
+`/` is translateed to RegExp `.` matchin _any_ character or non at all.
     
-    
-Example:
+Example file tree:
 ```
     project/
-    ├── .gitignore
+    ├── CODEOWNERS
     ├── file1.txt
     ├── dir1/
     │   ├── file2.txt
@@ -80,23 +82,42 @@ Example:
     └── file4.txt
 ```
 
-Globs:
+
+CODEOWNERS:
 ```
-    *.txt
-    dir1/*
+    *.txt @lakruzz
+    dir1/* @thetechcollective/frontend-owners
 ````
 
 Parser:
 ```
-    - file1.txt and file4.txt will be ignored because of *.txt.
-    - file2.txt will be ignored because of dir1/*.
-    - dir2/file3.txt will not be ignored because * does not cross directory boundaries.
+    - `file1.txt` and `file4.txt` are owned by `@lakruzz`
+    - `file2.txt` is owned by  `@thetechcollective/frontend-owners`
+    - `dir2/file3.txt` are not owned by anyone
 ````
 
-to match any *.txt file - across directory boundaries (which may have been the semantical intent by the first glob) 
-you would use the glob:
+to match any `*.txt` file - across directory boundaries (which may have been the semantical intent by the first glob) you would use the glob:
 
 ```    
     **/*.txt
 ```    
-This will match any .txt file in the repository, regardless of its location.
+This will match any `.txt` file in the repository, regardless of its location.
+
+Why? Remember, a single `*` does not cross directory boundaries.
+
+## The comitter has already aproved
+I `@lakruzz` changes `file.txt` it will _not_ reguire an apprioval, simply because we imply an approval from the committer.
+
+## Ono or more owners
+
+If an ownership lists more than one owner, then _all_ listed owners must approve.
+
+
+CODEOWNERS:
+```
+    **/*.txt @lakruzz @ravvnen
+```
+
+Will imply, that even if `@lakruzz' is the comitter of `file1.txt` the commit stil needs approval from `@ravvnen` too.
+
+If the intent was to require approval, not from _both_, but from _one of_ them, jou can set up a team (e.g. `@thetechcollective/txt-owners`) and make both `@lakruzz` and `@ravvnen` members of the team. This will imply that both of them can commit without needing any approval from anyone else. An anyone else will require an approval, not from both, but from _any_ `@thetechcollective/txt-owners` member.

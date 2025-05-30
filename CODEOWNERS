@@ -5,9 +5,11 @@
 # opens a pull request.
 
 **/*        @lakruzz  # STRIP!
-**/index.*        @aniasheld
+**/index.*  @aniasheld
 **/src      @albertbanke
 *.md        @djnaynay
+**/src/**/data @hamsterpants
+
 
 # Order is important; the last matching pattern takes the most
 # precedence. When someone opens a pull request that only
