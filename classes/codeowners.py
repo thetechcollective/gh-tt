@@ -40,6 +40,13 @@ def codeowners_file_to_dict(codeowner_file: str) -> dict:
         file_glob = parts[0]
         owners = parts[1:]
 
+       #TODO
+        #Literal .
+        #Literal /
+
+        # Remove any leading or trailing whitespace from owner names
+        owners = [o.strip() for o in owners]    
+
         # Convert the glob pattern to a regular expression
         # replace '/' with '\/' to escape slashes
         file_glob = re.sub(r'\/', r'|', file_glob)
@@ -134,16 +141,16 @@ class Codeowners():
 
         # Iterate over each file in the changeset
         for file_path in changeset:
-            owners = []
+            filtered_owners = []
             # Go through the regex patterns in reverse order (bottom up)
             for pattern, pattern_owners in reversed(list(cls._codeowners_dict.items())):
-                if re.fullmatch(pattern, file_path):
+                if re.match(pattern, file_path):
                     # Exclude owners in the exclude list
                     filtered_owners = [
                         o for o in pattern_owners if o not in exclude]
                     if filtered_owners:
                         result.append(f"{file_path} ({','.join(filtered_owners)})")
-                break
+                        break 
         return result
 
     @classmethod

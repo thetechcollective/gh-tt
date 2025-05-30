@@ -28,7 +28,7 @@ class TestCodeowners(unittest.TestCase):
         """Test app defaults"""
         codeowners = Codeowners().codeowner_parse(
             changeset=["README.md", "src/main.py", "docs/index.md"],
-            exclude=["@someone"]
+            exclude=["@djnaynay"]
         )
 
         self.assertTrue(True)

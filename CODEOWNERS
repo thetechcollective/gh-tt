@@ -4,7 +4,10 @@
 # The owners will be requested for review when someone 
 # opens a pull request.
 
-**/*       @lakruzz  # STRIP!
+**/*        @lakruzz  # STRIP!
+**/index.*        @aniasheld
+**/src      @albertbanke
+*.md        @djnaynay
 
 # Order is important; the last matching pattern takes the most
 # precedence. When someone opens a pull request that only

@@ -1,25 +1,51 @@
-# `codewners.py`
+# `CODEOWNERS`
 
+GitHub implements support for  a file `CODEOWNERS` the purpose is then, for a repository to add a policy to the Pull Requests that files _owned_ by someone should be reviewed by the owners.
 
-Purely static class, all methods are class methods.
-It reads the CODEOWNER files from the supported locations: the search order is:
-    
+The idea is good, but the implemntation in GitHub is troublesome.
+
+1. GitHub only supports the `CODEOWNERS` file in Pull Requests
+2. If ownership is given to a group, or more than one handle, this is interpreted that _everyone_ in then group or list must approve.
+3. The documentation says that the `CODEOWNERS` file uses globs that [_follws most of the same rules used in `.gitignore` files_](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-syntax). But how it differs from globs used in `.gitignore` is not clear. It's documented by an example only.
+
+## Our own parser to the rescue
+
+We need the following features
+
+1. Our regime is not one that uses _peer reviews_ as quality gates. On the contrary we adhere to XP like values, based on paired – or even mob – programing and we would like to enage the _code owners_ already during development, when someone changes files, that has ownership, the owners should join or mentor the development of that particular branch. _During_ as aoopsed to _after_. We need to support and parse the `CODEOWNERS` file, when commits are don to development branches.
+2. We interpret multiple owership or ownership to teams in a more trusting manner. If a developer is a member of a team of _owners_, then an additional approval, from another mebers should not be required.
+3. We interpret the `CODEOWNERS` file with support of only two patterns from the [`.gitignore` pattern format documentation](https://git-scm.com/docs/gitignore#_pattern_format);  `*` and `**` (described in some detail later). 
+
+## `codepwners.py``
+
+A purely static class, all methods are class methods.
+It reads the `CODEOWNER` files from the supported locations: the search order is:
+
+### Locations    
 1. `<repo-root>/.github/`
 2. `<repo-root>`
 3. `<repo-root>/docs/`
     
-The search stops when a file named `CODEOWNERS` is found in any of the locations
+The search stops when a file named `CODEOWNERS` is found in any of the locations.
 
+### Parsing
 Each line in the `CODOWNERS` file is then read, - to the end - and during parsing it is read from bottom up. 
-In other words, the last matching line is the one that is used to determine the ownership of a file.
 
-`CODEOWNERS` file can contain 
+In other words; if more patterns would defines ownership to the same file, it's the latest one, that is used to determine the ownership of a file.
+
+### Format
+
+`CODEOWNERS` file can contain:
+
   - _comments;_ defined as lines with `#` the first non white-space character.
   - _in-line commentes;_ Anything following `#` is stripped.
   - _empty lines;_ Lines that contains noting or only whitespaces
 
 Each line has the following format:
-`<file-pattern> <owner1> [<owner2> ... <ownerN>]`
+
+```
+<file-pattern> <owner1> [<owner2> ... <ownerN>]`
+```
 
 Where:
   - `<file-pattern>` is a glob pattern that matches files in the repository
