@@ -133,3 +133,4 @@ class Issue(Lazyload):
 
         self.set('assignee', assignee)
         return output
+    

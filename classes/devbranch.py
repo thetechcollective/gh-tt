@@ -1,5 +1,6 @@
 from config import Config
 from lazyload import Lazyload
+from responsibles import Responsibles
 from issue import Issue
 from project import Project
 from gitter import Gitter
@@ -439,11 +440,21 @@ class Devbranch(Lazyload):
                 cmd="git add -A",
                 msg="Nothin is staged. Staging all changes").run()
             )
-
-        # TODO - list staged files in this commit
-        # git diff --name-only --cached
+            asyncio.run(self._load_status(reload=True))
 
         msg = f"{message} - #{self.get('issue_number')}"
+
+        [me,_] = asyncio.run(Gitter(
+            cmd="gh api user --jq '.login'",
+            msg="Get my GitHub handle").run()
+        )
+
+        change_list = self._get_pretty_changes()
+        responsibles = Responsibles().responsibles_as_markdown(
+            changeset=change_list,
+            exclude=[f"@{me}"]
+        )
+        
 
         [_, result] = asyncio.run(Gitter(
             cmd=f'git commit -m "{msg}"',
@@ -455,22 +466,40 @@ class Devbranch(Lazyload):
             msg="Push branch").run()
         )
 
+
+        responsibles_alert = ''
+        if responsibles:
+            # Add the responsibls to a comment on the issue
+            issue = Issue(number=self.get('issue_number'))
+            [_, _] = asyncio.run(Gitter(
+                cmd=f"gh issue comment {self.get('issue_number')} --body '{responsibles}'",
+                msg="Add responsibles to the issue").run()
+            )
+
+            responsibles_alert = f"\n\n🔔 You touched on files that have named responsibles {responsibles}\n\n"
+
+
         print(
-            f"\n\n👍 Branch has got a new commit that mentions issue '#{self.get('issue_number')}' and it's pushed\n💡 Try to run: gh browse {self.get('issue_number')}")
+            f"\n\n👍 Branch has got a new commit that mentions issue '#{self.get('issue_number')}' and it's pushed\n{responsibles_alert}💡 Try to run: gh browse {self.get('issue_number')}")
         return True
 
-    async def _load_status(self):
+    async def _load_status(self, reload: bool = False):
         """Load the status of the current branch sets the following properties:
         - 'status': The output of `git status --porcelain`
         - 'is_dirty': True if there are unstaged or staged changes
         - 'unstaged_changes': List of unstaged changes
         - 'staged_changes': List of staged changes"""
 
-        if self.get('is_dirty') and self.get('unstaged_changes') and self.get('staged_changes'):
-            # If the status is already loaded, return
-            return
+        if not reload: # Not in force reload mode
+            if self.get('is_dirty') and self.get('unstaged_changes') and self.get('staged_changes'):
+                # If the status is already loaded, return
+                return
 
         await self._assert_props(['status'])
+
+        if reload:
+            await self._force_prop_reload('status')
+
         self.props['unstaged_changes'] = []
         self.props['staged_changes'] = []
         for line in self.get('status').splitlines():
@@ -480,6 +509,21 @@ class Devbranch(Lazyload):
                 self.props['staged_changes'].append(line)
         self.set('is_dirty',  len(self.props['unstaged_changes']) > 0 or len(
             self.props['staged_changes']) > 0)
+        
+    def _get_pretty_changes(self, staged: bool = True, unstaged: bool = False):
+        """Get a pretty formatted list of changes"""
+        changes = []
+        if staged:
+            changes.extend(self.get('staged_changes'))
+        if unstaged:
+            changes.extend(self.get('unstaged_changes'))
+
+        ## Go through all items and remove the tailing ' M', 'MM', 'A ' or '??' 
+        changes = [re.sub(r'^\s*([?M]+|A\s+)', '', change) for change in changes]
+        # Remove leading whitespace
+        changes = [change.lstrip() for change in changes]
+        return changes
+
 
     def set_issue(self, issue_number=int, assign=True):
         """Set the issue number context to work on"""

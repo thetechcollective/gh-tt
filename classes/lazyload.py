@@ -204,4 +204,20 @@ class Lazyload:
             return self._manifest[caller][prop].get('group', 'init')
         except KeyError:
             return 'init'  # Default group if not found
-   
+        
+    async def _force_prop_reload(self, prop: str):
+        """Force reload a property by removing it from the props dict
+        Args:
+            prop (str): The property to force reload
+        """
+        msg = self._manifest[self._caller()][prop].get('msg')
+        cmd = self._manifest[self._caller()][prop].get('cmd')
+        await  self._load_prop(
+            prop,
+            cmd,
+            msg
+        )
+
+        
+
+

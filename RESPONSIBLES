@@ -1,0 +1,19 @@
+
+# These users are the responsibles in this repo 
+# The owners will recieve a mention in the issue you are 
+# working in when you use `gh tt wrapup` 
+
+**/*           @lakruzz
+
+
+# Order is important; the last matching pattern takes the most
+# precedence. 
+# Supported globs are:
+# '*' for any number of characters - not descending into directories
+# '**' for any number of characters - descending into directories
+
+# Each line had the following format
+# <pattern> <responsible> [... <responsible>]
+
+# Only named accounts can be specified as responsibles.
+# Not teams or email addresses.
