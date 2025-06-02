@@ -31,92 +31,16 @@ class Devbranch(Lazyload):
             'is_dirty': False,
         }
 
-        # TODO This object can be loaded from main, så the validation is premature
-        self.set('issue_number', self.__validate_issue_branch())
-
-    def __validate_issue_branch(self):
-        # Depends on 'init' group being loaded
-        """Validate the current branch name to be a valid development branch
-        Returns:
-            str: The issue number extracted from the branch name
-        Raises:
-            AssertionError: If the branch name does not start with a valid issue number
-        Additional:
-            Loads 'init' group from the manifest
-        """
+    def _load_issue_number(self):
 
         asyncio.run(self._assert_props(['branch_name']))
         match = re.match(r'^(\d+).+', self.get('branch_name'))
-        #assert match, f"Branch name '{self.get('branch_name')}' does not constitute a valid development branch - Must be prefixed with a valid issue number"
         if not match:
-            return None
+            self.set('issue_number', None)
+            return False
         
-        return f"{match.group(1)}"
-
-    async def __load_details(self):
-
-        if self._details_loaded:
-            return
-
-        else:
-
-            # Get the status output from git
-            [status_output, _] = await Gitter(
-                cmd='git status --porcelain',
-                msg="Get the status of the working directory",
-                die_on_error=True).run()
-
-            # Parse the status lines
-            unstaged = []
-            staged = []
-            for line in status_output.splitlines():
-                if line.startswith('??') or line.startswith(' M'):
-                    unstaged.append(line)
-                elif line.startswith('M ') or line.startswith('MM') or line.startswith('A '):
-                    staged.append(line)
-
-            self.set('unstaged_changes', unstaged)
-            self.set('staged_changes', staged)
-            self.set('is_dirty',  len(unstaged) > 0 or len(staged) > 0)
-
-            await self.load_prop(
-                prop='merge_base',
-                cmd=f"git merge-base {self.get('branch_name')} {self.get('default_branch')}",
-                msg="Get the merge base of the current branch and the default branch")
-
-            await self.load_prop(
-                prop='default_sha1',
-                cmd=f"git rev-parse {self.get('default_branch')}",
-                msg="Get the SHA1 of the default branch")
-
-            await self.load_prop(
-                prop='commit_count',
-                cmd=f"git rev-list --count {self.get('branch_name')} ^{self.get('default_branch')}",
-                msg="Get the number of commits in the current branch")
-
-            await self.load_prop(
-                prop='commit_message',
-                cmd=f"git show -s --format=%B {self.get('branch_name')}",
-                msg="Get the commit message of the current branch HEAD")
-
-        self._details_loaded = True
-        return
-
-    def __validate_commit_message(self):
-        # TODO: Get rid of this
-        """
-        Check if the commit message already contains the issue number, fix it if it doesn't
-        """
-        commit_message = self.get('commit_message')
-        issue_number = self.get('issue_number')
-
-        if re.search(r'(close|closes|closed|fix|fixes|fixed|resolve|resolves|resolved) #'+issue_number, commit_message):
-            self.set('new_message', commit_message)
-            return commit_message
-        else:
-            self.set('new_message', commit_message +
-                     f" - resolves #{issue_number}")
-            return self.get('new_message')
+        self.set('issue_number',f"{match.group(1)}")
+        return True
 
     async def __load_squeezed_commit_message(self):
         """
@@ -124,6 +48,8 @@ class Devbranch(Lazyload):
         The first line is the issue title, followed by the commit messages
         for each commit on the branch (excluding the merge base).
         """
+        self._load_issue_number()
+
         await self._assert_props([
             'issue_title',
             'commit_log'
@@ -146,6 +72,8 @@ class Devbranch(Lazyload):
         """
         Squeeze the current branch into a single commit
         """
+
+        await self._load_status()
 
         # Abort for rebase if we must
         await self._assert_props([
@@ -202,46 +130,7 @@ class Devbranch(Lazyload):
 
         return self.get('squeeze_sha1')
 
-    def __workspace_is_clean(self):
-        # check if status is clean
-        value = None
-        result = None
-        [val, result] = Gitter(
-            cmd='git status --porcelain',
-            die_on_error=False,
-            msg="Check if the status is clean").run()
-
-        if value != '':
-            print(
-                f"ERROR: The working directory is not clean:\n{value}\n\nPlease commit or stash your changes before delivering the issue")
-            sys.exit(1)
-        return True
-
-    async def __rebase(self, autostash=True):
-        """
-        Rebase the branch to the default branch
-        """
-        await self.__load_details()
-
-        autostash_switch = ''
-        if autostash:
-            autostash_switch = '--autostash '
-
-        [_, result] = await Gitter(
-            cmd=f"git rebase {autostash_switch}{self.get('remote')}/{self.get('default_branch')}",
-            die_on_error=False,
-            msg="Rebase the branch").run()
-        if result.returncode != 0:
-            # abort the rebase
-            [_, _] = Gitter(
-                cmd="git rebase --abort",
-                msg="Abort the rebase").run()
-            print(
-                f"ERROR: Could not rebase the branch\n{result.stderr}", file=sys.stderr)
-            sys.exit(1)
-        return True
-
-    async def __push(self, force=False):
+    async def _push(self, force=False):
         # push the branch to the remote
         force_switch = ''
         if force == True:
@@ -271,110 +160,12 @@ class Devbranch(Lazyload):
         else:
             return True
 
-    def __reset_branch(self, squeeze_sha1=None, prefix=None):
-        """
-        Reset the current branch to the new commit
-        If prefix is set, create a new branch with the same name as the current branch, but prefixed with prefix"""
-
-        if squeeze_sha1 == None:
-            squeeze_sha1 = self.get('squeeze_sha1')
-
-        branch_name = self.get('branch_name')
-
-        if prefix is not None:
-            branch_name = f"{prefix}{branch_name}"
-
-        value = None
-        result = None
-        [value, result] = Gitter(
-            cmd=f"git branch -f {branch_name} {squeeze_sha1}",
-            msg=f"Set the branch '{branch_name}' to the new commit").run()
-        return squeeze_sha1
-
-    async def __check_rebase(self):
-        # Get the SHA1 of the default branch
-        await self.__load_details()
-
-        # Check if the default branch is ahead of the merge-base
-        if self.get('default_sha1') != self.get('merge_base'):
-            # rebase the default branch
-            print(
-                f"WARNING:\nThe {self.get('default_branch')} branch has commits your branch has never seen. A rebase is required. Do it now!")
-            return False
-        else:
-            return True
-
-    async def collapse(self):
-        """Collapse the current branch into a single commit"""
-
-        await self.__load_details()
-
-        # Check if the current branch is the default branch
-        if self.get('branch_name') == self.get('default_branch'):
-            print(
-                f"ERROR: Cannot collapse the default branch: ({self.get('branch_name')})\nSwitch to a development branch", file=sys.stderr)
-            sys.exit(1)
-
-        # check if status is clean
-        self.__workspace_is_clean()  # will exit if not clean
-
-        # Rebase the branch to the remote
-        self.__rebase()  # will exit if rebase fails
-
-        # Get the number of commits in the current branch
-        commit_count = self.get('commit_count')
-
-        # Check if the commit message already contains the issue number
-        issue_number = self.get('issue_number')
-
-        # Check if the commit message already contains the valid issue reference
-        new_message = self.__validate_commit_message()
-
-        # TODO don't do this check, just collapse!
-        # Check if the collapse is even necessary
-        if commit_count == '1':
-            print(
-                "Nothing to collapse. The branch already only contain a single commit")
-            if self.props['new_message'] != self.props['commit_message']:
-                print("The commit message has been updated and amended.")
-
-                [output, result] = Gitter(
-                    cmd=f"git commit --amend -m \"{self.props['new_message']}\"",
-
-                    msg="Amend the commit message").run()
-
-                [self.props['squeeze_sha1'], result] = Gitter(
-                    cmd=f"git rev-parse HEAD",
-
-                    msg="Get the SHA1 of the new commit").run()
-            else:
-                print("Even the commit message is already up to date.")
-
-        # A collapse is necessary
-        else:
-            squeeze_sha1 = self.__squeeze()
-
-            # verify that the new commit tree is identical to the old commit
-            is_the_same = self.__compare_before_after_trees()
-
-            if not is_the_same:
-                raise AssertionError(
-                    f"Before and after the squeeze commit trees differ")
-                sys.exit(1)
-
-            # TODO Set then branch to a ready branch
-            # move the branch to the new commit
-            self.__reset_branch(prefix=Config.config()[
-                                'wrapup']['policies']['branch_prefix'])
-
-        # push the branch to the remote
-        # TODO be sure to push the right branch - if the ready branch is used, that's the one that should be pushed
-        self.__push(force=True)
-
-#        print(f"Branch {self.get('branch_name')} has been collapsed into a single commit (was: {self.get('sha1')[:7]} now: {self.get('squeeze_sha1')[:7]})")
-
     def __develop(self, issue_number=int, branch_name=str):
-        # create a new branch, link it to it's upstream , it's issue issue and then check it out
+        """Develop on the issue branch, creating a new branch if needed
+        Args:
+            issue_number (int): The issue number to develop on
+            branch_name (str): The name of the branch to develop on
+        """
         
         [output, result] = asyncio.run(Gitter(
             cmd=f"gh issue develop {issue_number} -b {self.get('default_branch')} -n {self.get('branch_name')} -c",
@@ -382,6 +173,12 @@ class Devbranch(Lazyload):
         )
 
     def __reuse_issue_branch(self, issue_number=int):
+        """Check if there is a local or remote branch with the issue number and switch to it
+        Args:
+            issue_number (int): The issue number to check for
+        Returns:
+            bool: True if a branch was found and switched to, False otherwise
+        """
         # check if there is a local branch with the issue number
         [local_branches, result] = asyncio.run(Gitter(
             cmd='git branch --format="%(refname:short)"',
@@ -421,12 +218,9 @@ class Devbranch(Lazyload):
         return match
 
     def wrapup(self, message: str):
-        """Mapped to the 'wrapup' subcommand."""
-        # Implements similar behavior to the "note-this" alias:
-        # - Stage all changes if nothing is staged
-        # - Commit with message "<message> #<issue_number>"
-        # - Push the branch
+        """Mapped to the 'wrapup' subcommand in the main program"""
 
+        self._load_issue_number()
         asyncio.run(self._load_status())
 
         if not self.get('is_dirty'):
@@ -461,16 +255,12 @@ class Devbranch(Lazyload):
             msg="Commit changes").run()
         )
 
-        [_, _] = asyncio.run(Gitter(
-            cmd="git push",
-            msg="Push branch").run()
-        )
+        self._push(force=True)
 
 
         responsibles_alert = ''
         if responsibles:
             # Add the responsibls to a comment on the issue
-            issue = Issue(number=self.get('issue_number'))
             [_, _] = asyncio.run(Gitter(
                 cmd=f"gh issue comment {self.get('issue_number')} --body '{responsibles}'",
                 msg="Add responsibles to the issue").run()
@@ -511,7 +301,16 @@ class Devbranch(Lazyload):
             self.props['staged_changes']) > 0)
         
     def _get_pretty_changes(self, staged: bool = True, unstaged: bool = False):
-        """Get a pretty formatted list of changes"""
+        """Get a pretty formatted list of changes
+        
+        Args:
+            staged (bool): If True, include staged changes
+            unstaged (bool): If True, include unstaged changes
+        Returns:
+            list: A list of changes with the tailing ' M', 'MM', 'A ' or '??' removed
+        """
+        asyncio.run(self._assert_props(['status']))
+        asyncio.run(self._load_status())
         changes = []
         if staged:
             changes.extend(self.get('staged_changes'))
@@ -524,9 +323,9 @@ class Devbranch(Lazyload):
         changes = [change.lstrip() for change in changes]
         return changes
 
-
     def set_issue(self, issue_number=int, assign=True):
         """Set the issue number context to work on"""
+
         asyncio.run(self._assert_props(['remote', 'default_branch']))
 
 
