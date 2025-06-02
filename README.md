@@ -1,6 +1,6 @@
 # gh-tt
 
-**This utility is desinged as a GitHub Command Line extension.**
+**This utility is designed as a GitHub Command Line extension.**
 
 Install:
 
@@ -20,19 +20,19 @@ usage: gh tt [-h] [-v] {workon,wrapup,deliver} ...
 positional arguments:
   {workon,wrapup,deliver}
     workon              Set the issue number context to work on
-    wrapup              Collapse dev branch into one commit, check or set the commit message
-    deliver             Create the pull request for the current issue. Rebase and push the branch
+    wrapup              Commit the stat of the current issue branch and push it to the remote
+    deliver             Create a collapsed 'ready' branch for the current issue branch and push it to the remote
 
 options:
-  -h, --help       show this help message and exit
-  -v, --verbose    Enable verbose output
+  -h, --help            show this help message and exit
+  -v, --verbose         Enable verbose output
 ```
 
 #### --help
-You can always use the switch `--help` to learn details about a specific syntax
+You can always use the switch `--help|-h` to learn details about a specific syntax
 
 #### --verbose
-You can always use the switch `--verbose` to have the extensions print out all underlying calls to the OS.
+You can always use the switch `--verbose|-v` to have the extension print out all underlying calls to Git and GitHub.
 
 ## gh workon
 

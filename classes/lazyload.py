@@ -74,6 +74,24 @@ class Lazyload:
             print(f"ERROR: Could not write to file {file}: {e}", file=sys.stderr)
             return False
 
+    classmethod
+    def from_json(cls, file: str):
+        """Loads the class properties from a json file
+        Args:
+            file (str): The file to load the properties from
+        Returns:
+            Lazyload: An instance of the class with the properties loaded
+        Raises:
+            AssertionError: If the file does not exist or is not a valid json file
+        """
+        assert os.path.exists(file), f"File {file} does not exist"
+        with open(file, 'r') as f:
+            try:
+                props = json.load(f)
+                cls.props = props
+                return cls
+            except json.JSONDecodeError as e:
+                raise AssertionError(f"File {file} is not a valid JSON file: {e}")
 
 
     async def _load_prop(self, prop: str, cmd: str, msg: str):

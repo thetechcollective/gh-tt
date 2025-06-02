@@ -412,6 +412,12 @@ Your branch is up to date with 'origin/17-Add_a_deliver_subcommand'.
         devbranch.to_json('tests/data/devbranch/.tt-config-set_issue.json')
         self.assertEqual(True, True)
 
+    @pytest.mark.dev
+    def test__load_from_json(self):
+        devbranch = Devbranch().from_json(file='tests/data/devbranch/.tt-config-squeeze.json')
+        self.assertEqual(devbranch.get('issue_number'), '91')
+
+
 
 
   #  @pytest.mark.unittest
