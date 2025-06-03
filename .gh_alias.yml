@@ -1,18 +1,3 @@
 workon:  '!gh tt workon "$@"'
 wrapup:  '!gh tt wrapup "$@"'
 deliver: '!gh tt deliver "$@"'
-note:   '!f(){ 
-    USAGE="Usage:\n    gh note \"This is the note to the issue I´m working on\"";
-    ISSUE_NUMBER=$(git rev-parse --abbrev-ref HEAD | grep -o -E "^[0-9]+");
-    if [ -z "$ISSUE_NUMBER" ]; then
-      echo "ERROR: You are not on an issue branch\nRun:\n   gh workon -i <issue_number>\n\n...and try again";
-      return 1;
-    fi;
-    if [ -z "$1" ]; then
-      echo ERROR:You need to provide a note;
-      echo $USAGE;
-      return 1;
-    fi;
-    gh issue comment $ISSUE_NUMBER -b "$*"; 
-  }; 
-  f $1' 
