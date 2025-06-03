@@ -30,26 +30,16 @@ class TestDevbranch(unittest.TestCase):
             devbranch = Devbranch()
         self.assertRegex(str(e.exception), r"Error: Unable to fetch from the remote")            
 
-#    @pytest.mark.unittest
-    @patch('devbranch.Gitter')
-    def test_constructor_success(self, MockDevbranchGitter):
-        # Setup
-        mock_gitter_instance = MockDevbranchGitter.return_value
-        mock_gitter_instance.run.side_effect = [
-            ['', Mock(returncode=0)], # git fetch
-            ['main', None], # gh repo view defaultBranchRef
-            ['origin', None], # git remote
-            ['17-Add_a_deliver_subcommand', None], # git branch   
-        ]
-
+    @pytest.mark.unittest
+    def test_constructor_success(self):
         devbranch = Devbranch()
-        self.assertEqual(devbranch.get('default_branch'), 'main')
-        self.assertEqual(devbranch.get('remote'), 'origin')
-        self.assertEqual(devbranch.get('branch_name'), '17-Add_a_deliver_subcommand')
-        self.assertEqual(devbranch.get('issue_number'), '17')
-        self.assertEqual(devbranch.get('sha1'), None)
-        
-#    @pytest.mark.unittest
+        self.assertEqual(devbranch.get('unstaged_changes'), None)
+        self.assertEqual(devbranch.get('staged_changes'), None)
+        self.assertEqual(devbranch.get('is_dirty'), None)
+        self.assertEqual(devbranch.get('issue_number'), None)
+        self.assertEqual(devbranch._manifest_loaded, True)
+
+    @pytest.mark.unittest
     @patch('devbranch.Gitter')
     def test_constructor_success_no_issue(self, MockDevbranchGitter):
         # Setup

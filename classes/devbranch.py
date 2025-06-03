@@ -25,11 +25,10 @@ class Devbranch(Lazyload):
         super().__init__()
 
         # Init properties that are not defined in props.json
-        self.props = {
-            'unstaged_changes': None,
-            'staged_changes': None,
-            'is_dirty': False,
-        }
+        self.set('unstaged_changes', None)
+        self.set('staged_changes', None)
+        self.set('is_dirty', None)
+        self.set('issue_number', None)
 
     def _load_issue_number(self):
 
