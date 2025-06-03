@@ -135,7 +135,7 @@ class Devbranch(Lazyload):
         if force == True:
             force_switch = '--force-with-lease'
 
-        [output, result] = Gitter(
+        [output, result] = await Gitter(
             cmd=f"git push {force_switch}",
             msg="Push the branch to the remote").run()
 
@@ -254,7 +254,7 @@ class Devbranch(Lazyload):
             msg="Commit changes").run()
         )
 
-        self._push(force=True)
+        asyncio.run(self._push(force=True))
 
 
         responsibles_alert = ''
