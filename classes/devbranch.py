@@ -371,7 +371,7 @@ class Devbranch(Lazyload):
         [output, result] = asyncio.run(Gitter(
             cmd=f"git push --force-with-lease {remote} {squeeze_sha}:refs/heads/{ready_prefix}/{branch_name}",
             die_on_error=True,
-            msg="Push the squeezed sha to the remase as a 'ready' branch").run()
+            msg="Push the squeezed sha to the remote as a 'ready' branch").run()
         )
 
         print(
