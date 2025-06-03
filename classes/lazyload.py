@@ -30,7 +30,7 @@ class Lazyload:
 
     def __init__(self):
         self.props = {}
-        self._loaded = []  # List of manifest groups that have been loaded
+        self.set('_loaded', [])  # List of properties that have been loaded
 
     def set(self, key: str, value: str):
         """Setter for the class properties
@@ -150,7 +150,7 @@ class Lazyload:
             AssertionError: If the class is not found in the manifest file.
         """
         # Check if the group is already loaded
-        if group in self._loaded:
+        if group in self.get('_loaded'):
             return True
 
         # Require the manifest to be loaded
@@ -167,7 +167,7 @@ class Lazyload:
 
             # check if the property has explicit dependecies, that are not loaded yet
             dependency = self._manifest[caller][prop].get('dependency', 'init')
-            if group != 'init' and dependency not in self._loaded:
+            if group != 'init' and dependency not in self.get('_loaded'):
                 # load the dependency first
                 await self._load_manifest(dependency)
 
@@ -181,7 +181,7 @@ class Lazyload:
                 # Enforce the rule: No command can expect value substitution for props within the same group
                 dep_group = self._get_manifest_group(caller, match)
                 assert group != dep_group, f"ERROR: Property '{prop}' in group '{group}' defined in {self._manifest_file} implicitly depends on property '{match}'. They both belong to the same dependency group '{group}'. Value substitution within the same group is not allowed."
-                if dep_group not in self._loaded:
+                if dep_group not in self.get('_loaded'):
                     await self._load_manifest(dep_group)
 
             # When all dependencies are loaded compile the final command by replacing
@@ -206,7 +206,7 @@ class Lazyload:
 
         # Run all coroutines concurrently
         await asyncio.gather(*tasks)
-        self._loaded.append(group)
+        self.props['_loaded'].append(group)
         return True
 
     def _get_manifest_group(self, caller: str, prop: str):

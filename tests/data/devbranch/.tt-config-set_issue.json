@@ -3,10 +3,10 @@
     "staged_changes": null,
     "is_dirty": false,
     "branch_name": "95-make_workon_work_again_in_the_new_design",
-    "sha1": "37eaae086d8953fcd280cd7510dee7a433e67e72",
-    "status": " M .vscode/settings.json\n M classes/devbranch.py\n M classes/gitter.py\n M classes/issue.py\n M classes/project.py\n M classes/props.json\n M tests/data/devbranch/.tt-config-squeeze.json\n M tests/test_devbranch.py\n M tests/test_issue.py",
+    "sha1": "498ec910b4cda24e17f035be677cdc3d84cba9d2",
+    "status": " M classes/devbranch.py",
     "remote": "origin",
-    "default_branch": "main",
     "issue_number": "95",
+    "default_branch": "main",
     "assign": true
 }
