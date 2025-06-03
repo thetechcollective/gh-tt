@@ -30,9 +30,9 @@ class Devbranch(Lazyload):
         self.set('is_dirty', None)
         self.set('issue_number', None)
 
-    def _load_issue_number(self):
+    async def _load_issue_number(self):
 
-        asyncio.run(self._assert_props(['branch_name']))
+        await self._assert_props(['branch_name'])
         match = re.match(r'^(\d+).+', self.get('branch_name'))
         if not match:
             self.set('issue_number', None)
@@ -47,7 +47,7 @@ class Devbranch(Lazyload):
         The first line is the issue title, followed by the commit messages
         for each commit on the branch (excluding the merge base).
         """
-        self._load_issue_number()
+        await self._load_issue_number()
 
         await self._assert_props([
             'issue_title',
@@ -219,7 +219,7 @@ class Devbranch(Lazyload):
     def wrapup(self, message: str):
         """Mapped to the 'wrapup' subcommand in the main program"""
 
-        self._load_issue_number()
+        asyncio.run(self._load_issue_number())
         asyncio.run(self._load_status())
 
         if not self.get('is_dirty'):
