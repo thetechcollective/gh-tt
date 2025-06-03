@@ -39,7 +39,7 @@ class TestDevbranch(unittest.TestCase):
         self.assertEqual(devbranch.get('issue_number'), None)
         self.assertEqual(devbranch._manifest_loaded, True)
 
-    @pytest.mark.unittest
+    # @pytest.mark.unittest
     @patch('devbranch.Gitter')
     def test_constructor_success_no_issue(self, MockDevbranchGitter):
         # Setup
