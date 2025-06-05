@@ -147,10 +147,10 @@ class Devbranch(Lazyload):
 
         if diff != '':
             print(
-                f"WARNING:\nThe squeezed commit tree ({squeeze_sha1}) is not identical to the one on the issue branch ({sha1})\n Diff:\n{diff}")
-            return False
-        else:
-            return True
+                f"FATAL:\nThe squeezed commit tree ({squeeze_sha1}) is not identical to the one on the issue branch ({sha1})\n Diff:\n{diff}", file=sys.stderr)
+            sys.exit(1)
+        
+        return True
 
     def __develop(self, issue_number=int, branch_name=str):
         """Develop on the issue branch, creating a new branch if needed
@@ -348,6 +348,6 @@ class Devbranch(Lazyload):
         asyncio.run(self._run('push_squeeze'))
 
         print(
-            f"\n\n👍\nBranch '{self.get('branch_name')}' has been squeezed into one commit; '{self.get('squeeze_sha1')[:7]}' and pushed to {self.get('remote')} as '{ready_prefix}/{self.get('branch_name')}'")
+            f"\n👍 Branch '{self.get('branch_name')}' has been squeezed into one commit; '{self.get('squeeze_sha1')[:7]}' and pushed to {self.get('remote')} as '{ready_prefix}/{self.get('branch_name')}'")
 
         return self.get('squeeze_sha1')

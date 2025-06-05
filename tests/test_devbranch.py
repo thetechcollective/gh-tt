@@ -77,7 +77,8 @@ class TestDevbranch(unittest.TestCase):
 
     @pytest.mark.unittest
     @patch('devbranch.Devbranch._run', new_callable=AsyncMock)
-    def test__compare_before_after_trees(self, mock_run):
+    @patch('sys.stderr', new_callable=StringIO)
+    def test__compare_before_after_trees(self, mock_stderr, mock_run):
         mock_run.side_effect = [
             "",             # no diffs
             "somefile.txt"  # Some diffs
@@ -98,11 +99,15 @@ class TestDevbranch(unittest.TestCase):
         mock_run.reset_mock()
 
         # Some diffs
-        diff = loop.run_until_complete(
-            devbranch._Devbranch__compare_before_after_trees())
-        self.assertFalse(diff)
+        with self.assertRaises(SystemExit) as cm:
+            diff = loop.run_until_complete(
+                devbranch._Devbranch__compare_before_after_trees())
+            
+        self.assertEqual(cm.exception.code, 1)
+        self.assertRegex(mock_stderr.getvalue(), r"FATAL:\nThe squeezed commit tree (.*) is not identical to the one on the issue branch" )
         mock_run.assert_called_once_with('compare_trees')
         mock_run.reset_mock()
+
 
         loop.close()
 
