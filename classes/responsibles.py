@@ -164,8 +164,6 @@ class Responsibles():
 
         Returns:
             list: List of files that have responsibles - after the exclusion.
-            Each item is in the format: \<file_path\> \[\@user, (\@user2, \@user3)\]
-            If no owners are found, the file is not included in the list.
         """
         result = []
 
@@ -198,7 +196,6 @@ class Responsibles():
 
         Returns:
             str: Markdown formatted list of files that have responsibles.
-            Each item is in the format: \<file_path\> \[\@user, (\@user2, \@user3)]
             If no owners are found, the file is not included in the list.
         """
         filelist = cls.responsibles_parse(changeset, exclude)
