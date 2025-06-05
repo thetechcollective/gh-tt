@@ -83,6 +83,29 @@
       "cmd": "git rev-list --count {branch_name} ^{remote}/{default_branch}",
       "msg": "Get the number of commits in the current branch",
       "group": "pre-deliver"
+    },
+    "local_branches": {
+      "cmd": "git branch --format='%(refname:short)'",
+      "msg": "Get the list of local branches",
+      "group": "branch_reuse"
+    },
+    "remote_branches": {
+      "cmd": "git branch -r --format='%(refname:short)'",
+      "msg": "Get the list of remote branches",
+      "group": "branch_reuse"
+    },
+    // Groupless commands - helper functions to run with _run() - do not crearte a property
+    "checkout_local_branch": {
+      "cmd": "git checkout {branch_name}",
+      "msg": "Switch to the local branch"
+    },
+    "checkout_remote_branch": {
+      "cmd": "git checkout -b {branch_name} {remote}/{branch_name}",
+      "msg": "Switch to the remote branch and create a local branch"
+    },
+    "compare_trees": {
+      "cmd": "git diff-tree --no-commit-id --name-only -r {default_sha1} {squeeze_sha1}",
+      "msg": "Verify that the new squeezed commit tree is identical to the one on the issue branch"
     }
   },
   "issue": {

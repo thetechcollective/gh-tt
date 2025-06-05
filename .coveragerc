@@ -11,7 +11,7 @@ omit =
 
 [report]
 # Fail the build if the coverage is less than 80%
-fail_under = 12
+fail_under = 38
 
 # Skip empty files
 skip_empty = True

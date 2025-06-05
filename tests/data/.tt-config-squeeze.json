@@ -1,5 +1,8 @@
 {
-  "project": {
+    "_loaded": [
+        "init"
+    ],
+    "project": {
     "owner": "thetechcollective",
     "number": "12"
   },

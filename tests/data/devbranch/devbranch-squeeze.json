@@ -1,18 +1,17 @@
 {
-    "unstaged_changes": [
-        " M .github/workflows/python-app.yml",
-        " M .tt-config.json",
-        " M classes/devbranch.py",
-        " M classes/gitter.py",
-        " M gh_tt.py",
-        " M tests/data/devbranch/.tt-config-squeeze.json",
-        " M tests/test_config.py"
+    "_loaded": [
+        "init",
+        "remote-init",
+        "branch_reuse",
+        "pre-squeeze",
+        "squeeze"
     ],
-    "staged_changes": [],
-    "is_dirty": true,
+    "staged_changes": null,
+    "is_dirty": null,
+    "unstaged_changes": null,
     "branch_name": "91-Add_support_for_ready_branches_and_add_workflow_to_trigger_it",
     "sha1": "31deb7deaab9586563d86b281b7c9edb4c714b7b",
-    "status": " M .github/workflows/python-app.yml\n M .tt-config.json\n M classes/devbranch.py\n M classes/gitter.py\n M gh_tt.py\n M tests/data/devbranch/.tt-config-squeeze.json\n M tests/test_config.py",
+    "status": "MM .github/workflows/python-app.yml\n M .tt-config.json\n M classes/devbranch.py\n M classes/gitter.py\nM  gh_tt.py\n M tests/data/devbranch/devbranch-squeeze.json\n?? tests/test_config.py",
     "remote": "origin",
     "issue_number": "91",
     "default_branch": "main",

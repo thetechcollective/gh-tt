@@ -2,6 +2,7 @@
     "python.testing.pytestArgs": [
         "tests"
         ,"-m unittest"
+
         
     ],
     "python.testing.unittestEnabled": false,

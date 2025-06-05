@@ -1,0 +1,19 @@
+{
+    "_loaded": [
+        "init",
+        "remote-init",
+        "branch_reuse"
+    ],
+    "unstaged_changes": null,
+    "staged_changes": null,
+    "is_dirty": null,
+    "issue_number": "7",
+    "branch_name": "7-Add_unit_tests",
+    "sha1": "651b4d3d530fcf121085e8995842835ba403ee1c",
+    "status": " M .vscode/settings.json\n M classes/devbranch.py\n M classes/lazyload.py\n M classes/props.json\n M tests/test_devbranch.py\n?? tests/data/devbranch/main.json",
+    "remote": "origin",
+    "default_branch": "main",
+    "assign": true,
+    "local_branches": "7-Add_unit_tests\n95-make_workon_work_again_in_the_new_design\nmain\nnot_valid\ntype-switch",
+    "remote_branches": "origin/103-Test_issue\norigin/7-Add_unit_tests\norigin/95-make_workon_work_again_in_the_new_design\norigin\norigin/main"
+}

@@ -145,16 +145,15 @@ class Devbranch(Lazyload):
         """
         Verify that the new commit tree on the collapsed branch is identical to the old commit
         """
+        await self._assert_props(['sha1', 'squeeze_sha1'])
 
         sha1 = self.get('sha1')
         squeeze_sha1 = self.get('squeeze_sha1')
-        [output, result] = await Gitter(
-            cmd=f"git diff-tree --no-commit-id --name-only -r {sha1} {squeeze_sha1}",
-            msg="Verify that the new squeezed commit tree is identical to the one on the issue branch").run()
+        diff = await self._run('compare_trees')
 
-        if output != '':
+        if diff != '':
             print(
-                f"WARNING:\nThe squeezed commit tree ({squeeze_sha1}) is not identical to the one on the issue branch ({sha1})\n Diff:\n{output}")
+                f"WARNING:\nThe squeezed commit tree ({squeeze_sha1}) is not identical to the one on the issue branch ({sha1})\n Diff:\n{diff}")
             return False
         else:
             return True
@@ -171,47 +170,31 @@ class Devbranch(Lazyload):
             msg=f"gh develop {issue_number} on new branch {branch_name}").run()
         )
 
-    def __reuse_issue_branch(self, issue_number=int):
+    async def __reuse_issue_branch(self, issue_number=int):
         """Check if there is a local or remote branch with the issue number and switch to it
         Args:
             issue_number (int): The issue number to check for
         Returns:
             bool: True if a branch was found and switched to, False otherwise
         """
-        # check if there is a local branch with the issue number
-        [local_branches, result] = asyncio.run(Gitter(
-            cmd='git branch --format="%(refname:short)"',
-            msg=f"Get all local branches").run()
-        )
+        await self._assert_props(['local_branches', 'remote_branches'])
+
         match = False
-        for branch in local_branches.split('\n'):
+        for branch in self.get('local_branches').split('\n'):
             if re.match(f"^{issue_number}.+", branch):
                 self.set('branch_name', branch)
-                [output, result] = asyncio.run(Gitter(
-                    cmd=f"git checkout {self.get('branch_name')}",
-                    die_on_error=False,
-                    msg=f"Switch to the branch {self.get('branch_name')}").run()
-                )
-                if result.returncode != 0:
-                    print(f"Error: {result.stderr}", file=sys.stderr)
-                    sys.exit(1)
+                await self._run('checkout_local_branch')
                 match = True
                 break
 
         if not match:
             # check if there is a remote branch with the issue number
-            [remote_branches, result] = asyncio.run(Gitter(
-                cmd='git branch -r --format="%(refname:short)"',
-                msg=f"Get all remote branches").run()
-            )
-            for branch in remote_branches.split('\n'):
+
+            for branch in self.get('remote_branches').split('\n'):
                 match_obj = re.match(f"^origin/({issue_number}.+)", branch)
                 if match_obj:
                     self.set('branch_name', match_obj.group(1))
-                    [output, result] = asyncio.run(Gitter(
-                        cmd=f"git checkout -b {self.get('branch_name')} {self.get('remote')}/{self.get('branch_name')}",
-                        msg=f"Switch to the branch {self.props['branch_name']}").run()
-                    )
+                    await self._run('checkout_remote_branch')
                     match = True
                     break
         return match
@@ -280,7 +263,7 @@ class Devbranch(Lazyload):
         - 'staged_changes': List of staged changes"""
 
         if not reload: # Not in force reload mode
-            if self.get('is_dirty') and self.get('unstaged_changes') and self.get('staged_changes'):
+            if not self.get('is_dirty') == None and self.get('unstaged_changes') and self.get('staged_changes'):
                 # If the status is already loaded, return
                 return
 
@@ -327,13 +310,12 @@ class Devbranch(Lazyload):
 
         asyncio.run(self._assert_props(['remote', 'default_branch']))
 
-
         self.set('issue_number', issue_number)
         self.set('assign', assign)
 
         issue = Issue(number=issue_number)
 
-        reuse = self.__reuse_issue_branch(issue_number=issue_number)
+        reuse = asyncio.run(self.__reuse_issue_branch(issue_number=issue_number))
         if not reuse:
             # Construct a valid branch name based on the issue number, and the title, replacing spaces with underscores and weed out any chars that aren't allowind in branch names
             issue_title = issue.get('title')

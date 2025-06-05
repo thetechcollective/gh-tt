@@ -1,0 +1,13 @@
+{
+    "_loaded": [
+        "init"
+    ],
+    "unstaged_changes": null,
+    "staged_changes": null,
+    "is_dirty": null,
+    "issue_number": null,
+    "branch_name": "main",
+    "sha1": "651b4d3d530fcf121085e8995842835ba403ee1c",
+    "status": " M .vscode/settings.json\n M tests/test_devbranch.py\n?? tests/data/devbranch/main.json",
+    "remote": "origin"
+}

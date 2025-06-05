@@ -162,12 +162,12 @@ class Lazyload:
         tasks = []
         for prop in self._manifest[caller]:
             # Skip properties that are not in the specified group
-            if group != self._manifest[caller][prop].get('group', 'init'):
+            if group != self._manifest[caller][prop].get('group', None):
                 continue
 
             # check if the property has explicit dependecies, that are not loaded yet
-            dependency = self._manifest[caller][prop].get('dependency', 'init')
-            if group != 'init' and dependency not in self.get('_loaded'):
+            dependency = self._manifest[caller][prop].get('dependency', None)
+            if group != 'init' and dependency and dependency not in self.get('_loaded'):
                 # load the dependency first
                 await self._load_manifest(dependency)
 
@@ -224,7 +224,7 @@ class Lazyload:
             return 'init'  # Default group if not found
         
     async def _force_prop_reload(self, prop: str):
-        """Force reload a property by removing it from the props dict
+        """Force reload a property
         Args:
             prop (str): The property to force reload
         """
@@ -235,6 +235,39 @@ class Lazyload:
             cmd,
             msg
         )
+
+    async def _run(self, prop:str):
+        """Run a property command and return the value
+        Args:
+            prop (str): The property to run
+        Returns:
+            str: The value of the property after running the command
+        """
+
+        msg   = self._manifest[self._caller()][prop].get('msg')
+        cmd   = self._manifest[self._caller()][prop].get('cmd')
+        group = self._manifest[self._caller()][prop].get('group', None)
+
+        assert not group, f"ERROR: _run method should not be used for properties that aren't part of a group. Use _assert_props() instead"
+
+        # Find occurrences of {.*} in text (e.g., {someprop} and replace them with the property values)
+        matches = re.findall(r'(?<!{)\{(?!{)(.*?)\}', cmd)
+        for match in matches:
+            cmd = cmd.replace(f"{{{match}}}", str(self.get(match)))
+
+        # Find and expand occurrences of {{.*}} in text (e.g., {{tree}})  and replace them with just a single '{' '}' e.g. {tree}
+        matches = re.findall(r'{{(.*?)}}', cmd)
+        for match in matches:
+            cmd = cmd.replace(f"{{{{{match}}}}}", f"{{{match}}}")
+
+        from gitter import Gitter # avoid circular import
+
+        [value, _] = await Gitter(
+            cmd=f"{cmd}",
+            msg=f"{msg}",
+            die_on_error=True).run()
+        return value
+
 
         
 
