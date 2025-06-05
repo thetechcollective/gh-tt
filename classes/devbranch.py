@@ -88,7 +88,6 @@ class Devbranch(Lazyload):
 
         # check if the working directory is dirty
         # assert 'status', 'is_dirty', 'unstaged_changes' and 'staged_changes'
-        await self._load_status()
         if self.get('is_dirty'):
             # check if dirty is allowed
             if Config.config()['squeeze']['policies']['allow-dirty'] == False:
@@ -117,11 +116,6 @@ class Devbranch(Lazyload):
                         "The branch will be squeezed, but the changes in the files listed above will not be included in the commit.", file=sys.stderr)
 
         await self.__load_squeezed_commit_message()
-
-        # await self._load_prop(
-        #    prop='squeeze_sha1',
-        #    cmd=f"git commit-tree {self.get('branch_name')}^{{tree}} -p {self.get('merge_base')} -m \"{squeeze_message}\"",
-        #    msg="Collapse the branch into a single commit")
 
         await self._assert_props(['squeeze_sha1'])
 
@@ -345,18 +339,15 @@ class Devbranch(Lazyload):
     def deliver(self):
         """Mapped to the 'deliver' subcommand."""
 
-        squeeze_sha = asyncio.run(self.__squeeze())
-        remote = self.get('remote')
-        branch_name = self.get('branch_name')
-        ready_prefix = Config.config()['deliver']['policies']['branch_prefix']
+        self._assert_props(['branch_name', 'remote'])
 
-        [output, result] = asyncio.run(Gitter(
-            cmd=f"git push --force-with-lease {remote} {squeeze_sha}:refs/heads/{ready_prefix}/{branch_name}",
-            die_on_error=True,
-            msg="Push the squeezed sha to the remote as a 'ready' branch").run()
-        )
+        asyncio.run(self.__squeeze())
+        ready_prefix = Config.config()['deliver']['policies']['branch_prefix']
+        self.set('ready_prefix', ready_prefix)
+
+        asyncio.run(self._run('push_squeeze'))
 
         print(
-            f"\n\n👍\nBranch '{branch_name}' has been squeezed into one commit; '{squeeze_sha[:7]}' and pushed to {remote} as '{ready_prefix}/{branch_name}'")
+            f"\n\n👍\nBranch '{self.get('branch_name')}' has been squeezed into one commit; '{self.get('squeeze_sha1')[:7]}' and pushed to {self.get('remote')} as '{ready_prefix}/{self.get('branch_name')}'")
 
-        return squeeze_sha
+        return self.get('squeeze_sha1')

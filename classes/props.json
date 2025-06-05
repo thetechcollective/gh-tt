@@ -104,12 +104,13 @@
       "msg": "Switch to the remote branch and create a local branch"
     },
     "compare_trees": {
-      "cmd": "git diff-tree --no-commit-id --name-only -r {default_sha1} {squeeze_sha1}",
+      "cmd": "git diff-tree --no-commit-id --name-only -r {sha1} {squeeze_sha1}",
       "msg": "Verify that the new squeezed commit tree is identical to the one on the issue branch"
-    }
-  },
-  "issue": {
-    // init
+    },
+    "push_squeeze": {
+      "cmd": "git push --force-with-lease {remote} {squeeze_sha1}:refs/heads/{ready_prefix}/{branch_name}",
+      "msg": "Push the squeezed sha to the remote as a ready branch"
+    },
     "issue_number": {
       "cmd": "gh issue list --json number --jq '.[0].number'",
       "msg": "Get the number of the first issue in the current repository",
