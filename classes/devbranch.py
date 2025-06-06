@@ -269,10 +269,13 @@ class Devbranch(Lazyload):
         self.props['unstaged_changes'] = []
         self.props['staged_changes'] = []
         for line in self.get('status').splitlines():
-            if line.startswith('??') or line.startswith(' M'):
+            if line.startswith('??') or line.startswith(' M') or  line.startswith(' D'):
                 self.props['unstaged_changes'].append(line)
-            elif line.startswith('M ') or line.startswith('MM') or line.startswith('A '):
+            elif line.startswith('M ') or line.startswith('MM') or line.startswith('A ') or line.startswith('D ') :
                 self.props['staged_changes'].append(line)
+            else:
+                # Don't ignore other lines, they might be useful
+                self.props['unstaged_changes'].append(line)
         self.set('is_dirty',  len(self.props['unstaged_changes']) > 0 or len(
             self.props['staged_changes']) > 0)
         
