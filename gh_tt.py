@@ -25,12 +25,12 @@ def parse(args=None):
         prog='gh tt', 
         parents=[parent_parser],
         description="""
-            A command-line tool to support a consistent workflow across among a team. 
-            It supports a number of subcommands which defines the entiner process: `workon`,
-            `wrapup`, `deliver`  use the `-h|--help` switch on each to learn more. It utilizes 
-            the GitHub API `gh` to interact with GtiHub and therefore it's provided as a gh extension. 
-            GitHub Project integration is supporte4d. It enabels the issues to autoamtically 
-            propregate through the columns in the (kanban) board. Please consult the README.md file 
+            A command-line tool to support a consistent team workflow. 
+            It supports a number of subcommands which define the entire process: `workon`,
+            `wrapup`, `deliver`.  Use the `-h|--help` switch on each to learn more. The extension utilizes 
+            the GitHub CLI tool `gh` to interact with GitHub and therefore it's provided as a gh extension. 
+            GitHub Projects integration is supported. It enables issues to automatically 
+            propagate through the columns in the (kanban) board. Please consult the README.md file 
             in 'thetechcollective/gh-tt' for more information on how to enable this feature 
             - and many more neat tricks.  
             """,)
@@ -48,7 +48,7 @@ def parse(args=None):
     workon_parser.set_defaults(assignee=True, exclusive_groups=['workon'])
     
     # Add wrapup subcommand
-    wrapup_parser = subparsers.add_parser('wrapup', parents=[parent_parser], help='Commit the stat of the current issue branch and push it to the remote',)
+    wrapup_parser = subparsers.add_parser('wrapup', parents=[parent_parser], help='Commit the status of the current issue branch and push it to the remote',)
     wrapup_parser.add_argument('-m', '--message', type=str, help='Message for the commit', required=True)
 
     # Add deliver subcommand
@@ -56,10 +56,11 @@ def parse(args=None):
         'deliver', 
         parents=[parent_parser], help="Create a collapsed 'ready' branch for the current issue branch and push it to the remote",
         description="""
-            It squeezes the issue branch into just one commit and pushes it to the remote, with the same name as the issue brance as base, 
-            but prefixed with 'ready/*'. A seperate workflow should be defined for ready branches. It dosen't take any parameters; Policies 
-            for the delivery can be set in the configuration file '.tt-config.json'. Consult the README in 'thetechcollective/gh-tt' for 
-            details.""")
+            Squeezes the issue branch into one commit and pushes it to the remote on separate "ready/*" branch.
+            A seperate workflow should be defined for ready branches. The command takes no parameters.
+            Policies for the delivery can be set in the configuration file '.tt-config.json'. Consult the README
+            in 'thetechcollective/gh-tt' for details.
+            """)
     
     #Add the responsibles suncommand
     responsibles_parser = subparsers.add_parser(
@@ -67,8 +68,8 @@ def parse(args=None):
         parents=[parent_parser], 
         help="List the responsibles for the current issue branch",
         description="""
-            It lists the responsibles for the current issue branch. It uses the GitHub API to fetch the information. 
-            It doesn't take any parameters.""")
+            Lists the responsibles for the current issue branch. It uses the GitHub API to fetch the information. 
+            Takes no parameters.""")
     responsibles_parser.set_defaults(command='responsibles')
     # Add the project subcommand
     

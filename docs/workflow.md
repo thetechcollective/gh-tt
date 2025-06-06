@@ -17,7 +17,7 @@ This workflow is opinionated and tailored for teams who value a streamlined, Git
 4. Release candidates are deployed to `qa` (stage) and tested. Passing commits are marked as _shippable_.
 5. When ready for production, the latest _shippable_ commit is labeled (`<major>.<minor>.<patch>`) and deployed to `prod`.<br/>
 
-👉 **Mentorship Over Pull Requests:** Instead of pull requests, we use a `RESPONSIBLES` file (similar to `CODEOWNERS`). If a commit affects files with assigned responsibles, those individuals are mentioned on the issue to review or assist. This trust-based mentorship model replaces traditional quality gates.
+👉 **Mentorship Over Pull Requests:** Instead of pull requests, we use a [`RESPONSIBLES`](responsibles.md) file (similar to `CODEOWNERS`). If a commit affects files with assigned responsibles, those individuals are mentioned on the issue to review or assist. This trust-based mentorship model replaces traditional quality gates.
 
 The `gh` extension `thetechcollective/gh-tt` is designed to support this workflow, with three core subcommands: `workon`, `wrapup`, and `deliver`, which manage the branching strategy.
 

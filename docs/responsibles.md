@@ -14,13 +14,13 @@ The idea is good, but the implementation in GitHub is troublesome:
 
 We need the following features:
 
-1. Our process does not use _peer reviews_ as quality gates. On the contrary, we believe that enforcing _hand-overs_ in a process leads to waste in terms of _unevenness_, _overburden_, and ultimately _poor quality_. In our team, we adhere to XP-like values, based on paired – or even mob – programming, and we work with a concept we call _Module Key Responsible (MKR)_. Each repo has exactly _one_ MKR, who have the oppotunity to delegate some responsibility to others. Inspired by the _Benevolent Dictator Governance_ model well-known from many Open Source communities, we aim to engage _responsibles_ already during development. We need the feature that when someone changes files with appointed responsibility, (one of) the responsibles should join or mentor the development of that branch. We want this to happen _during_ development, not _after_. This should happen when commits are made to development branches.
-2. We interpret multiple responsibles in a more trusting manner. Contrary to GitHub's `CODEOWNERS`, which requires approval from _all_ code owners, we call for _eyes-on-code_ and _mentorship_ from _one of_ the responsibles. We do not enforce arbitrary wait-states. A review is not a quality gate; it's a collaboration tool.
+1. Our process does not use _peer reviews_ as quality gates. On the contrary, we believe that enforcing _hand-overs_ in a process leads to waste in terms of _unevenness_, _overburden_, and ultimately _poor quality_. In our team, we adhere to XP-like values, based on paired – or even mob – programming, and we work with a concept we call _Module Key Responsible (MKR)_. Each repo has exactly _one_ MKR, who has the opportunity to delegate some responsibility to others. Inspired by the _Benevolent Dictator Governance_ model well-known from many Open Source communities, we aim to engage _responsibles_ already during development. We need the feature that when someone changes files with appointed responsibility, (one of) the responsibles should join or mentor the development of that branch. We want this to happen _during_ development, not _after_. This should happen when commits are made to development branches.
+2. GitHub's `CODEOWNERS`, which requires PR approval from _all_ code owners. In contrast, we interpret multiple responsibles in a more trusting manner, calling for _eyes-on-code_ and _mentorship_ from _one of_ the responsibles. We do not enforce arbitrary wait-states. A review is not a quality gate; it's a collaboration tool.
 3. Due to the somewhat undocumented semantics of GitHub's `CODEOWNERS` file, we have introduced our own format: `RESPONSIBLES`. We believe we can achieve what we seek with only two simple glob patterns from the [`.gitignore` pattern format documentation](https://git-scm.com/docs/gitignore#_pattern_format): `*` and `**` (described in detail later).
 
 ## The `RESPONSIBLES` file
 
-The `RESPONSIBLES` file can be stored in different supportedf locations — using the same search order as GitHub uses for the `CODEOWNERS` file:
+The `RESPONSIBLES` file can be stored in different supported locations — using the same search order as GitHub uses for the `CODEOWNERS` file:
 
 1. `<repo-root>/.github/`
 2. `<repo-root>`

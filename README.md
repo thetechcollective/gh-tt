@@ -38,16 +38,19 @@ The extension requires write access to projects. If you don't have it, you'll be
 
 Run `gh tt -h` to see the syntax.
 
-The extension provides three subcommands: `workon`, `wrapup`, and `deliver`. See the [workflow](docs/workflow.md) for details.
+The extension provides four subcommands: `workon`, `wrapup`, and `deliver`, `responsibles`. See the [workflow](docs/workflow.md) for details.
 
 ```
-usage: gh tt [-h] [-v] {workon,wrapup,deliver} ...
+usage: gh tt [-h] [-v] {workon,wrapup,deliver,responsibles} ...
+
+A command-line tool to support a consistent team workflow. It supports a number of subcommands which define the entire process: `workon`, `wrapup`, `deliver`. Use the`-h|--help` switch on each to learn more. The extension utilizes the GitHub CLI tool `gh` to interact with GitHub and therefore it's provided as a gh extension. GitHub Projects integration is supported. It enables issues to automatically propagate through the columns in the (kanban) board. Please consult the README.md file in 'thetechcollective/gh-tt' for more information on how to enable this feature - and many more neat tricks.
 
 positional arguments:
-  {workon,wrapup,deliver}
+  {workon,wrapup,deliver,responsibles}
     workon              Set the issue number context to work on
-    wrapup              Commit the state of the current issue branch and push it to the remote
+    wrapup              Commit the status of the current issue branch and push it to the remote
     deliver             Create a collapsed 'ready' branch for the current issue branch and push it to the remote
+    responsibles        List the responsibles for the current issue branch
 
 options:
   -h, --help            show this help message and exit
@@ -84,9 +87,9 @@ options:
 ```
 usage: gh tt deliver [-h] [-v]
 
-It squashes the issue branch into a single commit and pushes it to the remote, using the same name as the issue branch but prefixed with 'ready/*'. A separate workflow should be defined for ready branches. It doesn't take any parameters.
+Squeezes the issue branch into one commit and pushes it to the remote on separate "ready/*" branch. A seperate workflow should be defined for ready branches. The command takes no parameters.
 
-Policies for delivery can be set in the configuration file `.tt-config.json`. See the README in `thetechcollective/gh-tt` for details.
+Policies for the delivery can be set in the configuration file '.tt-config.json'. Consult the README in 'thetechcollective/gh-tt' for details.
 
 options:
   -h, --help     show this help message and exit
