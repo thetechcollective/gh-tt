@@ -92,10 +92,11 @@ class Issue(Lazyload):
         issue_url = re.search(r'(https://github.com/.*/issues/\d+)', output)
         if issue_url:
             issue_number = issue_url.group(1).split('/')[-1]
+            print(f"{issue_url.group(1)}")
         else:
             print(
                 f"ERROR: Could not capture the issue URL from the output:\n{output}", file=sys.stderr)
-            exit(1)
+            exit(1)    
 
         return cls(number=issue_number)
 

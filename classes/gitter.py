@@ -189,7 +189,7 @@ class Gitter(Lazyload):
             msg += " and prune local branches and tags)"
 
         [_, _] = await Gitter(
-            cmd=f"git fetch --tags --all {prune_switch}",
+            cmd=f"git fetch --tags --all -f {prune_switch}",
             msg=f"{msg}").run()
 
         cls.fetched = True
