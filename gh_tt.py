@@ -42,6 +42,7 @@ def parse(args=None):
     workon_group.add_argument('-i', '--issue', type=int, help='Issue number')
     workon_group.add_argument('-t', '--title', type=str, help='Title for the new issue')
     workon_parser.add_argument('-b', '--body', dest='body', type=str, help='Optional body (issue comment) for the new issue')
+    workon_parser.add_argument('-r', '--reopen', action='store_true', help='Reopen the issue if it is closed - only valid with --issue', default=False)
     assign_group = workon_parser.add_mutually_exclusive_group()
     assign_group.add_argument('--assign', dest='assignee', action='store_true', help='Assign @me to the issue (default)')
     assign_group.add_argument('--no-assign', dest='assignee', action='store_false', help='Do not assign anybody to the issue')
@@ -74,6 +75,10 @@ def parse(args=None):
     # Add the project subcommand
     
     args = parser.parse_args(args)
+
+    # make sure that --reopen is only ever used with --issue
+    if args.command == 'workon' and args.reopen and not args.issue:
+        parser.error("--reopen can only be used with: workon --issue")
     return args
 
 if __name__ == "__main__":
@@ -88,7 +93,7 @@ if __name__ == "__main__":
     
     if args.command == 'workon':
         if args.issue:
-            devbranch.set_issue(issue_number=args.issue, assign=args.assignee, msg=args.body)
+            devbranch.set_issue(issue_number=args.issue, assign=args.assignee, msg=args.body, reopen=args.reopen)
             
         elif args.title:
             issue =  Issue.create_new(title=args.title, body=args.body)

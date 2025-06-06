@@ -1,9 +1,7 @@
 {
     "python.testing.pytestArgs": [
-        "tests"
-        ,"-m unittest"
-
-        
+        "tests",
+        "-m unittest"      
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
@@ -12,5 +10,8 @@
         "${workspaceFolder}/tests",
         "${workspaceFolder}"
     ],
-    "python.defaultInterpreterPath": ".venv/bin/python"
+    "python.defaultInterpreterPath": ".venv/bin/python",
+    "github-actions.workflows.pinned.workflows": [
+        ".github/workflows/ready.yml"
+    ]
 }

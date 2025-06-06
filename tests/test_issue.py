@@ -15,6 +15,14 @@ from devbranch import Devbranch
 
 class TestIssue(unittest.TestCase):
 
+    @pytest.mark.dev
+    def test_issue_dev_no_mock(self):
+        # This is a dev test that runs without mocking
+        issue = Issue(number=17)
+        
+        # Assertions
+        self.assertTrue(True)
+
     #@pytest.mark.unittest
     @patch('issue.Gitter')
     def test_issue_constructor_success(self, MockGitter):

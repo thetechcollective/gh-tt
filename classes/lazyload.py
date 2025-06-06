@@ -181,7 +181,7 @@ class Lazyload:
                 # Enforce the rule: No command can expect value substitution for props within the same group
                 dep_group = self._get_manifest_group(caller, match)
                 assert group != dep_group, f"ERROR: Property '{prop}' in group '{group}' defined in {self._manifest_file} implicitly depends on property '{match}'. They both belong to the same dependency group '{group}'. Value substitution within the same group is not allowed."
-                if dep_group not in self.get('_loaded'):
+                if dep_group not in self.get('_loaded') and dep_group is not None:
                     await self._load_manifest(dep_group)
 
             # When all dependencies are loaded compile the final command by replacing
@@ -219,9 +219,9 @@ class Lazyload:
             str: The group of the property
         """
         try:
-            return self._manifest[caller][prop].get('group', 'init')
+            return self._manifest[caller][prop].get('group')
         except KeyError:
-            return 'init'  # Default group if not found
+            return None  # Default group if not found
         
     async def _force_prop_reload(self, prop: str):
         """Force reload a property

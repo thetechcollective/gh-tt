@@ -21,6 +21,13 @@ from devbranch import Devbranch
 
 class TestDevbranch(unittest.TestCase):
 
+
+    @pytest.mark.dev
+    def test_dev_set_issue(self):
+        devbranch = Devbranch()
+        devbranch.set_issue(issue_number=17,assign=True, reopen=True)
+        self.assertTrue(True)
+
     @pytest.mark.unittest
     def test_constructor_success(self):
         devbranch = Devbranch()

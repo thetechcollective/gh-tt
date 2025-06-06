@@ -116,5 +116,16 @@
       "msg": "Get the number of the first issue in the current repository",
       "group": "init"
     }
+  },
+  "issue": {
+    "json": {
+      "cmd": "gh issue view {number} --json url,title,number,labels,assignees,closed,comments",
+      "msg": "Get the properties from the issue",
+      "group": "init"
+    },
+    "reopen":{
+      "cmd": "gh issue reopen {number}",
+      "msg": "Reopen the issue"
+    }
   }
 }

@@ -21,45 +21,20 @@ class Issue(Lazyload):
         super().__init__()
 
         self.set('number', number)
-        self.set('url', None)
-        self.set('title', None)
-        self.set('item_id', None)
-        self.set('assignee', None)
 
-        result = None
-        [output, result] = asyncio.run( Gitter(
-            cmd=f"gh issue view {number} --json url,title",
-            msg="Get the url and title from the issue",
-            die_on_error=False).run()
-        )
-
-        if result.returncode != 0:
-            print(
-                f"ERROR: Issue '{number}' doesn't exit in current git context\n{result.stderr}", file=sys.stderr)
-            exit(1)
-
-        # the output looks like:
-        # {
-        #   "title": "Refactor",
-        #   "url": "https://github.com/thetechcollective/gh-tt/issues/26"
-        # }
-        # Load the json and set the url and title
+        asyncio.run(self._load_manifest('init'))
 
         try:
-            issue_json = json.loads(output)
+            issue_json = json.loads(self.get('json'))
         except ValueError as e:
             pass
             print(
-                f"ERROR: Could not get the issue url or title on issue number: '{number}'\n{result.stderr}", file=sys.stderr)
-            exit(1)
+                f"ERROR: Could not parse the json", file=sys.stderr)
+            sys.exit(1)
 
-        self.set('url', issue_json.get('url'))
-        self.set('title', issue_json.get('title'))
-
-        if self.get('url') is None or self.get('title') is None:
-            print(
-                f"ERROR: Could not get the issue url or title from incomplete JSON:\n{issue_json}", file=sys.stderr)
-            exit(1)
+        # Iterate through issue_json and add each element to self.props
+        for key, value in issue_json.items():
+            self.set(key, value)
 
     @classmethod
     def create_new(cls, title=str, body=None, assign=None):
@@ -75,7 +50,7 @@ class Issue(Lazyload):
         body_switch = f"--body '{body}'" if body is not None else "--body ''"
         assign_switch = f"--assignee '{assign}'" if assign is not None else ""
 
-        [output, result] = asyncio.run (Gitter(
+        [output, result] = asyncio.run(Gitter(
             cmd=f"gh issue create --title '{title}' {body_switch} {assign_switch}",
             msg="Create a new issue").run()
         )
@@ -96,7 +71,7 @@ class Issue(Lazyload):
         else:
             print(
                 f"ERROR: Could not capture the issue URL from the output:\n{output}", file=sys.stderr)
-            exit(1)    
+            exit(1)
 
         return cls(number=issue_number)
 
@@ -134,8 +109,8 @@ class Issue(Lazyload):
 
         self.set('assignee', assignee)
         return output
-    
-    def comment(self, msg:str):
+
+    def comment(self, msg: str):
         """Add a comment to the issue"""
 
         issue_number = self.get('number')
@@ -146,4 +121,11 @@ class Issue(Lazyload):
         )
 
         return output
-    
+    def reopen(self):
+        """Reopen the issue"""
+
+        asyncio.run(self._run('reopen'))
+        return True
+
+        
+
