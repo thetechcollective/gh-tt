@@ -97,8 +97,9 @@ class Responsibles():
 
     if len(_responsibles_files) > 0:
         if len(_responsibles_files) > 1:
+            new_line_bullet = '\n- '
             print(
-                f"""⚠️ Multiple RESPONSIBLES files found. Using the first one found: '{_responsibles_files[0]}'.\n💡 Valid locations listed in search order:\n- {'\n- '.join(_valid_locations)}""", file=sys.stderr)
+                f"""⚠️ Multiple RESPONSIBLES files found. Using the first one found: '{_responsibles_files[0]}'.\n💡 Valid locations listed in search order:\n- {new_line_bullet.join(_valid_locations)}""", file=sys.stderr)
 
         _responsibles_dict = responsibles_file_to_dict(_responsibles_files[0])
 
