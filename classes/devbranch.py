@@ -299,7 +299,7 @@ class Devbranch(Lazyload):
         changes = [change.lstrip() for change in changes]
         return changes
 
-    def set_issue(self, issue_number=int, assign=True):
+    def set_issue(self, issue_number=int, assign=True, msg:str=None):
         """Set the issue number context to work on"""
 
         asyncio.run(self._assert_props(['remote', 'default_branch']))
@@ -327,6 +327,10 @@ class Devbranch(Lazyload):
         if self.get('assign'):
             issue.assign(assignee='@me')
 
+        if msg:
+            # add the body to the issue
+            issue.comment(msg=msg)
+
         # add the issue to the project and set the Status to "In Progess"
         project = Project()
         workon_field = project.get('workon_field')
@@ -339,7 +343,7 @@ class Devbranch(Lazyload):
     def deliver(self):
         """Mapped to the 'deliver' subcommand."""
 
-        self._assert_props(['branch_name', 'remote'])
+        asyncio.run(self._assert_props(['branch_name', 'remote']))
 
         asyncio.run(self.__squeeze())
         ready_prefix = Config.config()['deliver']['policies']['branch_prefix']

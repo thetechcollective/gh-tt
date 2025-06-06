@@ -41,6 +41,7 @@ def parse(args=None):
     workon_group = workon_parser.add_mutually_exclusive_group()
     workon_group.add_argument('-i', '--issue', type=int, help='Issue number')
     workon_group.add_argument('-t', '--title', type=str, help='Title for the new issue')
+    workon_parser.add_argument('-b', '--body', dest='body', type=str, help='Optional body (issue comment) for the new issue')
     assign_group = workon_parser.add_mutually_exclusive_group()
     assign_group.add_argument('--assign', dest='assignee', action='store_true', help='Assign @me to the issue (default)')
     assign_group.add_argument('--no-assign', dest='assignee', action='store_false', help='Do not assign anybody to the issue')
@@ -86,10 +87,10 @@ if __name__ == "__main__":
     
     if args.command == 'workon':
         if args.issue:
-            devbranch.set_issue(issue_number=args.issue, assign=args.assignee)
+            devbranch.set_issue(issue_number=args.issue, assign=args.assignee, msg=args.body)
             
         elif args.title:
-            issue =  Issue.create_new(title=args.title)
+            issue =  Issue.create_new(title=args.title, body=args.body)
             devbranch.set_issue(issue_number=issue.get('number'), assign=args.assignee)
           
     if args.command == 'wrapup':

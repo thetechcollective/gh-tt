@@ -135,3 +135,15 @@ class Issue(Lazyload):
         self.set('assignee', assignee)
         return output
     
+    def comment(self, msg:str):
+        """Add a comment to the issue"""
+
+        issue_number = self.get('number')
+
+        [output, _] = asyncio.run(Gitter(
+            cmd=f"gh issue comment {issue_number} --body '{msg}'",
+            msg="Add a comment to the issue").run()
+        )
+
+        return output
+    
