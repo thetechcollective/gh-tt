@@ -93,6 +93,10 @@ options:
   -v, --verbose  Enable verbose output
 ```
 
+## Responsibles
+
+TODO add documentation
+
 ## Configuration
 
 To connect `gh tt` to a project, configure the `.gitconfig` file in the root of your repository. It should contain:

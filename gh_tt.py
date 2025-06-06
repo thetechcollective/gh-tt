@@ -60,6 +60,17 @@ def parse(args=None):
             for the delivery can be set in the configuration file '.tt-config.json'. Consult the README in 'thetechcollective/gh-tt' for 
             details.""")
     
+    #Add the responsibles suncommand
+    responsibles_parser = subparsers.add_parser(
+        'responsibles', 
+        parents=[parent_parser], 
+        help="List the responsibles for the current issue branch",
+        description="""
+            It lists the responsibles for the current issue branch. It uses the GitHub API to fetch the information. 
+            It doesn't take any parameters.""")
+    responsibles_parser.set_defaults(command='responsibles')
+    # Add the project subcommand
+    
     args = parser.parse_args(args)
     return args
 
