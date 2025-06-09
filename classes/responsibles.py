@@ -213,8 +213,10 @@ class Responsibles():
             markdown_list.append(f"- `{file_path}` ({responsibles})")
         # Join the list items with newlines
 #        return "\n".join(markdown_list)
+
+        new_line = '\n'
     
-        return f"**Responsibles for the changeset:**\n\n{"\n".join(markdown_list)}\n\n" 
+        return f"**Responsibles for the changeset:**\n\n{new_line.join(markdown_list)}\n\n" 
 
 
 
