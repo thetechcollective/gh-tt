@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+USAGE="set-status <state> <description>"
+STATE="$1"
+DESCRIPTION="$2"
+
+echo "####### Setting the commit status ########"
+echo Entered $(basename $0) with:
+echo "  state:       '$STATE'"
+echo "  description: '$DESCRIPTION'"
+echo Derived values:
+echo "  context:     '$GITHUB_ACTION'"
+echo "  url:         '$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID'"
+
+# Die if any of the environment variables are not set
+if [[ -z "$STATE" || -z "DESCRIPTION" ]]; then
+  echo "Required arguments are not given."
+  echo "Usage: $USAGE"
+  exit 1
+fi
+
+
+if [[ -z "$GITHUB_REPOSITORY" || -z "$GITHUB_SHA" || -z "$GITHUB_SERVER_URL" || -z "$GITHUB_RUN_ID" || -z "$GITHUB_ACTION" ]]; then
+  echo "Required environment variables are not set."
+  echo "Make sure this script is run in a GitHub Actions workflow."
+  exit 1
+fi
+
+set -x
+gh api \
+  --method POST \
+  -H "Accept: application/vnd.github+json" \
+  -H "X-GitHub-Api-Version: 2022-11-28" \
+  /repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA \
+  -f "state=$STATE" \
+  -f "target_url=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+  -f "description=$DESCRIPTION" \
+  -f "context=$GITHUB_ACTION"

@@ -10,27 +10,55 @@ on:
     branches: 
       - '[0-9]*'
 
+# No special permissions defined before we need them
 permissions:
   contents: read
 
 jobs:
-  build:
+  # This job will install uv, run the unittests and output the arguments we need to set the status
+  verification:
 
     runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.13"
-    - name: Install uv and dependencies
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        uv venv
-        source .venv/bin/activate
-        uv sync --extra dev
-    - name: Test with pytest
-      run: |
-        . .venv/bin/activate 
-        pytest --cov=. --cov-config=.coveragerc -m unittest
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          uv venv
+          . .venv/bin/activate
+          uv sync --extra dev
+          gh extension install thetechcollective/gh-set-status --pin stable
+
+      - name: Test with pytest
+        id: Unittest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          . .venv/bin/activate 
+          pwd
+          # Dont exit if the next command fails, we want to capture the exit code
+          set +e
+          pytest --cov=. --cov-config=.coveragerc -m unittest
+          result=$?
+          set -e
+
+
+          if [ $result -eq 0 ]; then
+            gh set-status success "All tests passed and threshold on line coverage reached"
+          else
+            gh set-status failure "Some tests failed or threshold on line covearage not reached"
+          fi
+          exit $result
