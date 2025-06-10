@@ -3,6 +3,7 @@ import sys
 import json
 import re
 import asyncio
+import subprocess
 
 
 class Lazyload:
@@ -236,7 +237,7 @@ class Lazyload:
             msg
         )
 
-    async def _run(self, prop:str):
+    async def _run(self, prop:str, die_on_error: bool = True):
         """Run a property command and return the value
         Args:
             prop (str): The property to run
@@ -262,10 +263,14 @@ class Lazyload:
 
         from gitter import Gitter # avoid circular import
 
-        [value, _] = await Gitter(
+        [value, result] = await Gitter(
             cmd=f"{cmd}",
             msg=f"{msg}",
-            die_on_error=True).run()
+            die_on_error=die_on_error).run()
+        
+        if die_on_error is not True and result.returncode != 0:
+             raise subprocess.CalledProcessError(
+                result.returncode, cmd, output=result.stdout, stderr=result.stderr)
         return value
 
 

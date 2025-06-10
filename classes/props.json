@@ -61,6 +61,11 @@
       "msg": "Get the SHA1 of the default branch",
       "group": "init-last"
     },
+    "me": {
+      "cmd": "gh api /user --jq '.login'",
+      "msg": "Get the GitHub username of the authenticated user",
+      "group": "init-last"
+    },
     // pre-squeeze
     // Only relevant to a squeeze
     "issue_title": {
@@ -111,10 +116,13 @@
       "cmd": "git push --force-with-lease {remote} {squeeze_sha1}:refs/heads/{ready_prefix}/{branch_name}",
       "msg": "Push the squeezed sha to the remote as a ready branch"
     },
-    "issue_number": {
-      "cmd": "gh issue list --json number --jq '.[0].number'",
-      "msg": "Get the number of the first issue in the current repository",
-      "group": "init"
+    "add_all": {
+      "cmd": "git add -A",
+      "msg": "Staging all changes"
+    },
+    "commit_changes": {
+      "cmd": "git commit -m {commit_msg}",
+      "msg": "Commit changes"
     }
   },
   "issue": {

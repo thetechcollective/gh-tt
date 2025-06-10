@@ -177,7 +177,11 @@ class Devbranch(Lazyload):
         for branch in self.get('local_branches').split('\n'):
             if re.match(f"^{issue_number}.+", branch):
                 self.set('branch_name', branch)
-                await self._run('checkout_local_branch')
+                try:
+                    await self._run(prop='checkout_local_branch', die_on_error=False)
+                except subprocess.CalledProcessError as e:
+                    print(f"Failed to checkout local branch: {e}", file=sys.stderr)
+                    sys.exit(1)
                 match = True
                 break
 
@@ -196,8 +200,10 @@ class Devbranch(Lazyload):
     def wrapup(self, message: str):
         """Mapped to the 'wrapup' subcommand in the main program"""
 
+        asyncio.run(self._assert_props(['me']))
         asyncio.run(self._load_issue_number())
         asyncio.run(self._load_status())
+
 
         if not self.get('is_dirty'):
             print("Nothing to commit. The working directory is clean.")
@@ -206,31 +212,18 @@ class Devbranch(Lazyload):
         # If nothing is staged, stage all changes
         if not len(self.get('staged_changes')) > 0:
             # Stage all changes if nothing is staged
-            [_, _] = asyncio.run(Gitter(
-                cmd="git add -A",
-                msg="Nothin is staged. Staging all changes").run()
-            )
+            asyncio.run(self._run('add_all'))
             asyncio.run(self._load_status(reload=True))
 
-        msg = f"{message} - #{self.get('issue_number')}"
-
-        [me,_] = asyncio.run(Gitter(
-            cmd="gh api user --jq '.login'",
-            msg="Get my GitHub handle").run()
-        )
+        self.set('commit_msg',f"\"{message} - #{self.get('issue_number')}\"")
 
         change_list = self._get_pretty_changes()
         responsibles = Responsibles().responsibles_as_markdown(
             changeset=change_list,
-            exclude=[f"@{me}"]
+            exclude=[f"@{self.get('me')}"]
         )
         
-
-        [_, result] = asyncio.run(Gitter(
-            cmd=f'git commit -m "{msg}"',
-            msg="Commit changes").run()
-        )
-
+        asyncio.run(self._run('commit_changes') )
         asyncio.run(self._push(force=True))
 
 
@@ -365,3 +358,34 @@ class Devbranch(Lazyload):
             f"\n👍 Branch '{self.get('branch_name')}' has been squeezed into one commit; '{self.get('squeeze_sha1')[:7]}' and pushed to {self.get('remote')} as '{ready_prefix}/{self.get('branch_name')}'")
 
         return self.get('squeeze_sha1')
+
+    def responsibles(self, unstaged: bool, staged: bool, exclude:str ):
+
+        asyncio.run(self._assert_props(['me']))
+
+        exclude_list = []
+        if exclude is not None:
+            exclude_list = exclude.split(',')
+
+        # replace @me with the current user
+        exclude_list = [item.replace('@me', f"@{self.get('me')}") for item in exclude_list]
+
+        asyncio.run(self._load_issue_number())
+        asyncio.run(self._load_status())
+        change_list = self._get_pretty_changes(staged=staged, unstaged=unstaged)
+        responsibles = Responsibles().responsibles_parse(
+            changeset=change_list,
+            exclude=exclude_list
+        )
+
+        if not responsibles:
+            return
+        # print each line of responsibles
+        for item in responsibles:
+            # Split the item into file path and responsibles
+            file_path, responsibles = item.split(' (', 1)
+            responsibles = responsibles.rstrip(')')
+            # Format the item as a markdown list item
+            print(f"{file_path} ({responsibles})")
+
+

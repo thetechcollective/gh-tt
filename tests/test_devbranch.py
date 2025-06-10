@@ -66,7 +66,7 @@ class TestDevbranch(unittest.TestCase):
         reuse_local = loop.run_until_complete(
             devbranch._Devbranch__reuse_issue_branch(7))
         self.assertTrue(reuse_local)
-        mock_run.assert_called_once_with('checkout_local_branch')
+        mock_run.assert_called_once_with(prop='checkout_local_branch', die_on_error=False)
         mock_run.reset_mock()
 
         devbranch.props['local_branches'] = ""
@@ -116,7 +116,11 @@ class TestDevbranch(unittest.TestCase):
         mock_run.reset_mock()
 
 
+
+
         loop.close()
+
+
 
     @pytest.mark.unittest
     def test__load_squeezed_commit_message(self):
@@ -141,6 +145,95 @@ class TestDevbranch(unittest.TestCase):
         )
 
         loop.close()
+
+    @pytest.mark.unittest
+    @patch('sys.stderr', new_callable=StringIO)
+    def test__squeeze_exits(self, mock_stderr):
+
+        Gitter.verbose = True
+        # Load the recorded instance of Devbranch
+        devbranch = Devbranch().from_json(
+            file='tests/data/devbranch/devbranch-squeeze.json')
+
+        # Create a single loop for all test cases
+        loop = asyncio.new_event_loop()
+        # no diffs
+        with self.assertRaises(SystemExit) as cm:
+            squeezed_sha = loop.run_until_complete(
+                devbranch._Devbranch__squeeze())
+            
+        self.assertEqual(cm.exception.code, 1)
+        self.assertRegex(mock_stderr.getvalue(), r"ERROR: There are staged changes" )
+
+        Config._config_dict['squeeze']['policies']['allow-dirty'] = False
+
+        with self.assertRaises(SystemExit) as cm:
+            squeezed_sha = loop.run_until_complete(
+                devbranch._Devbranch__squeeze())
+        self.assertEqual(cm.exception.code, 1)
+        self.assertRegex(mock_stderr.getvalue(), r"ERROR: The working directory is not clean" )
+
+
+        Config._config_dict['squeeze']['policies']['abort_for_rebase'] = False
+        Config._config_dict['squeeze']['policies']['allow-dirty'] = True
+        Config._config_dict['squeeze']['policies']['quiet'] == False
+        Config._config_dict['squeeze']['policies']['allow-staged'] = False
+        with self.assertRaises(SystemExit) as cm:
+            squeezed_sha = loop.run_until_complete(
+                devbranch._Devbranch__squeeze())
+        self.assertEqual(cm.exception.code, 1)
+        self.assertRegex(mock_stderr.getvalue(), r"ERROR: There are staged changes" )
+
+        
+                
+
+        Config._config_dict['squeeze']['policies']['abort_for_rebase'] = True
+        devbranch.props['merge_base'] = '490e2075ca58113619e026ab53bdfc719e56b375'
+        with self.assertRaises(SystemExit) as cm:
+            squeezed_sha = loop.run_until_complete(
+                devbranch._Devbranch__squeeze())
+        self.assertEqual(cm.exception.code, 1)
+        self.assertRegex(mock_stderr.getvalue(), r"ERROR: The .* branch has commits your branch has never seen." )
+  
+
+        loop.close()
+
+
+    @pytest.mark.unittest
+    @patch('devbranch.Devbranch._assert_props', new_callable=AsyncMock)
+    @patch('devbranch.Devbranch._Devbranch__compare_before_after_trees', new_callable=AsyncMock)
+    def test__squeeze_success(self, mock_compare_before_after_trees, mock_assert_props):
+
+        mock_compare_before_after_trees.return_value = True
+
+        Gitter.verbose = True
+        # Load the recorded instance of Devbranch
+        devbranch = Devbranch().from_json(
+            file='tests/data/devbranch/devbranch-squeeze.json')
+
+        # Create a single loop for all test cases
+        loop = asyncio.new_event_loop()
+        Config._config_dict['squeeze']['policies']['abort_for_rebase'] = False
+        Config._config_dict['squeeze']['policies']['allow-dirty'] = True
+        Config._config_dict['squeeze']['policies']['quiet'] == False
+        Config._config_dict['squeeze']['policies']['allow-staged'] = True
+        devbranch.props['_loaded'] = [
+            "init",
+            "remote-init",
+            "branch_reuse",
+            "pre-squeeze"
+        ]
+
+        squeezed_sha = loop.run_until_complete(
+                devbranch._Devbranch__squeeze())
+
+             
+        self.assertEqual(squeezed_sha, 'e4bba5cbd37f72b64c647f3504c7fac66518ab9f')
+        mock_assert_props.assert_called_with(['squeeze_sha1'])
+
+        loop.close()
+
+
 
     @pytest.mark.unittest
     @patch('devbranch.Devbranch._force_prop_reload', new_callable=AsyncMock)

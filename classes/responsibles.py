@@ -97,9 +97,9 @@ class Responsibles():
 
     if len(_responsibles_files) > 0:
         if len(_responsibles_files) > 1:
-            new_line_bullet = '\n- '
+            new_line = '\n'
             print(
-                f"""⚠️ Multiple RESPONSIBLES files found. Using the first one found: '{_responsibles_files[0]}'.\n💡 Valid locations listed in search order:\n- {new_line_bullet.join(_valid_locations)}""", file=sys.stderr)
+                f"""⚠️ Multiple RESPONSIBLES files found. Using the first one found: '{_responsibles_files[0]}'.\n💡 Valid locations listed in search order:\n{new_line.join(_valid_locations)}""", file=sys.stderr)
 
         _responsibles_dict = responsibles_file_to_dict(_responsibles_files[0])
 
@@ -167,6 +167,8 @@ class Responsibles():
             list: List of files that have responsibles - after the exclusion.
         """
         result = []
+        if exclude is None:
+            exclude = []
 
         # Iterate over each file in the changeset
         for file_path in changeset:

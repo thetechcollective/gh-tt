@@ -179,3 +179,4 @@ gh extension install lakruzz/gh-semver
 ## Feature request and discussions
 
 Issues are open on the repo: [`thetechcollective/gh-tt`](https://github.com/thetechcollective/gh-tt/issues). If you experience errors, misbehavior, or have feature requests, feel free to join the discussion.
+

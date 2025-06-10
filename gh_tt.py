@@ -71,6 +71,9 @@ def parse(args=None):
         description="""
             Lists the responsibles for the current issue branch. It uses the GitHub API to fetch the information. 
             Takes no parameters.""")
+    responsibles_parser.add_argument('--unstaged', action='store_true', help='Get the list of responsibles for all dirty, but unstaged changes', required=False, default=False)
+    responsibles_parser.add_argument('--staged',  action='store_true', help='Get the list of responsibles for staged changes', required=False, default=False)
+    responsibles_parser.add_argument('--exclude', type=str, help="Comma separated list of handles to exclude '@me' is supported too", required=False, default=None)
     responsibles_parser.set_defaults(command='responsibles')
     # Add the project subcommand
     
@@ -104,6 +107,9 @@ if __name__ == "__main__":
     
     if args.command == 'deliver':
         devbranch.deliver()
+
+    if args.command == 'responsibles':
+       devbranch.responsibles(unstaged=args.unstaged, staged=args.staged, exclude=args.exclude)
             
     Gitter.write_cache()            
     exit(0)
