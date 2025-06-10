@@ -78,7 +78,7 @@ jobs:
 
     - name: Close the issue
       env:
-        GITHUB_TOKEN: ${{ secrets.READY_PUSHER }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
         # checkout the main branch, fast-forward merge the changes from the ready branch and push the changes to origin
       run: |
