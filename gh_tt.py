@@ -69,8 +69,7 @@ def parse(args=None):
         parents=[parent_parser], 
         help="List the responsibles for the current issue branch",
         description="""
-            Lists the responsibles for the current issue branch. It uses the GitHub API to fetch the information. 
-            Takes no parameters.""")
+            Lists the responsibles for the current change set""")
     responsibles_parser.add_argument('--unstaged', action='store_true', help='Get the list of responsibles for all dirty, but unstaged changes', required=False, default=False)
     responsibles_parser.add_argument('--staged',  action='store_true', help='Get the list of responsibles for staged changes', required=False, default=False)
     responsibles_parser.add_argument('--exclude', type=str, help="Comma separated list of handles to exclude '@me' is supported too", required=False, default=None)
@@ -79,9 +78,17 @@ def parse(args=None):
     
     args = parser.parse_args(args)
 
+    if not args.command:
+        parser.print_help()
+        parser.exit(0)
+
     # make sure that --reopen is only ever used with --issue
     if args.command == 'workon' and args.reopen and not args.issue:
         parser.error("--reopen can only be used with: workon --issue")
+
+    if args.command == 'responsibles' and not (args.unstaged or args.staged):
+        parser.error("You must specify either --unstaged or --staged  or both for the responsibles command")
+
     return args
 
 if __name__ == "__main__":
