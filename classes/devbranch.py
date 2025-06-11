@@ -355,14 +355,16 @@ class Devbranch(Lazyload):
         ready_prefix = Config.config()['deliver']['policies']['branch_prefix']
         self.set('ready_prefix', ready_prefix)
 
-        asyncio.run(self._run('push_squeeze'))
-
-                # add the issue to the project and set the Status to "In Progess"
+        
+        asyncio.run(self._load_issue_number())
+        issue = Issue(number=self.get('issue_number'))
         project = Project()
         field = project.get('deliver_field')
         field_value = project.get('deliver_field_value')
         project.update_field(url=issue.get(
             'url'), field=field, field_value=field_value)
+
+        asyncio.run(self._run('push_squeeze'))
 
         print(
             f"\n👍 Branch '{self.get('branch_name')}' has been squeezed into one commit; '{self.get('squeeze_sha1')[:7]}' and pushed to {self.get('remote')} as '{ready_prefix}/{self.get('branch_name')}'")
