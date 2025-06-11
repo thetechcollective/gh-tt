@@ -164,9 +164,10 @@ gh alias import .gh_alias.yml --clobber
 This creates shortcuts so you can run:
 
 ```sh
-gh workon   # instead of gh tt workon
-gh wrapup   # instead of gh tt wrapup
-gh deliver  # instead of gh tt deliver
+gh workon        # instead of gh tt workon
+gh wrapup        # instead of gh tt wrapup
+gh deliver       # instead of gh tt deliver
+gh responsibles  # instead of gh tt responsibles
 ```
 
 In `postCreateCommand.sh`, we also install our `gh` extensions so they're always available:
