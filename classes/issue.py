@@ -1,6 +1,7 @@
 from project import Project
 from lazyload import Lazyload
 from gitter import Gitter
+from label import Label
 import os
 import subprocess
 import sys
@@ -108,6 +109,19 @@ class Issue(Lazyload):
         )
 
         self.set('assignee', assignee)
+        return output
+    
+    def label(self, label:str):
+        """Add a label to the issue"""
+        
+        label = Label(name=label, create=True)
+        issue_number = self.get('number')
+
+        [output, _] = asyncio.run(Gitter(
+            cmd=f"gh issue edit {issue_number} --add-label '{label.get('name')}'",
+            msg=f"Add label '{label}' to the issue").run()
+        )
+
         return output
 
     def comment(self, msg: str):

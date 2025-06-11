@@ -295,7 +295,7 @@ class Devbranch(Lazyload):
         changes = [change.lstrip() for change in changes]
         return changes
 
-    def set_issue(self, issue_number=int, assign=True, msg:str=None, reopen:bool=False):
+    def set_issue(self, issue_number=int, assign=True, msg:str=None, rework:bool=False, label:str=None):
         """Set the issue number context to work on"""
 
         asyncio.run(self._assert_props(['remote', 'default_branch']))
@@ -306,8 +306,8 @@ class Devbranch(Lazyload):
         issue = Issue(number=issue_number)
 
         if issue.get('closed'): 
-            if not reopen:
-                print(f"ERROR: Issue '{issue_number}' is closed, you must use --reopen if you want to workon this issue", file=sys.stderr)
+            if not rework:
+                print(f"ERROR: Issue '{issue_number}' is closed, you must use --rework if you want to workon this issue", file=sys.stderr)
                 sys.exit(1)
             # Reopen the issue if it is closed
             issue.reopen()
@@ -329,6 +329,9 @@ class Devbranch(Lazyload):
         # assign the issue to the current user
         if self.get('assign'):
             issue.assign(assignee='@me')
+
+        issue.label(label=label)
+
 
         if msg:
             # add the body to the issue

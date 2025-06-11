@@ -11,7 +11,12 @@
         "rebase": true,
         // if "rebase" and "allow-dirty" are both set to true, A stash is done before the rebase and a stash pop after.
         "allow-dirty": true
-    }
+    },
+    "labels": {
+         "title": "ad hoc",
+         "issue": "development",
+         "rework": "rework"
+    }    
   },
   "squeeze": {
     "policies":{
@@ -48,6 +53,21 @@
         "codeowner": true,
         // The prefix to use for the collapsed branch - igonered if "collapse:false", required if "collapse:true"
         "branch_prefix": "ready"
+    }
+  },
+  "labels":{
+    // Description strings are limited to 100 characters
+    "ad hoc": {
+      "color": "00aa00",
+      "description": "Ad hoc work, not part of a strict planned updstream kanban cycle"
+    },
+    "development": {
+      "color": "00aa66",
+      "description": "Regular planned development work, part of a strict prioritized upstream kanban cycle"
+    },
+    "rework": {
+      "color": "00aaaa",
+      "description": "Rework of existing code; may or may not be part of a strict prioritized upstream kanban cycle"
     }
   }
 }

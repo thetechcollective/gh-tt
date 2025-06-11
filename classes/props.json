@@ -135,5 +135,11 @@
       "cmd": "gh issue reopen {number}",
       "msg": "Reopen the issue"
     }
+  },
+  "label": {
+    "json_list_all": {
+      "cmd": "gh label list --json name,description,color",
+      "msg": "List all labels in repo"
+    }
   }
 }

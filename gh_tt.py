@@ -11,9 +11,9 @@ class_path = os.path.dirname(os.path.abspath(__file__)) + "/classes"
 sys.path.append(class_path)
 
 from devbranch import Devbranch
-from project import Project
 from gitter import Gitter
 from issue import Issue
+from config import Config
 
 def parse(args=None):
     # Define the parent parser with the --verbose argument
@@ -42,7 +42,7 @@ def parse(args=None):
     workon_group.add_argument('-i', '--issue', type=int, help='Issue number')
     workon_group.add_argument('-t', '--title', type=str, help='Title for the new issue')
     workon_parser.add_argument('-b', '--body', dest='body', type=str, help='Optional body (issue comment) for the new issue')
-    workon_parser.add_argument('-r', '--reopen', action='store_true', help='Reopen the issue if it is closed - only valid with --issue', default=False)
+    workon_parser.add_argument('-r', '--rework', action='store_true', help='Rework the issue if it is closed required if the issue is closed', default=False)
     assign_group = workon_parser.add_mutually_exclusive_group()
     assign_group.add_argument('--assign', dest='assignee', action='store_true', help='Assign @me to the issue (default)')
     assign_group.add_argument('--no-assign', dest='assignee', action='store_false', help='Do not assign anybody to the issue')
@@ -82,10 +82,6 @@ def parse(args=None):
         parser.print_help()
         parser.exit(0)
 
-    # make sure that --reopen is only ever used with --issue
-    if args.command == 'workon' and args.reopen and not args.issue:
-        parser.error("--reopen can only be used with: workon --issue")
-
     if args.command == 'responsibles' and not (args.unstaged or args.staged):
         parser.error("You must specify either --unstaged or --staged  or both for the responsibles command")
 
@@ -102,12 +98,30 @@ if __name__ == "__main__":
     devbranch = Devbranch()
     
     if args.command == 'workon':
+        label = None
+        if args.rework:
+            try:
+                label = Config()._config_dict['workon']['labels']['rework']
+            except KeyError:
+                pass
+
         if args.issue:
-            devbranch.set_issue(issue_number=args.issue, assign=args.assignee, msg=args.body, reopen=args.reopen)
+            if label is None:
+                try:
+                    label = Config()._config_dict['workon']['labels']['issue']
+                except KeyError:
+                    pass
+
+            devbranch.set_issue(issue_number=args.issue, assign=args.assignee, msg=args.body, rework=args.rework, label=label)
             
         elif args.title:
+            if label is None:
+                try:
+                    label = Config()._config_dict['workon']['labels']['title']
+                except KeyError:
+                    pass
             issue =  Issue.create_new(title=args.title, body=args.body)
-            devbranch.set_issue(issue_number=issue.get('number'), assign=args.assignee)
+            devbranch.set_issue(issue_number=issue.get('number'), assign=args.assignee, rework=args.rework, label=label)
           
     if args.command == 'wrapup':
         devbranch.wrapup(message=args.message)
