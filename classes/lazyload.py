@@ -105,7 +105,7 @@ class Lazyload:
         Returns:
             value: The value of the property after running the command
         """
-        from gitter import Gitter
+        from classes.gitter import Gitter
 
         await Gitter.fetch()
 

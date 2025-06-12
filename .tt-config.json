@@ -40,6 +40,13 @@
         "branch_prefix": "ready"
     }
   },
+  "semver":{
+    "policies": {
+      // Prerelease are defined as labels with a suffix. Set the suffix here.
+      "prerelease_suffix": "rc"
+    }
+
+  },
   "labels":{
     // Description strings are limited to 100 characters
     "ad hoc": {
