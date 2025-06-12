@@ -61,6 +61,11 @@
       "msg": "Get the SHA1 of the default branch",
       "group": "init-last"
     },
+    "remote_sha1": {
+      "cmd": "git rev-parse {remote}/{branch_name}",
+      "msg": "Get the SHA1 of the remote branch",
+      "group": "init-last"
+    },
     "me": {
       "cmd": "gh api /user --jq '.login'",
       "msg": "Get the GitHub username of the authenticated user",

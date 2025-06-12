@@ -23,20 +23,26 @@ class TestProject(unittest.TestCase):
         self.assertEqual(config['project']['owner'], '')
         self.assertEqual(config['project']['number'], '')
         self.assertEqual(config['workon']['status'], 'In Progress')   
-        self.assertEqual(config['workon']['policies']['rebase'], True)   
-        self.assertEqual(config['workon']['policies']['allow-dirty'], True)   
+        self.assertEqual(config['workon']['labels']['title'], 'ad hoc')
+        self.assertEqual(config['workon']['labels']['issue'], 'development')
+        self.assertEqual(config['workon']['labels']['rework'], 'rework')
         self.assertEqual(config['squeeze']['policies']['abort_for_rebase'], True)   
         self.assertEqual(config['squeeze']['policies']['allow-dirty'], True)   
         self.assertEqual(config['squeeze']['policies']['allow-staged'], False)
         self.assertEqual(config['squeeze']['policies']['quiet'], False)
-        self.assertEqual(config['wrapup']['status'], 'Delivery Initiated')   
-        self.assertEqual(config['wrapup']['policies']['collapse'], True)
-        self.assertEqual(config['wrapup']['policies']['close-keyword'], 'resolves')
-        self.assertEqual(config['wrapup']['policies']['rebase'], True)
-        self.assertEqual(config['deliver']['policies']['model'], 'branch')
-        self.assertEqual(config['deliver']['policies']['codeowner'], True)
+        self.assertEqual(config['squeeze']['policies']['close-keyword'], 'resolves')
+        self.assertEqual(config['wrapup']['policies']['warn_about_rebase'], True)
+        self.assertEqual(config['deliver']['status'], 'Delivery Initiated')   
         self.assertEqual(config['deliver']['policies']['branch_prefix'], 'ready')
-
+        self.assertRegex(config['labels']['ad hoc']['color'], r'[0-9a-fA-F]{6}')
+        self.assertRegex(config['labels']['ad hoc']['description'], r'.*')
+        self.assertLessEqual(len(config['labels']['ad hoc']['description']), 100)  
+        self.assertRegex(config['labels']['rework']['color'], r'[0-9a-fA-F]{6}')
+        self.assertRegex(config['labels']['rework']['description'], r'.*')
+        self.assertLessEqual(len(config['labels']['rework']['description']), 100)   
+        self.assertRegex(config['labels']['development']['color'], r'[0-9a-fA-F]{6}')
+        self.assertRegex(config['labels']['development']['description'], r'.*')
+        self.assertLessEqual(len(config['labels']['development']['description']), 100) 
 
     @pytest.mark.unittest
     def test_read_project_static(self):
@@ -47,9 +53,9 @@ class TestProject(unittest.TestCase):
         self.assertRegex(files[2], '.tt-config-project.json')    
         self.assertEqual(config['project']['owner'], 'thetechcollective')
         self.assertEqual(config['project']['number'], '12')
-        self.assertEqual(config['workon']['policies']['rebase'], False)   
-        self.assertEqual(config['workon']['policies']['allow-dirty'], False) 
-        self.assertEqual(config['wrapup']['policies']['close-keyword'], 'resolves')
+        self.assertEqual(config['wrapup']['policies']['warn_about_rebase'], False)   
+        self.assertEqual(config['wrapup']['policies']['allow-dirty'], False) 
+        self.assertEqual(config['squeeze']['policies']['close-keyword'], 'resolves')
 
     @pytest.mark.unittest
     def test_read_malformed_static_exit(self):

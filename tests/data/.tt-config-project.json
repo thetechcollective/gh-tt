@@ -3,9 +3,9 @@
     "owner": "thetechcollective",
     "number": "12"
   },
-  "workon": {
+  "wrapup": {
     "policies":{
-        "rebase": false,
+        "warn_about_rebase": false,
         "allow-dirty": false
     }
   }

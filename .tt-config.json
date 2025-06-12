@@ -7,10 +7,6 @@
     // the status to set in the project when the workon subcommand is used
     "status": "In Progress",
     "policies":{
-        // When an existing branch is found rebase:true will perform a rebase against the default_branch rebase:false will not
-        "rebase": true,
-        // if "rebase" and "allow-dirty" are both set to true, A stash is done before the rebase and a stash pop after.
-        "allow-dirty": true
     },
     "labels": {
          "title": "ad hoc",
@@ -26,32 +22,21 @@
         "allow-dirty": true,
         // "allow-staged:true" will run the squeeze, even with staged, uncommited changes. Will warn unless "quiet:true" 
         "allow-staged": false,
+        // The closing keyword to use when closing the issue in the project - ignored if a valid closing keyword is found in the commit message
+        "close-keyword": "resolves",
         // "quiet:true" will suppress the dirty/staged warnings
         "quiet": false
     }
   },
   "wrapup": {
-    // the status to set in the project when the wrapup subcommand is used
-    "status": "Delivery Initiated",
     "policies":{
-        // "collapse:true" will rebase the branch onto itself - essentially collapsing the commits into one
-        // "collapse:false" will leave the branch as is
-        "collapse": true,
-        // The closing keyword to use when closing the issue in the project - ignored if a valid closing keyword is found in the commit message
-        "close-keyword": "resolves",
-        // The branch to default_branch
-        "rebase": true
+        "warn_about_rebase": true
     }
   },
   "deliver": {
+    // the status to set in the project when the wrapup subcommand is used
+    "status": "Delivery Initiated",
     "policies": {
-        // "model:branch" will just push the branch to the remote
-        // "model:pr" will create a pull request for the branch
-        "model": "branch",
-        // "codeowner:true" will add read the CODEOWNERS file and require a review if commit contains files with ownership
-        // Ignored if model "model:pr" is used
-        "codeowner": true,
-        // The prefix to use for the collapsed branch - igonered if "collapse:false", required if "collapse:true"
         "branch_prefix": "ready"
     }
   },

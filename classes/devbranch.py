@@ -55,7 +55,7 @@ class Devbranch(Lazyload):
         ])
 
         # Build the final message
-        close_keyword = Config.config()['wrapup']['policies']['close-keyword']
+        close_keyword = Config.config()['squeeze']['policies']['close-keyword']
         issue_number = self.get('issue_number')
 
         # Escape quotes and backticks for safe inclusion in the commit message
@@ -82,8 +82,10 @@ class Devbranch(Lazyload):
         ])
         if Config.config()['squeeze']['policies']['abort_for_rebase']:
             if self.get('default_sha1') != self.get('merge_base'):
-                print(
-                    f"ERROR: The {self.get('default_branch')} branch has commits your branch has never seen. A rebase is required. Do it now!", file=sys.stderr)
+                print(f"⛔️ ERROR: The '{self.get('default_branch')}' branch has commits your branch has never seen. A rebase is required.", file=sys.stderr)
+                print(f"💡 Run: git rebase {self.get('remote')}/{self.get('default_branch')}  (you may - or may not - need to stash or commit your changes first)", file=sys.stderr)            
+                if self.get('is_dirty'):
+                    print(f"⚠️  Psst: Your workspace is dirty, so you must stash or commit your changes first)", file=sys.stderr)
                 sys.exit(1)
 
         # check if the working directory is dirty
@@ -91,7 +93,7 @@ class Devbranch(Lazyload):
         if self.get('is_dirty'):
             # check if dirty is allowed
             if Config.config()['squeeze']['policies']['allow-dirty'] == False:
-                print("ERROR: The working directory is not clean:", file=sys.stderr)
+                print("⛔️ ERROR: The working directory is not clean:", file=sys.stderr)
                 print('\n'.join(self.get('unstaged_changes')), file=sys.stderr)
                 print('\n'.join(self.get('staged_changes')), file=sys.stderr)
                 print("Commit or stash the changes.", file=sys.stderr)
@@ -100,7 +102,7 @@ class Devbranch(Lazyload):
             # check if staged changes are allowed
             else:
                 if Config.config()['squeeze']['policies']['allow-staged'] == False and len(self.get('staged_changes')) > 0:
-                    print("ERROR: There are staged changes:", file=sys.stderr)
+                    print("⛔️ ERROR: There are staged changes:", file=sys.stderr)
                     print('\n'.join(self.get('unstaged_changes')), file=sys.stderr)
                     print('\n'.join(self.get('staged_changes')), file=sys.stderr)
                     print("Commit or stash the changes.", file=sys.stderr)
@@ -108,7 +110,7 @@ class Devbranch(Lazyload):
 
                 # check if we should warn about dirty working directory
                 if not Config.config()['squeeze']['policies']['quiet'] == True:
-                    print("WARNING: The working directory is not clean:",
+                    print("⚠️  WARNING: The working directory is not clean:",
                           file=sys.stderr)
                     print('\n'.join(self.get('unstaged_changes')), file=sys.stderr)
                     print('\n'.join(self.get('staged_changes')), file=sys.stderr)
@@ -147,7 +149,7 @@ class Devbranch(Lazyload):
 
         if diff != '':
             print(
-                f"FATAL:\nThe squeezed commit tree ({squeeze_sha1}) is not identical to the one on the issue branch ({sha1})\n Diff:\n{diff}", file=sys.stderr)
+                f"😱 FATAL:\nThe squeezed commit tree ({squeeze_sha1}) is not identical to the one on the issue branch ({sha1})\n Diff:\n{diff}", file=sys.stderr)
             sys.exit(1)
         
         return True
@@ -180,7 +182,7 @@ class Devbranch(Lazyload):
                 try:
                     await self._run(prop='checkout_local_branch', die_on_error=False)
                 except subprocess.CalledProcessError as e:
-                    print(f"Failed to checkout local branch: {e}", file=sys.stderr)
+                    print(f"⛔️ ERROR:Failed to checkout local branch: {e}", file=sys.stderr)
                     sys.exit(1)
                 match = True
                 break
@@ -200,13 +202,24 @@ class Devbranch(Lazyload):
     def wrapup(self, message: str):
         """Mapped to the 'wrapup' subcommand in the main program"""
 
-        asyncio.run(self._assert_props(['me']))
         asyncio.run(self._load_issue_number())
         asyncio.run(self._load_status())
+        asyncio.run(self._assert_props(['me', 'merge_base', 'remote_sha1', 'default_sha1' ]))
+
+        if Config.config()['wrapup']['policies']['warn_about_rebase'] and not self.get('merge_base') == self.get('default_sha1'):
+            print(
+                f"⚠️  WARNING: The '{self.get('default_branch')}' branch has commits your branch has never seen. A Rebase is required before you can deliver.", file=sys.stderr)
+            print(f"💡 Run: git rebase {self.get('remote')}/{self.get('default_branch')}")                  
+            if self.get('is_dirty'):
+                print(f"⚠️  Psst: Your workspace is dirty you must stash or commit your changes first)", file=sys.stderr)
 
 
         if not self.get('is_dirty'):
-            print("Nothing to commit. The working directory is clean.")
+            print("☝️  Nothing to commit. The working directory is clean.")
+
+            if not self.get('sha1') == self.get('remote_sha1'):                
+                print("👉 The branch is ahead of its remote; ...pushing")
+                asyncio.run(self._push(force=True))
             return
 
         # If nothing is staged, stage all changes
@@ -235,11 +248,12 @@ class Devbranch(Lazyload):
                 msg="Add responsibles to the issue").run()
             )
 
-            responsibles_alert = f"\n\n🔔 You touched on files that have named responsibles {responsibles}\n\n"
+            responsibles_alert = f"\n☝️ You touched on files that have named responsibles {responsibles}\nThey are now mentioned in the issue."
 
 
-        print(
-            f"\n\n👍 Branch has got a new commit that mentions issue '#{self.get('issue_number')}' and it's pushed\n{responsibles_alert}💡 Try to run: gh browse {self.get('issue_number')}")
+        print(f"👍 SUCCESS: Branch has got a new commit that mentions issue '#{self.get('issue_number')}' and it's pushed\n{responsibles_alert}")
+        print(f"💡 Run: gh workflow view wrapup")      
+        print(f"💡 Run: gh browse {self.get('issue_number')}")
         return True
 
     async def _load_status(self, reload: bool = False):
@@ -307,7 +321,7 @@ class Devbranch(Lazyload):
 
         if issue.get('closed'): 
             if not rework:
-                print(f"ERROR: Issue '{issue_number}' is closed, you must use --rework if you want to workon this issue", file=sys.stderr)
+                print(f"⛔️ ERROR: Issue '{issue_number}' is closed, you must use --rework if you want to workon this issue", file=sys.stderr)
                 sys.exit(1)
             # Reopen the issue if it is closed
             issue.reopen()
@@ -367,7 +381,8 @@ class Devbranch(Lazyload):
         asyncio.run(self._run('push_squeeze'))
 
         print(
-            f"\n👍 Branch '{self.get('branch_name')}' has been squeezed into one commit; '{self.get('squeeze_sha1')[:7]}' and pushed to {self.get('remote')} as '{ready_prefix}/{self.get('branch_name')}'")
+            f"👍 SUCCESS: Branch '{self.get('branch_name')}' has been squeezed into one commit; '{self.get('squeeze_sha1')[:7]}' and pushed to {self.get('remote')} as '{ready_prefix}/{self.get('branch_name')}'")
+        print(f"💡 Run: gh workflow view ready")
 
         return self.get('squeeze_sha1')
 
