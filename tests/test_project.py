@@ -7,12 +7,22 @@ from unittest.mock import Mock
 import pytest
 from io import StringIO
 
-class_path = os.path.dirname(os.path.abspath(__file__)) + "/../classes"
-sys.path.append(class_path)
-
-from project import Project
+from classes.project import Project
+from classes.gitter import Gitter
 
 class TestProject(unittest.TestCase):
+
+
+    @pytest.mark.dev
+    def test_project_constructor(self):
+        Gitter().verbose(True)
+        project = Project(owner="thetechcollective", number="12")
+        self.assertIsInstance(project, Project)
+
+        item = project.get_item(url="https://github.com/Arla-OMB/python-new-dawn-graphql/issues/777")
+        item.get_created_date()
+        project.update_field(url=item['content']['url'], field="Start", field_value=item['created_at'])
+        self.assertIsInstance(item, dict)
 
 
     #@pytest.mark.unittest

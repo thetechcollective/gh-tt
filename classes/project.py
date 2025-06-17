@@ -1,5 +1,3 @@
-from lazyload import Lazyload
-from gitter import Gitter
 import os
 import subprocess
 import sys
@@ -7,11 +5,10 @@ import re
 import json
 import asyncio
 
-# Add directory of this class to the general class_path
-# to allow import of sibling classes
-class_path = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(class_path)
 
+from classes.lazyload import Lazyload
+from classes.gitter import Gitter
+from classes.projectitem import Projectitem
 
 class Project(Lazyload):
     """Class used to represent the Devbranch for a development contribution"""
@@ -23,7 +20,7 @@ class Project(Lazyload):
 
     # Instance methods
 
-    def __init__(self, owner=None, number=None):
+    def __init__(self, owner:str, number=str):
         super().__init__()
 
         self.set('workdir', os.getcwd())
@@ -51,7 +48,78 @@ class Project(Lazyload):
             print(
                 f"Project owner or number not set - null values are currently not supported", file=sys.stderr)
             sys.exit(1)
+        
 
+    def get_item(self, url:str) -> Projectitem:
+        """The project serves as a factory for project items.
+        It will only return the project item if it is in the project's item-list.
+        """
+        self._load_initial()
+        item = Projectitem()
+        item.props = self.get('items')[url]
+
+        has_start = False
+        try:
+            item.get('start')
+            has_start = True
+        except AssertionError:
+            pass
+
+            
+        if not has_start:
+            created_at = item.get_created_date()
+            self.update_field(
+                url=url,
+                field='start',
+                field_value=created_at
+            )
+
+        # Todo: update the field on the project.
+        
+
+        return item
+
+
+
+    def _load_initial(self):
+        try:
+            #Using the project id from the properties as an indicator that the project has been loaded
+            self.get('id')
+            return
+        except AssertionError:
+            pass
+        
+        asyncio.run(self._load_manifest('init'))
+
+
+        # load the json in self.get('project_raw_json') into a dict
+        try:
+            project_json = json.loads(self.get('raw_json_project'))
+        except json.JSONDecodeError as e:
+            raise RuntimeError(
+                f"Project JSON is not valid: {e}\n{self.get('raw_json_project')}")
+            sys.exit(1)
+
+        # iterate through the project_json and transfer each key-value pair to the properties
+        for key, value in project_json.items():
+            self.set(key, value)
+
+        try:
+            item_list_json = json.loads(self.get('raw_json_project_items'))
+        except json.JSONDecodeError as e:
+            raise RuntimeError(
+                f"Project item list JSON is not valid: {e}\n{self.get('raw_json_project_items')}")
+            sys.exit(1)
+        # item_list_json has one element 'items' which is a list of items
+        # read throug each item and transfer it to self.props['items']
+        # with the item['content']['url'] as the key and the value as the value
+        for item in item_list_json['items']:
+            if 'content' in item and 'url' in item['content']:
+                item['project_id'] = self.get('id')
+                self.props['items'][item['content']['url']] = item
+
+
+        
     def get_project_id(self, owner=None, number=None):
         """Get the project id from the project owner and number
 
