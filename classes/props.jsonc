@@ -195,5 +195,17 @@
         "cmd": "gh auth status",
         "msg": "Check if the user has sufficient access to update projects"
     }
+  },
+  "project":{
+    "raw_json_project": {
+      "cmd": "gh project view {project_number} --owner  {project_owner} --format json",
+      "msg": "Get the properties from the project",
+      "group": "init"
+    },
+    "raw_json_project_items": {
+      "cmd": "gh project item-list {project_number} --owner  {project_owner} --format json",
+      "msg": "Get the properties from the project",
+      "group": "init"
+    }    
   }
 }
