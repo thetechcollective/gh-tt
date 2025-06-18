@@ -42,7 +42,7 @@ def parse(args=None):
     workon_group.add_argument('-i', '--issue', type=int, help='Issue number')
     workon_group.add_argument('-t', '--title', type=str, help='Title for the new issue')
     workon_parser.add_argument('-b', '--body', dest='body', type=str, help='Optional body (issue comment) for the new issue')
-    workon_parser.add_argument('-r', '--rework', action='store_true', help='Rework the issue if it is closed required if the issue is closed', default=False)
+    workon_parser.add_argument('-r', '--reopen', action='store_true', help='Reopens a closed issue. Required when you want to continue working on a closed issue.', default=False)
     assign_group = workon_parser.add_mutually_exclusive_group()
     assign_group.add_argument('--assign', dest='assignee', action='store_true', help='Assign @me to the issue (default)')
     assign_group.add_argument('--no-assign', dest='assignee', action='store_false', help='Do not assign anybody to the issue')
@@ -99,11 +99,6 @@ if __name__ == "__main__":
     
     if args.command == 'workon':
         label = None
-        if args.rework:
-            try:
-                label = Config()._config_dict['workon']['labels']['rework']
-            except KeyError:
-                pass
 
         if args.issue:
             if label is None:
@@ -112,7 +107,7 @@ if __name__ == "__main__":
                 except KeyError:
                     pass
 
-            devbranch.set_issue(issue_number=args.issue, assign=args.assignee, msg=args.body, rework=args.rework, label=label)
+            devbranch.set_issue(issue_number=args.issue, assign=args.assignee, msg=args.body, reopen=args.reopen, label=label)
             
         elif args.title:
             if label is None:
@@ -121,7 +116,7 @@ if __name__ == "__main__":
                 except KeyError:
                     pass
             issue =  Issue.create_new(title=args.title, body=args.body)
-            devbranch.set_issue(issue_number=issue.get('number'), assign=args.assignee, rework=args.rework, label=label)
+            devbranch.set_issue(issue_number=issue.get('number'), assign=args.assignee, reopen=args.reopen, label=label)
           
     if args.command == 'wrapup':
         devbranch.wrapup(message=args.message)
