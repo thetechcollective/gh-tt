@@ -116,7 +116,7 @@ if __name__ == "__main__":
         label = None
 
         if args.type is not None:
-            is_valid_type_label = Label.validate(args.type, "type")
+            Label.validate(args.type, "type")
 
         if args.issue:
             if label is None:

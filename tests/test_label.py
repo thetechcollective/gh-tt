@@ -1,18 +1,12 @@
 import unittest
 import os
 import sys
-import json
-from io import StringIO 
-from unittest.mock import patch, MagicMock
-from unittest.mock import Mock
 import pytest
 
 class_path = os.path.dirname(os.path.abspath(__file__)) + "/../classes"
 sys.path.append(class_path)
 
 from label import Label
-from issue import Issue
-from devbranch import Devbranch
 from gitter import Gitter
 
 class TestLabel(unittest.TestCase):
@@ -34,3 +28,18 @@ class TestLabel(unittest.TestCase):
         
         # Assertions
         self.assertTrue(True)
+
+    @pytest.mark.unittest
+    def test_label_validate_success(self):
+        category = "type"
+        name = "ad hoc"
+
+        self.assertTrue(Label.validate(name=name, category=category))
+
+    @pytest.mark.unittest
+    def test_label_validate_fail(self):
+        category = "type"
+        name = "some random value that's definitely not a label"
+
+        with pytest.raises(SystemExit):
+            Label.validate(name=name, category=category)
