@@ -11,6 +11,8 @@ import pprint
 class_path = os.path.dirname(os.path.abspath(__file__)) + "/classes"
 sys.path.append(class_path)
 
+from label import Label
+from version import Version
 from devbranch import Devbranch
 from gitter import Gitter
 from issue import Issue
@@ -81,37 +83,10 @@ def parse(args=None):
     
     args = parser.parse_args(args)
 
-    if args.reopen and args.command == "workon" and not args.issue:
+    if args.command == "workon" and args.reopen and not args.issue:
         parser.error("🛑 --reopen flag can only be used with the `workon --issue` command")
 
-    if args.version:
-        Gitter.verbose(verbose=args.verbose)
-
-        cmd = "gh extension list"
-        [extensions_data, _] = asyncio.run(Gitter(cmd=cmd).run())
-
-        lines = extensions_data.splitlines()
-        
-        sha = None
-        for line in lines:
-            if line.startswith("gh tt"):
-                parts = line.split("\t")
-                sha = parts[2]
-                break
-
-        if not sha:
-            print("🛑  SHA for current gh tt version could not be extracted from gh extension list")
-            sys.exit(1)
-
-        cmd = f"git tag --points-at {sha}"
-        [tags, _] = asyncio.run(Gitter(cmd=cmd).run())
-
-        print("gh-tt extension")
-        print(f"Version SHA: {sha}")
-        print(f"Version tags: {", ".join(tags.split("\n")) if tags != "" else "The current SHA has no tags attached"}")
-        sys.exit(0)
-
-    if not args.command:
+    if not args.command and not args.version:
         parser.print_help()
         parser.exit(0)
 
@@ -124,8 +99,15 @@ if __name__ == "__main__":
     args = parse(sys.argv[1:])
 
     Gitter.verbose(verbose=args.verbose)
-    Gitter.read_cache()
     Gitter.validate_gh_version()
+
+    if args.version:
+        version = Version()
+        version.print()
+
+        sys.exit(0)
+
+    Gitter.read_cache()
     Gitter.validate_gh_scope(scope='project')
     
     devbranch = Devbranch()
@@ -134,18 +116,7 @@ if __name__ == "__main__":
         label = None
 
         if args.type is not None:
-            is_valid_type_label = False
-            for label_name, label_data in Config()._config_dict['labels'].items():
-                if label_data["category"] == "type" and label_name == args.type:
-                    is_valid_type_label = True
-                    break
-
-            if not is_valid_type_label:
-                type_labels = [label_name for label_name, label_data in Config()._config_dict['labels'].items() if label_data["category"] == "type"]
-                print(f"🛑  ERROR: \"{args.type}\" passed in --type is not matching any issue type labels defined in the config. Choose of the issue type labels defined: {type_labels}")
-                sys.exit(1)
-
-            label=args.type
+            is_valid_type_label = Label.validate(args.type, "type")
 
         if args.issue:
             if label is None:

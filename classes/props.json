@@ -146,5 +146,15 @@
       "cmd": "gh label list --json name,description,color",
       "msg": "List all labels in repo"
     }
+  },
+  "version": {
+    "extension_list": {
+        "cmd": "gh extension list",
+        "msg": "Get a list of installed gh extensions"
+    },
+    "sha_tags": {
+        "cmd": "git tag --points-at {sha}",
+        "msg": "Get a list of tags for a given SHA"
+    }
   }
 }
