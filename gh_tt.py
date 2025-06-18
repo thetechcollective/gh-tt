@@ -81,6 +81,9 @@ def parse(args=None):
     
     args = parser.parse_args(args)
 
+    if args.reopen and args.command == "workon" and not args.issue:
+        parser.error("🛑 --reopen flag can only be used with the `workon --issue` command")
+
     if args.version:
         Gitter.verbose(verbose=args.verbose)
 
