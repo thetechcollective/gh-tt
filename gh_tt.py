@@ -41,6 +41,7 @@ def parse(args=None):
     workon_group = workon_parser.add_mutually_exclusive_group()
     workon_group.add_argument('-i', '--issue', type=int, help='Issue number')
     workon_group.add_argument('-t', '--title', type=str, help='Title for the new issue')
+    workon_parser.add_argument('--type', type=str, help='Set an issue type label', default=None)
     workon_parser.add_argument('-b', '--body', dest='body', type=str, help='Optional body (issue comment) for the new issue')
     workon_parser.add_argument('-r', '--reopen', action='store_true', help='Reopens a closed issue. Required when you want to continue working on a closed issue.', default=False)
     assign_group = workon_parser.add_mutually_exclusive_group()
@@ -99,6 +100,20 @@ if __name__ == "__main__":
     
     if args.command == 'workon':
         label = None
+
+        if args.type is not None:
+            is_valid_type_label = False
+            for label_name, label_data in Config()._config_dict['labels'].items():
+                if label_data["category"] == "type" and label_name == args.type:
+                    is_valid_type_label = True
+                    break
+
+            if not is_valid_type_label:
+                type_labels = [label_name for label_name, label_data in Config()._config_dict['labels'].items() if label_data["category"] == "type"]
+                print(f"🛑  ERROR: \"{args.type}\" passed in --type is not matching any issue type labels defined in the config. Choose of the issue type labels defined: {type_labels}")
+                sys.exit(1)
+
+            label=args.type
 
         if args.issue:
             if label is None:
