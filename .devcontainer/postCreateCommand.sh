@@ -22,7 +22,7 @@ if [ -e $(dirname $0)/_temp.token ]; then
     echo "$PREFIX setting up GitHub CLI"
     $(dirname $0)/gh-login.sh postcreate
     echo "$PREFIX Installing the techcollective/gh-tt gh cli extension"
-    gh extension install thetechcollective/gh-tt
+    gh extension install thetechcollective/gh-tt --pin stable
     echo "$PREFIX Installing the lakruzz/gh-semver gh cli extension"
     gh extension install lakruzz/gh-semver
     echo "$PREFIX Installing the gh aliases"    
