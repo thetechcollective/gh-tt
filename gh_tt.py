@@ -103,7 +103,7 @@ if __name__ == "__main__":
         if args.issue:
             if label is None:
                 try:
-                    label = Config()._config_dict['workon']['labels']['issue']
+                    label = Config()._config_dict['workon']['default_type_labels']['issue']
                 except KeyError:
                     pass
 
@@ -112,7 +112,7 @@ if __name__ == "__main__":
         elif args.title:
             if label is None:
                 try:
-                    label = Config()._config_dict['workon']['labels']['title']
+                    label = Config()._config_dict['workon']['default_type_labels']['title']
                 except KeyError:
                     pass
             issue =  Issue.create_new(title=args.title, body=args.body)

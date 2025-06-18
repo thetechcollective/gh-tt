@@ -1,3 +1,4 @@
+from config import Config
 from project import Project
 from lazyload import Lazyload
 from gitter import Gitter
@@ -113,6 +114,15 @@ class Issue(Lazyload):
     
     def label(self, label:str):
         """Add a label to the issue"""
+
+        existing_labels = self.get("labels")
+        config = Config()._config_dict
+        type_labels = [name for name, props in config["labels"].items() if props["category"] == "type"]
+
+        for l in existing_labels:
+            if l["name"] in type_labels:
+                print(f"⚠️  Issue already has a type label. The new label \"{label}\" will not be applied.")
+                return
         
         label = Label(name=label, create=True)
         issue_number = self.get('number')

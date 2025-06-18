@@ -40,8 +40,8 @@ class Label(Lazyload):
             if create:
                 try:
                     config = Config()._config_dict
-                    color = Config()._config_dict['labels'][name]['color']
-                    description = Config()._config_dict['labels'][name]['description']
+                    color = config['labels'][name]['color']
+                    description = config['labels'][name]['description']
                 except KeyError as e:
                     print(f"ERROR: Label '{name}' not defined in the config file", file=sys.stderr)
                     sys.exit(1)

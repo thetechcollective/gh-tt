@@ -8,11 +8,12 @@
     "status": "In Progress",
     "policies":{
     },
-    "labels": {
+    // labels which will be applied (depending on the flag used) by default if 
+    // no other `type` label has been applied to the issue
+    "default_type_labels": {
          "title": "ad hoc",
-         "issue": "development",
-         "rework": "rework"
-    }    
+         "issue": "development"
+    }
   },
   "squeeze": {
     "policies":{
@@ -40,19 +41,22 @@
         "branch_prefix": "ready"
     }
   },
-  "labels":{
-    // Description strings are limited to 100 characters
-    "ad hoc": {
-      "color": "00aa00",
-      "description": "Ad hoc work, not part of a strict planned updstream kanban cycle"
-    },
-    "development": {
-      "color": "00aa66",
-      "description": "Regular planned development work, part of a strict prioritized upstream kanban cycle"
-    },
-    "rework": {
-      "color": "00aaaa",
-      "description": "Rework of existing code; may or may not be part of a strict prioritized upstream kanban cycle"
+  // Description strings are limited to 100 characters
+  "labels": {
+        "ad hoc": {
+          "color": "00aa00",
+          "description": "Ad hoc work, not part of a strict planned upstream kanban cycle",
+          "category": "type"
+        },
+        "development": {
+          "color": "00aa66",
+          "description": "Regular planned development work, part of a strict prioritized upstream kanban cycle",
+            "category": "type"
+        },
+        "rework": {
+          "color": "00aaaa",
+          "description": "Rework of existing code; may or may not be part of a strict prioritized upstream kanban cycle",
+          "category": "type"
+        }
     }
-  }
 }
