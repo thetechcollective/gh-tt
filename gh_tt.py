@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import asyncio
 import os
 import sys
 import argparse
@@ -19,6 +20,7 @@ def parse(args=None):
     # Define the parent parser with the --verbose argument
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
+    parent_parser.add_argument('--version', action='store_true', help='Print info about the app and quit')
 
     # Define command-line arguments
     parser = argparse.ArgumentParser(
@@ -78,6 +80,33 @@ def parse(args=None):
     # Add the project subcommand
     
     args = parser.parse_args(args)
+
+    if args.version:
+        Gitter.verbose(verbose=args.verbose)
+
+        cmd = "gh extension list"
+        [extensions_data, _] = asyncio.run(Gitter(cmd=cmd).run())
+
+        lines = extensions_data.splitlines()
+        
+        sha = None
+        for line in lines:
+            if line.startswith("gh tt"):
+                parts = line.split("\t")
+                sha = parts[2]
+                break
+
+        if not sha:
+            print("🛑  SHA for current gh tt version could not be extracted from gh extension list")
+            sys.exit(1)
+
+        cmd = f"git tag --points-at {sha}"
+        [tags, _] = asyncio.run(Gitter(cmd=cmd).run())
+
+        print("gh-tt extension")
+        print(f"Version SHA: {sha}")
+        print(f"Version tags: {", ".join(tags.split("\n")) if tags != "" else "The current SHA has no tags attached"}")
+        sys.exit(0)
 
     if not args.command:
         parser.print_help()
