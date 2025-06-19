@@ -71,7 +71,7 @@ class Project(Lazyload):
         [id, result] = Gitter(
             cmd=f"gh project view {number} --owner {owner} --format json --jq '.id'",
             msg="Get the project id").run(cache=True)
-        )
+
         return id
 
     def get_field_description(self, owner=None, number=None, field=str):
@@ -95,7 +95,7 @@ class Project(Lazyload):
         [field_json_str, result] = Gitter(
             cmd=f"gh project field-list {number} --owner {owner} --format json --jq '.fields[] | select(.name == \"{field}\")'",
             msg="Get the field description in json format").run(cache=True)
-        )
+
 
         field_json = json.loads(field_json_str)
 
