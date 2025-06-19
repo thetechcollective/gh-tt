@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 import json
@@ -94,7 +95,7 @@ class Lazyload:
                 raise AssertionError(f"File {file} is not a valid JSON file: {e}")
 
 
-    def _load_prop(self, prop: str, cmd: str, msg: str):
+    async def _load_prop(self, prop: str, cmd: str, msg: str):
         """
         Load a property and set the value on the properties
         Args:
@@ -106,16 +107,16 @@ class Lazyload:
         """
         from gitter import Gitter
 
-        Gitter.fetch()
+        await Gitter.fetch()
 
-        [value, _] = Gitter(
+        [value, _] = await Gitter(
             cmd=f"{cmd}",
             msg=f"{msg}",
             die_on_error=True).run()
         self.set(prop, value)
         return value
 
-    def _assert_props(self, props: list[str] ):
+    def _assert_props(self, props: list[str]):
         """
         Assert that all properties in the list are loaded, and if no then initiate the load
         Args:
@@ -134,16 +135,16 @@ class Lazyload:
         """Get the class name in lowercase to match the manifest"""
         return self.__class__.__name__.lower()
     
-    def _load_manifest(self, group: str = 'init'):
+    async def _load_manifest(self, group: str = 'init'):
         """
-        Load all properties from the manifest file relevant to the class instance.
+        Load all properties of the class based on the manifest file.
 
         Args:
             group (str): The group of properties to load. 
             None implies group 'init'.
 
         Returns:
-            true if properties were loaded, False otherwise.
+            True if properties were loaded.
 
         Raises:
             AssertionError: If the manifest file is not loaded or does not exist.
@@ -169,7 +170,7 @@ class Lazyload:
             dependency = self._manifest[caller][prop].get('dependency', None)
             if group != 'init' and dependency and dependency not in self.get('_loaded'):
                 # load the dependency first
-                self._load_manifest(dependency)
+                await self._load_manifest(dependency)
 
             # Find occurrences of {.*} in text (e.g., {someprop} and replace them with the property values)
             # The regex uses negative lookbehind (?<!{) and negative lookahead (?!{) assertions to ensure 
@@ -180,9 +181,9 @@ class Lazyload:
             for match in matches:
                 # Enforce the rule: No command can expect value substitution for props within the same group
                 dep_group = self._get_manifest_group(caller, match)
-                assert group != dep_group, f"ERROR: Property '{prop}' in group '{group}' defined in {self._manifest_file} implicitly depends on property '{match}'. They both belong to the same dependency group '{group}'. Value substitution within the same group is not allowed."
+                assert group != dep_group, f"ERROR: Circular dependency. Property '{prop}' in group '{group}' defined in {self._manifest_file} implicitly depends on property '{match}'. They both belong to the same dependency group '{group}'. Value substitution within the same group is not allowed."
                 if dep_group not in self.get('_loaded') and dep_group is not None:
-                    self._load_manifest(dep_group)
+                    await self._load_manifest(dep_group)
 
             # When all dependencies are loaded compile the final command by replacing
             # the dependency values are replaced e.g., {someprop} -> self.get('someprop')
@@ -198,12 +199,12 @@ class Lazyload:
             msg = self._manifest[caller][prop].get('msg', '')
 
             # Append the coroutine to the list
-            self._load_prop(
-                prop,
-                cmd,
-                msg)
+            tasks.append(self._load_prop(prop, cmd, msg))
 
         # Run all coroutines concurrently
+        if tasks:
+            await asyncio.gather(*tasks)
+
         self.props['_loaded'].append(group)
         return True
 
