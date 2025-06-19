@@ -142,7 +142,7 @@ class Issue(Lazyload):
     def reopen(self):
         """Reopen the issue"""
 
-        self._run('reopen')
+        await self._run('reopen')
         return True
 
         

@@ -29,26 +29,26 @@ class Devbranch(Lazyload):
         self.set('is_dirty', None)
         self.set('issue_number', None)
 
-    def _load_issue_number(self):
+    async def _load_issue_number(self):
+        await self._assert_props(['branch_name'])
 
-        self._assert_props(['branch_name'])
         match = re.match(r'^(\d+).+', self.get('branch_name'))
         if not match:
             self.set('issue_number', None)
             return False
         
-        self.set('issue_number',f"{match.group(1)}")
+        self.set('issue_number', f"{match.group(1)}")
         return True
 
-    def __load_squeezed_commit_message(self):
+    async def __load_squeezed_commit_message(self):
         """
         Build the multiline commit message for the collapsed commit.
         The first line is the issue title, followed by the commit messages
         for each commit on the branch (excluding the merge base).
         """
-        self._load_issue_number()
+        await self._load_issue_number()
 
-        self._assert_props([
+        await self._assert_props([
             'issue_title',
             'commit_log'
         ])
@@ -66,15 +66,15 @@ class Devbranch(Lazyload):
                  f"{safe_title} – {close_keyword} #{issue_number}\n\n{safe_commit_log}")
         return self.get('squeeze_message')
 
-    def __squeeze(self):
+    async def __squeeze(self):
         """
         Squeeze the current branch into a single commit
         """
 
-        self._load_status()
+        await self._load_status()
 
         # Abort for rebase if we must
-        self._assert_props([
+        await self._assert_props([
             'merge_base',
             'default_sha1',
             'default_branch'
@@ -116,35 +116,33 @@ class Devbranch(Lazyload):
                     print(
                         "The branch will be squeezed, but the changes in the files listed above will not be included in the commit.", file=sys.stderr)
 
-        self.__load_squeezed_commit_message()
-
-        self._assert_props(['squeeze_sha1'])
-
-        self.__compare_before_after_trees()
+        await self.__load_squeezed_commit_message()
+        await self._assert_props(['squeeze_sha1'])
+        await self.__compare_before_after_trees()
 
         return self.get('squeeze_sha1')
 
-    def _push(self, force=False):
+    async def _push(self, force=False):
         # push the branch to the remote
         force_switch = ''
         if force == True:
             force_switch = '--force-with-lease'
 
-        [output, result] = Gitter(
+        [_, _] = await Gitter(
             cmd=f"git push {force_switch}",
             msg="Push the branch to the remote").run()
 
         return True
 
-    def __compare_before_after_trees(self):
+    async def __compare_before_after_trees(self):
         """
         Verify that the new commit tree on the collapsed branch is identical to the old commit
         """
-        self._assert_props(['sha1', 'squeeze_sha1'])
+        await self._assert_props(['sha1', 'squeeze_sha1'])
 
         sha1 = self.get('sha1')
         squeeze_sha1 = self.get('squeeze_sha1')
-        diff = self._run('compare_trees')
+        diff = await self._run('compare_trees')
 
         if diff != '':
             print(
@@ -153,32 +151,32 @@ class Devbranch(Lazyload):
         
         return True
 
-    def __develop(self, issue_number=int, branch_name=str):
+    async def __develop(self, issue_number=int, branch_name=str):
         """Develop on the issue branch, creating a new branch if needed
         Args:
             issue_number (int): The issue number to develop on
             branch_name (str): The name of the branch to develop on
         """
         
-        [output, result] = Gitter(
+        [_, _] = await Gitter(
             cmd=f"gh issue develop {issue_number} -b {self.get('default_branch')} -n {self.get('branch_name')} -c",
             msg=f"gh develop {issue_number} on new branch {branch_name}").run()
 
-    def __reuse_issue_branch(self, issue_number=int):
+    async def __reuse_issue_branch(self, issue_number=int):
         """Check if there is a local or remote branch with the issue number and switch to it
         Args:
             issue_number (int): The issue number to check for
         Returns:
             bool: True if a branch was found and switched to, False otherwise
         """
-        self._assert_props(['local_branches', 'remote_branches'])
+        await self._assert_props(['local_branches', 'remote_branches'])
 
         match = False
         for branch in self.get('local_branches').split('\n'):
             if re.match(f"^{issue_number}.+", branch):
                 self.set('branch_name', branch)
                 try:
-                    self._run(prop='checkout_local_branch', die_on_error=False)
+                    await self._run(prop='checkout_local_branch', die_on_error=False)
                 except subprocess.CalledProcessError as e:
                     print(f"⛔️ ERROR:Failed to checkout local branch: {e}", file=sys.stderr)
                     sys.exit(1)
@@ -192,17 +190,17 @@ class Devbranch(Lazyload):
                 match_obj = re.match(f"^origin/({issue_number}.+)", branch)
                 if match_obj:
                     self.set('branch_name', match_obj.group(1))
-                    self._run('checkout_remote_branch')
+                    await self._run('checkout_remote_branch')
                     match = True
                     break
         return match
 
-    def wrapup(self, message: str):
+    async def wrapup(self, message: str):
         """Mapped to the 'wrapup' subcommand in the main program"""
 
-        self._load_issue_number()
-        self._load_status()
-        self._assert_props(['me', 'merge_base', 'remote_sha1', 'default_sha1' ])
+        await self._load_issue_number()
+        await self._load_status()
+        await self._assert_props(['me', 'merge_base', 'remote_sha1', 'default_sha1' ])
 
         if Config.config()['wrapup']['policies']['warn_about_rebase'] and not self.get('merge_base') == self.get('default_sha1'):
             print(
@@ -217,25 +215,25 @@ class Devbranch(Lazyload):
 
             if not self.get('sha1') == self.get('remote_sha1'):                
                 print("👉 The branch is ahead of its remote; ...pushing")
-                self._push(force=True)
+                await self._push(force=True)
             return
 
         # If nothing is staged, stage all changes
         if not len(self.get('staged_changes')) > 0:
             # Stage all changes if nothing is staged
-            self._run('add_all')
-            self._load_status(reload=True)
+            await self._run('add_all')
+            await self._load_status(reload=True)
 
         self.set('commit_msg',f"\"{message} - #{self.get('issue_number')}\"")
 
-        change_list = self._get_pretty_changes()
+        change_list = await self._get_pretty_changes()
         responsibles = Responsibles().responsibles_as_markdown(
             changeset=change_list,
             exclude=[f"@{self.get('me')}"]
         )
         
-        self._run('commit_changes')
-        self._push(force=True)
+        await self._run('commit_changes')
+        await self._push(force=True)
 
 
         responsibles_alert = ''
@@ -253,7 +251,7 @@ class Devbranch(Lazyload):
         print(f"💡 Run: gh browse {self.get('issue_number')}")
         return True
 
-    def _load_status(self, reload: bool = False):
+    async def _load_status(self, reload: bool = False):
         """Load the status of the current branch sets the following properties:
         - 'status': The output of `git status --porcelain`
         - 'is_dirty': True if there are unstaged or staged changes
@@ -265,7 +263,7 @@ class Devbranch(Lazyload):
                 # If the status is already loaded, return
                 return
 
-        self._assert_props(['status'])
+        await self._assert_props(['status'])
 
         if reload:
             self._force_prop_reload('status')
@@ -283,7 +281,7 @@ class Devbranch(Lazyload):
         self.set('is_dirty',  len(self.props['unstaged_changes']) > 0 or len(
             self.props['staged_changes']) > 0)
         
-    def _get_pretty_changes(self, staged: bool = True, unstaged: bool = False):
+    async def _get_pretty_changes(self, staged: bool = True, unstaged: bool = False):
         """Get a pretty formatted list of changes
         
         Args:
@@ -292,8 +290,8 @@ class Devbranch(Lazyload):
         Returns:
             list: A list of changes with the tailing ' M', 'MM', 'A ' or '??' removed
         """
-        self._assert_props(['status'])
-        self._load_status()
+        await self._assert_props(['status'])
+        await self._load_status()
         changes = []
         if staged:
             changes.extend(self.get('staged_changes'))
@@ -306,10 +304,10 @@ class Devbranch(Lazyload):
         changes = [change.lstrip() for change in changes]
         return changes
 
-    def set_issue(self, issue_number=int, assign=True, msg:str=None, reopen:bool=False, label:str=None):
+    async def set_issue(self, issue_number=int, assign=True, msg:str=None, reopen:bool=False, label:str=None):
         """Set the issue number context to work on"""
 
-        self._assert_props(['remote', 'default_branch'])
+        await self._assert_props(['remote', 'default_branch'])
 
         self.set('issue_number', issue_number)
         self.set('assign', assign)
@@ -323,7 +321,7 @@ class Devbranch(Lazyload):
             # Reopen the issue if it is closed
             issue.reopen()
 
-        reuse = self.__reuse_issue_branch(issue_number=issue_number)
+        reuse = await self.__reuse_issue_branch(issue_number=issue_number)
         if not reuse:
             # Construct a valid branch name based on the issue number, and the title, replacing spaces with underscores and weed out any chars that aren't allowind in branch names
             issue_title = issue.get('title')
@@ -331,7 +329,7 @@ class Devbranch(Lazyload):
                 '[^a-zA-Z0-9_-]', '', re.sub(' ', '_', issue_title))
             branch_name = f"{issue_number}-{branch_valid_title}"
             self.set('branch_name', branch_name)
-            self.__develop(issue_number=issue_number, branch_name=branch_name)
+            await self.__develop(issue_number=issue_number, branch_name=branch_name)
 
         # at this point the branch should exist and is checked out - either through a local branch, a remote branch or a new branch
 
@@ -357,17 +355,16 @@ class Devbranch(Lazyload):
         project.update_field(url=issue.get(
             'url'), field=workon_field, field_value=workon_field_value)
 
-    def deliver(self):
+    async def deliver(self):
         """Mapped to the 'deliver' subcommand."""
 
-        self._assert_props(['branch_name', 'remote'])
+        await self._assert_props(['branch_name', 'remote'])
 
-        self.__squeeze()
+        await self.__squeeze()
         ready_prefix = Config.config()['deliver']['policies']['branch_prefix']
         self.set('ready_prefix', ready_prefix)
-
         
-        self._load_issue_number()
+        await self._load_issue_number()
         issue = Issue(number=self.get('issue_number'))
         project = Project()
         field = project.get('deliver_field')
@@ -375,7 +372,7 @@ class Devbranch(Lazyload):
         project.update_field(url=issue.get(
             'url'), field=field, field_value=field_value)
 
-        self._run('push_squeeze')
+        await self._run('push_squeeze')
 
         print(
             f"👍 SUCCESS: Branch '{self.get('branch_name')}' has been squeezed into one commit; '{self.get('squeeze_sha1')[:7]}' and pushed to {self.get('remote')} as '{ready_prefix}/{self.get('branch_name')}'")
@@ -383,9 +380,9 @@ class Devbranch(Lazyload):
 
         return self.get('squeeze_sha1')
 
-    def responsibles(self, unstaged: bool, staged: bool, exclude:str ):
+    async def responsibles(self, unstaged: bool, staged: bool, exclude:str ):
 
-        self._assert_props(['me'])
+        await self._assert_props(['me'])
 
         exclude_list = []
         if exclude is not None:
@@ -394,9 +391,9 @@ class Devbranch(Lazyload):
         # replace @me with the current user
         exclude_list = [item.replace('@me', f"@{self.get('me')}") for item in exclude_list]
 
-        self._load_issue_number()
-        self._load_status()
-        change_list = self._get_pretty_changes(staged=staged, unstaged=unstaged)
+        await self._load_issue_number()
+        await self._load_status()
+        change_list = await self._get_pretty_changes(staged=staged, unstaged=unstaged)
         responsibles = Responsibles().responsibles_parse(
             changeset=change_list,
             exclude=exclude_list

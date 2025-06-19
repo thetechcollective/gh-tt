@@ -123,7 +123,7 @@ async def main(args):
                 except KeyError:
                     pass
 
-            devbranch.set_issue(issue_number=args.issue, assign=args.assignee, msg=args.body, reopen=args.reopen, label=label)
+            await devbranch.set_issue(issue_number=args.issue, assign=args.assignee, msg=args.body, reopen=args.reopen, label=label)
             
         elif args.title:
             if label is None:
@@ -132,16 +132,16 @@ async def main(args):
                 except KeyError:
                     pass
             issue =  Issue.create_new(title=args.title, body=args.body)
-            devbranch.set_issue(issue_number=issue.get('number'), assign=args.assignee, reopen=args.reopen, label=label)
+            await devbranch.set_issue(issue_number=issue.get('number'), assign=args.assignee, reopen=args.reopen, label=label)
           
     if args.command == 'wrapup':
-        devbranch.wrapup(message=args.message)
+        await devbranch.wrapup(message=args.message)
     
     if args.command == 'deliver':
-        devbranch.deliver()
+        await devbranch.deliver()
 
     if args.command == 'responsibles':
-       devbranch.responsibles(unstaged=args.unstaged, staged=args.staged, exclude=args.exclude)
+       await devbranch.responsibles(unstaged=args.unstaged, staged=args.staged, exclude=args.exclude)
             
     Gitter.write_cache()            
     exit(0)

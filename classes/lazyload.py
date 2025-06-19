@@ -235,7 +235,7 @@ class Lazyload:
             msg
         )
 
-    def _run(self, prop:str, die_on_error: bool = True):
+    async def _run(self, prop:str, die_on_error: bool = True):
         """Run a property command and return the value
         Args:
             prop (str): The property to run
@@ -261,7 +261,7 @@ class Lazyload:
 
         from gitter import Gitter # avoid circular import
 
-        [value, result] = Gitter(
+        [value, result] = await Gitter(
             cmd=f"{cmd}",
             msg=f"{msg}",
             die_on_error=die_on_error).run()

@@ -98,7 +98,7 @@ class Label(Lazyload):
 
     def _reload(cls):
         """Reload the labels from the current repository"""
-        list_all =  cls._run('json_list_all')
+        list_all =  await cls._run('json_list_all')
         try:
             Label._all = json.loads(list_all)                
         except ValueError as e:
