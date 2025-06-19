@@ -168,7 +168,7 @@ class Gitter(Lazyload):
 
         [stdout, _] = await Gitter(
             cmd="gh auth status",
-            msg="Check if the user has sufficient access to update projects").run()
+            msg="Check if the user has sufficient GH CLI permissions").run()
 
         # Valiadate that we have reaacce to projects
         # The command returns something like this:
