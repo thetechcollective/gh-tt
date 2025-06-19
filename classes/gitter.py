@@ -158,10 +158,15 @@ class Gitter(Lazyload):
         return True
 
     @classmethod
-    def validate_gh_scope(cls, scope=str):
-        """Check if the user has sufficient access to the github cli"""
+    async def validate_gh_scope(cls, scope=str) -> bool:
+        """
+        Check if the user has sufficient access to the GitHub CLI. If not, exits.
 
-        [stdout, result] = Gitter(
+        Returns:
+            True if the user has sufficient access.
+        """
+
+        [stdout, _] = await Gitter(
             cmd="gh auth status",
             msg="Check if the user has sufficient access to update projects").run()
 
@@ -176,7 +181,7 @@ class Gitter(Lazyload):
         if f"'{scope}'" not in stdout:
             print(
                 f"gh token does not have the required scope '{scope}'\nfix it by running:\n   gh auth refresh --scopes '{scope}'", file=sys.stderr)
-            exit(1)
+            sys.exit(1)
 
         return True
 

@@ -106,7 +106,7 @@ async def main(args):
         sys.exit(0)
 
     Gitter.read_cache()
-    Gitter.validate_gh_scope(scope='project')
+    await Gitter.validate_gh_scope(scope='project')
     
     devbranch = Devbranch()
     
