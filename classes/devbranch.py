@@ -312,7 +312,7 @@ class Devbranch(Lazyload):
         self.set('issue_number', issue_number)
         self.set('assign', assign)
 
-        issue = Issue(number=issue_number)
+        issue = await Issue(number=issue_number)
 
         if issue.get('closed'): 
             if not reopen:
@@ -365,7 +365,7 @@ class Devbranch(Lazyload):
         self.set('ready_prefix', ready_prefix)
         
         await self._load_issue_number()
-        issue = Issue(number=self.get('issue_number'))
+        issue = await Issue(number=self.get('issue_number'))
         project = await Project()
         field = project.get('deliver_field')
         field_value = project.get('deliver_field_value')

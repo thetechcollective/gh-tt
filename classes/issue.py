@@ -17,12 +17,12 @@ sys.path.append(class_path)
 class Issue(Lazyload):
     """Class used to represent a GitHub issue - in context of the current development branch"""
 
-    def __init__(self, number=int):
+    async def __init__(self, number: int):
         super().__init__()
 
         self.set('number', number)
 
-        self._load_manifest('init')
+        await self._load_manifest('init')
 
         try:
             issue_json = json.loads(self.get('json'))
