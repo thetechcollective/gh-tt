@@ -55,7 +55,7 @@ class Gitter(Lazyload):
                 print(f"# {self.get('msg')}")
             print(f"$ {self.get('cmd')}")
 
-    async def run(self, cache=False):
+    def run(self, cache=False):
 
         self.__verbose_print()
 
@@ -133,11 +133,9 @@ class Gitter(Lazyload):
         Returns:
             [result (bool), status (str)] : True/'' if the validation is OK, False/Error message if the validation fails
         """
-        [stdout, _] = asyncio.run(
-            Gitter(
+        [stdout, _] = Gitter(
                 cmd="gh --version",
                 msg="Check if the user has access to right version of gh CLI").run()
-        )
 
         # Validate that the version is => 2.55.0
         # The command returns something like this:
@@ -156,9 +154,9 @@ class Gitter(Lazyload):
     def validate_gh_scope(cls, scope=str):
         """Check if the user has sufficient access to the github cli"""
 
-        [stdout, result] = asyncio.run(Gitter(
+        [stdout, result] = Gitter(
             cmd="gh auth status",
-            msg="Check if the user has sufficient access to update projects").run())
+            msg="Check if the user has sufficient access to update projects").run()
 
         # Valiadate that we have reaacce to projects
         # The command returns something like this:
@@ -176,7 +174,7 @@ class Gitter(Lazyload):
         return True
 
     @classmethod
-    async def fetch(cls, prune=False, again=False):
+    def fetch(cls, prune=False, again=False):
         """Fetch """
 
         if cls.fetched and not again:
@@ -188,7 +186,7 @@ class Gitter(Lazyload):
         if prune:
             msg += " and prune local branches and tags)"
 
-        [_, _] = await Gitter(
+        [_, _] = Gitter(
             cmd=f"git fetch --tags --all -f {prune_switch}",
             msg=f"{msg}").run()
 

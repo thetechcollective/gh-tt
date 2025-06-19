@@ -2,7 +2,6 @@ import os
 import sys
 import json
 import re
-import asyncio
 import subprocess
 
 
@@ -95,7 +94,7 @@ class Lazyload:
                 raise AssertionError(f"File {file} is not a valid JSON file: {e}")
 
 
-    async def _load_prop(self, prop: str, cmd: str, msg: str):
+    def _load_prop(self, prop: str, cmd: str, msg: str):
         """
         Load a property and set the value on the properties
         Args:
@@ -107,16 +106,16 @@ class Lazyload:
         """
         from gitter import Gitter
 
-        await Gitter.fetch()
+        Gitter.fetch()
 
-        [value, _] = await Gitter(
+        [value, _] = Gitter(
             cmd=f"{cmd}",
             msg=f"{msg}",
             die_on_error=True).run()
         self.set(prop, value)
         return value
 
-    async def _assert_props(self, props: list[str] ):
+    def _assert_props(self, props: list[str] ):
         """
         Assert that all properties in the list are loaded, and if no then initiate the load
         Args:
@@ -129,13 +128,13 @@ class Lazyload:
         for prop in props:
             if prop not in self.props or self.props[prop] is None:
                 dep_group = self._get_manifest_group(self._caller(), prop)    
-                await self._load_manifest(dep_group)
+                self._load_manifest(dep_group)
 
     def _caller(self):
         """Get the class name in lowercase to match the manifest"""
         return self.__class__.__name__.lower()
     
-    async def _load_manifest(self, group: str = 'init'):
+    def _load_manifest(self, group: str = 'init'):
         """
         Load all properties from the manifest file relevant to the class instance.
 
@@ -170,7 +169,7 @@ class Lazyload:
             dependency = self._manifest[caller][prop].get('dependency', None)
             if group != 'init' and dependency and dependency not in self.get('_loaded'):
                 # load the dependency first
-                await self._load_manifest(dependency)
+                self._load_manifest(dependency)
 
             # Find occurrences of {.*} in text (e.g., {someprop} and replace them with the property values)
             # The regex uses negative lookbehind (?<!{) and negative lookahead (?!{) assertions to ensure 
@@ -183,7 +182,7 @@ class Lazyload:
                 dep_group = self._get_manifest_group(caller, match)
                 assert group != dep_group, f"ERROR: Property '{prop}' in group '{group}' defined in {self._manifest_file} implicitly depends on property '{match}'. They both belong to the same dependency group '{group}'. Value substitution within the same group is not allowed."
                 if dep_group not in self.get('_loaded') and dep_group is not None:
-                    await self._load_manifest(dep_group)
+                    self._load_manifest(dep_group)
 
             # When all dependencies are loaded compile the final command by replacing
             # the dependency values are replaced e.g., {someprop} -> self.get('someprop')
@@ -199,14 +198,12 @@ class Lazyload:
             msg = self._manifest[caller][prop].get('msg', '')
 
             # Append the coroutine to the list
-            tasks.append(self._load_prop(
+            self._load_prop(
                 prop,
                 cmd,
                 msg)
-            )
 
         # Run all coroutines concurrently
-        await asyncio.gather(*tasks)
         self.props['_loaded'].append(group)
         return True
 
@@ -224,20 +221,20 @@ class Lazyload:
         except KeyError:
             return None  # Default group if not found
         
-    async def _force_prop_reload(self, prop: str):
+    def _force_prop_reload(self, prop: str):
         """Force reload a property
         Args:
             prop (str): The property to force reload
         """
         msg = self._manifest[self._caller()][prop].get('msg')
         cmd = self._manifest[self._caller()][prop].get('cmd')
-        await  self._load_prop(
+        self._load_prop(
             prop,
             cmd,
             msg
         )
 
-    async def _run(self, prop:str, die_on_error: bool = True):
+    def _run(self, prop:str, die_on_error: bool = True):
         """Run a property command and return the value
         Args:
             prop (str): The property to run
@@ -263,7 +260,7 @@ class Lazyload:
 
         from gitter import Gitter # avoid circular import
 
-        [value, result] = await Gitter(
+        [value, result] = Gitter(
             cmd=f"{cmd}",
             msg=f"{msg}",
             die_on_error=die_on_error).run()

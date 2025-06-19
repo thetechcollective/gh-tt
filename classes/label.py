@@ -7,7 +7,6 @@ import subprocess
 import sys
 import re
 import json
-import asyncio
 
 # Add directory of this class to the general class_path
 # to allow import of sibling classes
@@ -68,10 +67,10 @@ class Label(Lazyload):
         color_switch = f" --color {color}" if color is not None else ''
         force_switch = ' --force' if force and description is not None and color is not None else ''
 
-        [output, result] = asyncio.run(Gitter(
+        [output, result] = Gitter(
             cmd=f"gh label create '{name}'{description_switch}{color_switch}{force_switch}",
             msg="Create a new lable").run()
-        )
+        
         cls._loaded = False
         return cls(name=name)
     
@@ -91,7 +90,7 @@ class Label(Lazyload):
 
     def _reload(cls):
         """Reload the labels from the current repository"""
-        list_all =  asyncio.run(cls._run('json_list_all'))
+        list_all =  cls._run('json_list_all')
         try:
             Label._all = json.loads(list_all)                
         except ValueError as e:

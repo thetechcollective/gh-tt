@@ -4,11 +4,9 @@ from lazyload import Lazyload
 from gitter import Gitter
 from label import Label
 import os
-import subprocess
 import sys
 import re
 import json
-import asyncio
 
 # Add directory of this class to the general class_path
 # to allow import of sibling classes
@@ -24,7 +22,7 @@ class Issue(Lazyload):
 
         self.set('number', number)
 
-        asyncio.run(self._load_manifest('init'))
+        self._load_manifest('init')
 
         try:
             issue_json = json.loads(self.get('json'))
@@ -52,10 +50,9 @@ class Issue(Lazyload):
         body_switch = f"--body '{body}'" if body is not None else "--body ''"
         assign_switch = f"--assignee '{assign}'" if assign is not None else ""
 
-        [output, result] = asyncio.run(Gitter(
+        [output, result] = Gitter(
             cmd=f"gh issue create --title '{title}' {body_switch} {assign_switch}",
             msg="Create a new issue").run()
-        )
 
         # The output is a mulitiline string like this:
         #
@@ -104,10 +101,9 @@ class Issue(Lazyload):
 
         issue_number = self.get('number')
 
-        [output, result] = asyncio.run(Gitter(
+        [output, result] = Gitter(
             cmd=f"gh issue edit {issue_number} --add-assignee '{assignee}'",
             msg=f"Assign @me to the issue").run()
-        )
 
         self.set('assignee', assignee)
         return output
@@ -127,10 +123,9 @@ class Issue(Lazyload):
         label = Label(name=label, create=True)
         issue_number = self.get('number')
 
-        [output, _] = asyncio.run(Gitter(
+        [output, _] = Gitter(
             cmd=f"gh issue edit {issue_number} --add-label '{label.get('name')}'",
             msg=f"Add label '{label}' to the issue").run()
-        )
 
         return output
 
@@ -139,16 +134,15 @@ class Issue(Lazyload):
 
         issue_number = self.get('number')
 
-        [output, _] = asyncio.run(Gitter(
+        [output, _] = Gitter(
             cmd=f"gh issue comment {issue_number} --body '{msg}'",
             msg="Add a comment to the issue").run()
-        )
 
         return output
     def reopen(self):
         """Reopen the issue"""
 
-        asyncio.run(self._run('reopen'))
+        self._run('reopen')
         return True
 
         

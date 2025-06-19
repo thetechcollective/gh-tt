@@ -95,9 +95,7 @@ def parse(args=None):
 
     return args
 
-if __name__ == "__main__":
-    args = parse(sys.argv[1:])
-
+async def main(args):
     Gitter.verbose(verbose=args.verbose)
     Gitter.validate_gh_version()
 
@@ -147,3 +145,13 @@ if __name__ == "__main__":
             
     Gitter.write_cache()            
     exit(0)
+
+
+if __name__ == "__main__":
+    args = parse(sys.argv[1:])
+    try:
+        asyncio.run(main(args))
+        sys.exit(0)
+    except KeyboardInterrupt:
+        print("Execution aborted.")
+        sys.exit(1)

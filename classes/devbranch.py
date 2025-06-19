@@ -8,7 +8,6 @@ import os
 import subprocess
 import sys
 import re
-import asyncio
 from datetime import datetime
 
 # Add directory of this class to the general class_path
@@ -161,26 +160,25 @@ class Devbranch(Lazyload):
             branch_name (str): The name of the branch to develop on
         """
         
-        [output, result] = asyncio.run(Gitter(
+        [output, result] = Gitter(
             cmd=f"gh issue develop {issue_number} -b {self.get('default_branch')} -n {self.get('branch_name')} -c",
             msg=f"gh develop {issue_number} on new branch {branch_name}").run()
-        )
 
-    async def __reuse_issue_branch(self, issue_number=int):
+    def __reuse_issue_branch(self, issue_number=int):
         """Check if there is a local or remote branch with the issue number and switch to it
         Args:
             issue_number (int): The issue number to check for
         Returns:
             bool: True if a branch was found and switched to, False otherwise
         """
-        await self._assert_props(['local_branches', 'remote_branches'])
+        self._assert_props(['local_branches', 'remote_branches'])
 
         match = False
         for branch in self.get('local_branches').split('\n'):
             if re.match(f"^{issue_number}.+", branch):
                 self.set('branch_name', branch)
                 try:
-                    await self._run(prop='checkout_local_branch', die_on_error=False)
+                    self._run(prop='checkout_local_branch', die_on_error=False)
                 except subprocess.CalledProcessError as e:
                     print(f"⛔️ ERROR:Failed to checkout local branch: {e}", file=sys.stderr)
                     sys.exit(1)
@@ -194,7 +192,7 @@ class Devbranch(Lazyload):
                 match_obj = re.match(f"^origin/({issue_number}.+)", branch)
                 if match_obj:
                     self.set('branch_name', match_obj.group(1))
-                    await self._run('checkout_remote_branch')
+                    self._run('checkout_remote_branch')
                     match = True
                     break
         return match
@@ -202,9 +200,9 @@ class Devbranch(Lazyload):
     def wrapup(self, message: str):
         """Mapped to the 'wrapup' subcommand in the main program"""
 
-        asyncio.run(self._load_issue_number())
-        asyncio.run(self._load_status())
-        asyncio.run(self._assert_props(['me', 'merge_base', 'remote_sha1', 'default_sha1' ]))
+        self._load_issue_number()
+        self._load_status()
+        self._assert_props(['me', 'merge_base', 'remote_sha1', 'default_sha1' ])
 
         if Config.config()['wrapup']['policies']['warn_about_rebase'] and not self.get('merge_base') == self.get('default_sha1'):
             print(
@@ -219,14 +217,14 @@ class Devbranch(Lazyload):
 
             if not self.get('sha1') == self.get('remote_sha1'):                
                 print("👉 The branch is ahead of its remote; ...pushing")
-                asyncio.run(self._push(force=True))
+                self._push(force=True)
             return
 
         # If nothing is staged, stage all changes
         if not len(self.get('staged_changes')) > 0:
             # Stage all changes if nothing is staged
-            asyncio.run(self._run('add_all'))
-            asyncio.run(self._load_status(reload=True))
+            self._run('add_all')
+            self._load_status(reload=True)
 
         self.set('commit_msg',f"\"{message} - #{self.get('issue_number')}\"")
 
@@ -236,17 +234,16 @@ class Devbranch(Lazyload):
             exclude=[f"@{self.get('me')}"]
         )
         
-        asyncio.run(self._run('commit_changes') )
-        asyncio.run(self._push(force=True))
+        self._run('commit_changes')
+        self._push(force=True)
 
 
         responsibles_alert = ''
         if responsibles:
             # Add the responsibls to a comment on the issue
-            [_, _] = asyncio.run(Gitter(
+            [_, _] = Gitter(
                 cmd=f"gh issue comment {self.get('issue_number')} --body '{responsibles}'",
                 msg="Add responsibles to the issue").run()
-            )
 
             responsibles_alert = f"\n☝️ You touched on files that have named responsibles {responsibles}\nThey are now mentioned in the issue."
 
@@ -295,8 +292,8 @@ class Devbranch(Lazyload):
         Returns:
             list: A list of changes with the tailing ' M', 'MM', 'A ' or '??' removed
         """
-        asyncio.run(self._assert_props(['status']))
-        asyncio.run(self._load_status())
+        self._assert_props(['status'])
+        self._load_status()
         changes = []
         if staged:
             changes.extend(self.get('staged_changes'))
@@ -312,7 +309,7 @@ class Devbranch(Lazyload):
     def set_issue(self, issue_number=int, assign=True, msg:str=None, reopen:bool=False, label:str=None):
         """Set the issue number context to work on"""
 
-        asyncio.run(self._assert_props(['remote', 'default_branch']))
+        self._assert_props(['remote', 'default_branch'])
 
         self.set('issue_number', issue_number)
         self.set('assign', assign)
@@ -326,7 +323,7 @@ class Devbranch(Lazyload):
             # Reopen the issue if it is closed
             issue.reopen()
 
-        reuse = asyncio.run(self.__reuse_issue_branch(issue_number=issue_number))
+        reuse = self.__reuse_issue_branch(issue_number=issue_number)
         if not reuse:
             # Construct a valid branch name based on the issue number, and the title, replacing spaces with underscores and weed out any chars that aren't allowind in branch names
             issue_title = issue.get('title')
@@ -363,14 +360,14 @@ class Devbranch(Lazyload):
     def deliver(self):
         """Mapped to the 'deliver' subcommand."""
 
-        asyncio.run(self._assert_props(['branch_name', 'remote']))
+        self._assert_props(['branch_name', 'remote'])
 
-        asyncio.run(self.__squeeze())
+        self.__squeeze()
         ready_prefix = Config.config()['deliver']['policies']['branch_prefix']
         self.set('ready_prefix', ready_prefix)
 
         
-        asyncio.run(self._load_issue_number())
+        self._load_issue_number()
         issue = Issue(number=self.get('issue_number'))
         project = Project()
         field = project.get('deliver_field')
@@ -378,7 +375,7 @@ class Devbranch(Lazyload):
         project.update_field(url=issue.get(
             'url'), field=field, field_value=field_value)
 
-        asyncio.run(self._run('push_squeeze'))
+        self._run('push_squeeze')
 
         print(
             f"👍 SUCCESS: Branch '{self.get('branch_name')}' has been squeezed into one commit; '{self.get('squeeze_sha1')[:7]}' and pushed to {self.get('remote')} as '{ready_prefix}/{self.get('branch_name')}'")
@@ -388,7 +385,7 @@ class Devbranch(Lazyload):
 
     def responsibles(self, unstaged: bool, staged: bool, exclude:str ):
 
-        asyncio.run(self._assert_props(['me']))
+        self._assert_props(['me'])
 
         exclude_list = []
         if exclude is not None:
@@ -397,8 +394,8 @@ class Devbranch(Lazyload):
         # replace @me with the current user
         exclude_list = [item.replace('@me', f"@{self.get('me')}") for item in exclude_list]
 
-        asyncio.run(self._load_issue_number())
-        asyncio.run(self._load_status())
+        self._load_issue_number()
+        self._load_status()
         change_list = self._get_pretty_changes(staged=staged, unstaged=unstaged)
         responsibles = Responsibles().responsibles_parse(
             changeset=change_list,
