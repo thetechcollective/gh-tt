@@ -403,11 +403,13 @@ class Devbranch(Lazyload):
         # replace @me with the current user
         exclude_list = [item.replace('@me', f"@{self.get('me')}") for item in exclude_list]
 
-        await self._load_issue_number()
-        await self._load_status()
-        change_list = await self._get_pretty_changes(staged=staged, unstaged=unstaged)
+        results = await asyncio.gather(
+            self._get_pretty_changes(staged=staged, unstaged=unstaged),
+            self._load_issue_number(),
+        )
+        
         responsibles = Responsibles().responsibles_parse(
-            changeset=change_list,
+            changeset=results[0],
             exclude=exclude_list
         )
 

@@ -208,6 +208,7 @@ class Project(Lazyload):
         git_root = Gitter.git_root
         self.set('config_file', f"{git_root}/.gitconfig")
 
+        # TODO: move this into props.json!
         tasks = [
             # Check if project owner can be read from .gitconfig
             Gitter(
