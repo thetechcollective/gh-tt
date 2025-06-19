@@ -1,4 +1,4 @@
-from gitter import Gitter
+from classes.gitter import Gitter
 import os
 import sys
 import re

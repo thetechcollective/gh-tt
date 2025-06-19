@@ -42,11 +42,9 @@
     }
   },
   "semver":{
-    "policies": {
-      // Prerelease are defined as labels with a suffix. Set the suffix here.
-      "prerelease_suffix": "rc"
-    }
-
+      "prerelease_suffix": "rc",
+      "prefix": "",
+      "initial": "0.0.0"
   },
   "labels":{
     // Description strings are limited to 100 characters
