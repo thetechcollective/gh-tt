@@ -114,7 +114,7 @@ async def main(args):
         label = None
 
         if args.type is not None:
-            Label.validate(args.type, "type")
+            Label.validate(name=args.type, category="type")
 
         if args.issue:
             if label is None:
