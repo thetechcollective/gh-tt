@@ -347,7 +347,7 @@ class Devbranch(Lazyload):
             tasks.append(issue.assign(assignee='@me'))
 
         if msg:
-            tasks.append(await issue.comment(msg=msg))
+            tasks.append(issue.comment(msg=msg))
 
         results = await asyncio.gather(*tasks)
         project = results[0]
