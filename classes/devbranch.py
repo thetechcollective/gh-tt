@@ -347,12 +347,12 @@ class Devbranch(Lazyload):
             await issue.comment(msg=msg)
 
         # add the issue to the project and set the Status to "In Progess"
-        project = Project()
+        project = await Project()
         workon_field = project.get('workon_field')
         workon_field_value = project.get('workon_field_value')
 
         # TODO get the values from the config
-        project.update_field(url=issue.get(
+        await project.update_field(url=issue.get(
             'url'), field=workon_field, field_value=workon_field_value)
 
     async def deliver(self):
@@ -366,10 +366,10 @@ class Devbranch(Lazyload):
         
         await self._load_issue_number()
         issue = Issue(number=self.get('issue_number'))
-        project = Project()
+        project = await Project()
         field = project.get('deliver_field')
         field_value = project.get('deliver_field_value')
-        project.update_field(url=issue.get(
+        await project.update_field(url=issue.get(
             'url'), field=field, field_value=field_value)
 
         await self._run('push_squeeze')

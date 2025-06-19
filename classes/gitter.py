@@ -23,6 +23,7 @@ class Gitter(Lazyload):
     use_cache = False
     fetched = False  # Flag to indicate if the repository has been fetched
     class_cache = {}  # Dictionary to store class cache data
+    # TODO use an async subprocess utility instead of subprocess.run() 
     result = subprocess.run("git rev-parse --show-toplevel",
                             capture_output=True, text=True, shell=True)
     git_root = result.stdout.strip()
