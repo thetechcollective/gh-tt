@@ -68,7 +68,7 @@ class Project(Lazyload):
         if not number:
             number = self.get('project_number')
 
-        [id, result] = asyncio.run(Gitter(
+        [id, result] = Gitter(
             cmd=f"gh project view {number} --owner {owner} --format json --jq '.id'",
             msg="Get the project id").run(cache=True)
         )
@@ -92,7 +92,7 @@ class Project(Lazyload):
         if not number:
             number = self.get('project_number')
 
-        [field_json_str, result] = asyncio.run(Gitter(
+        [field_json_str, result] = Gitter(
             cmd=f"gh project field-list {number} --owner {owner} --format json --jq '.fields[] | select(.name == \"{field}\")'",
             msg="Get the field description in json format").run(cache=True)
         )
@@ -176,10 +176,10 @@ class Project(Lazyload):
                     f"Field type {field_type} not supported. It may be that the field type is just not supported in this extension yet. - Please open an issue or discussion on the repository\n")
                 sys.exit(1)
 
-        [output, result] = asyncio.run(Gitter(
+        [output, result] = Gitter(
             cmd=f"gh project item-edit --project-id {project_id} --field-id {field_id} --id {item_id} {value_switch}",
             msg="Update the field with the option").run()
-        )
+
         return output
 
     def add_issue(self, owner=None, number=None, url=str):
@@ -198,10 +198,10 @@ class Project(Lazyload):
         if not number:
             number = self.get('project_number')
 
-        [id, result] = asyncio.run(Gitter(
+        [id, result] = Gitter(
             cmd=f"gh project item-add {number} --owner {owner} --url {url} --format json --jq '.id'",
             msg="Add the issue to the project").run(cache=True)
-        )
+
         return id
 
     def __read_config(self):
@@ -213,22 +213,22 @@ class Project(Lazyload):
         self.set('config_file', f"{git_root}/.gitconfig")
 
         # Check if the project owner can be read from .gitconfig
-        [project_owner, result] = asyncio.run(Gitter(
+        [project_owner, result] = Gitter(
             cmd=f"git config --get -f {self.get('config_file')} project.owner",
             msg="Get the project owner from .gitconfig",
             die_on_error=False).run()
-        )
+
 
         # only override the default values if sucesfully read
         if not project_owner == '':
             self.set('project_owner', project_owner)
 
         # Check if the project number can be read from .gitconfig
-        [project_number, result] = asyncio.run(Gitter(
+        [project_number, result] = Gitter(
             cmd=f"git config --get -f {self.get('config_file')} project.number",
             msg="Get the project number from .gitconfig",
             die_on_error=False).run()
-        )
+
         # only override the default values if sucesfully read
         if not project_number == '':
             self.set('project_number', project_number)
@@ -237,11 +237,11 @@ class Project(Lazyload):
         complete = True
 
         # Check if the workon action trigger can be read from .gitconfig
-        [workon_action, result] = asyncio.run(Gitter(
+        [workon_action, result] = Gitter(
             cmd=f"git config --get -f {self.get('config_file')} project.workon",
             msg="Get the workon trigger action from .gitconfig",
             die_on_error=False).run()
-        )
+
         # split the workon action on : into field and value
         # only override the default values if both field and value are sucesfully read
         try:
@@ -253,11 +253,11 @@ class Project(Lazyload):
             pass
 
         # Check if the workon action trigger can be read from .gitconfig
-        [deliver_action, result] = asyncio.run(Gitter(
+        [deliver_action, result] = Gitter(
             cmd=f"git config --get -f {self.get('config_file')} project.deliver",
             msg="Get the deliver trigger action from .gitconfig",
             die_on_error=False).run()
-        )
+
         # split the workon action on : into field and value
         # only override the default values if both field and value are sucesfully read
         try:
