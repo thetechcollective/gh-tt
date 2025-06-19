@@ -10,14 +10,14 @@ sys.path.append(class_path)
 from lazyload import Lazyload
 
 class Version(Lazyload):
-    def __init__(self):
+    async def __init__(self):
         super().__init__()
 
-        installed_gh_extensions = asyncio.run(self._run("extension_list"))
+        installed_gh_extensions = await self._run("extension_list")
         sha = self._get_gh_tt_sha(extension_list=installed_gh_extensions)
         self.set("sha", sha)
 
-        raw_tags = asyncio.run(self._run("sha_tags"))
+        raw_tags = await self._run("sha_tags")
         self.set("tags", self._get_tags(raw_tags=raw_tags))
 
 

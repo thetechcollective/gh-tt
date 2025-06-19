@@ -100,7 +100,7 @@ async def main(args):
     await Gitter.validate_gh_version()
 
     if args.version:
-        version = Version()
+        version = await Version()
         version.print()
 
         sys.exit(0)
