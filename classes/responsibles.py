@@ -220,14 +220,8 @@ class Responsibles():
     
         return f"**Responsibles for the changeset:**\n\n{new_line.join(markdown_list)}\n\n" 
 
-
-
-
-
-
-    
     @classmethod
-    def is_member(cls, team:str, user:str) -> bool:
+    async def is_member(cls, team:str, user:str) -> bool:
         """Check if a user is a member of a team.
 
         Args:
@@ -248,7 +242,7 @@ class Responsibles():
 
         # Check if the user is a member of the team using the GitHub API
     
-        [_, result] = Gitter(
+        [_, result] = await Gitter(
                 cmd=f"gh api orgs/{org}/teams/{team_name}/memberships/{user}",
                 msg="Checking if user is a member of the team",
                 die_on_error=False,
