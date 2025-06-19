@@ -1,3 +1,4 @@
+import asyncio
 from config import Config
 from lazyload import Lazyload
 from responsibles import Responsibles
@@ -335,19 +336,21 @@ class Devbranch(Lazyload):
 
         # TODO Update the data used for metrics: 1) assignee, 2) add to project 3) update project field
 
-        # assign the issue to the current user
+        tasks = []
+
+        tasks.append(Project())
+        tasks.append(issue.label(label=label))
+        
         if self.get('assign'):
-            await issue.assign(assignee='@me')
-
-        await issue.label(label=label)
-
+            tasks.append(issue.assign(assignee='@me'))
 
         if msg:
-            # add the body to the issue
-            await issue.comment(msg=msg)
+            tasks.append(await issue.comment(msg=msg))
+
+        results = await asyncio.gather(*tasks)
+        project = results[0]
 
         # add the issue to the project and set the Status to "In Progess"
-        project = await Project()
         workon_field = project.get('workon_field')
         workon_field_value = project.get('workon_field_value')
 
