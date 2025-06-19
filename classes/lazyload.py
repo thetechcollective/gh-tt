@@ -210,7 +210,6 @@ class Lazyload:
         self.props['_loaded'].append(group)
         return True
 
-
     def _get_manifest_group(self, caller: str, prop: str):
         """Get the group of a property from the manifest file
         If the the property is not found in the manifest file, return 'init' as the default group.
@@ -273,9 +272,3 @@ class Lazyload:
              raise subprocess.CalledProcessError(
                 result.returncode, cmd, output=result.stdout, stderr=result.stderr)
         return value
-
-
-        
-
-
-
