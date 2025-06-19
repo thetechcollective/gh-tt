@@ -108,11 +108,11 @@ class Issue(Lazyload):
         self.set('assignee', assignee)
         return output
     
-    def label(self, label:str):
+    async def label(self, label:str):
         """Add a label to the issue"""
 
         existing_labels = self.get("labels")
-        config = Config()._config_dict
+        config = Config().config()
         type_labels = [name for name, props in config["labels"].items() if props["category"] == "type"]
 
         for l in existing_labels:
@@ -120,10 +120,10 @@ class Issue(Lazyload):
                 print(f"⚠️  Issue already has a type label. The new label \"{label}\" will not be applied.")
                 return
         
-        label = Label(name=label, create=True)
+        label = await Label(name=label, create=True)
         issue_number = self.get('number')
 
-        [output, _] = Gitter(
+        [output, _] = await Gitter(
             cmd=f"gh issue edit {issue_number} --add-label '{label.get('name')}'",
             msg=f"Add label '{label}' to the issue").run()
 

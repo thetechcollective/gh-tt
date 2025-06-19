@@ -20,13 +20,13 @@ class Label(Lazyload):
     _all = {}
     _loaded=False
 
-    def __init__(self, name:str, create:bool=False):
+    async def __init__(self, name:str, create:bool=False):
         super().__init__()
 
         self.set('name', name)
 
         if not Label._loaded:
-            self._reload()
+            await self._reload()
 
         found = False
         for label in Label._all:
@@ -38,21 +38,21 @@ class Label(Lazyload):
         if not found:
             if create:
                 try:
-                    config = Config()._config_dict
+                    config = Config().config()
                     color = config['labels'][name]['color']
                     description = config['labels'][name]['description']
                 except KeyError as e:
                     print(f"ERROR: Label '{name}' not defined in the config file", file=sys.stderr)
                     sys.exit(1)
 
-                self.props = self.create_new(name=name, description=description, color=color, force=True).props
+                self.props = await self.create_new(name=name, description=description, color=color, force=True).props
             else:                
                 print(f"ERROR: Label '{name}' doesn't exist in current git context", file=sys.stderr)
                 sys.exit(1)
 
 
     @classmethod
-    def create_new(cls, name=str, description:str=None, color:str=None, force:bool=False):
+    async def create_new(cls, name=str, description:str=None, color:str=None, force:bool=False):
         """Create a new label in the current repository
         Works as an alternative to the constructor, call it on the class and it will return a new Label object
 
@@ -67,9 +67,9 @@ class Label(Lazyload):
         color_switch = f" --color {color}" if color is not None else ''
         force_switch = ' --force' if force and description is not None and color is not None else ''
 
-        [output, result] = Gitter(
+        [_, _] = await Gitter(
             cmd=f"gh label create '{name}'{description_switch}{color_switch}{force_switch}",
-            msg="Create a new lable").run()
+            msg="Create a new label").run()
         
         cls._loaded = False
         return cls(name=name)
@@ -96,9 +96,9 @@ class Label(Lazyload):
             print(f"🛑  ERROR: \"{name}\" passed in --type is not matching any label with category '{category}' defined in the config. Choose one of the labels defined: {valid_labels}")
             sys.exit(1)
 
-    def _reload(cls):
+    async def _reload(cls):
         """Reload the labels from the current repository"""
-        list_all =  await cls._run('json_list_all')
+        list_all = await cls._run('json_list_all')
         try:
             Label._all = json.loads(list_all)                
         except ValueError as e:

@@ -339,7 +339,7 @@ class Devbranch(Lazyload):
         if self.get('assign'):
             issue.assign(assignee='@me')
 
-        issue.label(label=label)
+        await issue.label(label=label)
 
 
         if msg:
