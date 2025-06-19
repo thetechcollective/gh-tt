@@ -16,7 +16,7 @@ class Gitter(Lazyload):
     """Class used to run sub process commands (optimized for git and gh commands).
         It supports using cached data from previous runs.
     """
-    reguired_version = '2.55.0'
+    required_version = '2.55.0'
     verbose = False
     die_on_error = True
     workdir = os.getcwd()
@@ -55,7 +55,7 @@ class Gitter(Lazyload):
                 print(f"# {self.get('msg')}")
             print(f"$ {self.get('cmd')}")
 
-    def run(self, cache=False):
+    async def run(self, cache=False):
 
         self.__verbose_print()
 
@@ -67,20 +67,25 @@ class Gitter(Lazyload):
                     print(f"{cached_value}")
                 return cached_value, None
 
-        result = subprocess.run(
-            self.get('cmd'), capture_output=True, text=True, shell=True, cwd=self.get('workdir'))
+        proc = await asyncio.create_subprocess_shell(
+            self.get('cmd'),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+
+        stdout, stderr = await proc.communicate()
+        stdout = stdout.decode().strip()
+        stderr = stderr.decode().strip()
 
         if self.get('verbose'):
-            print(f"{result.stdout.rstrip()}{result.stderr.rstrip()}")
+            print(f"{stdout}{stderr}")
 
-        if self.get('die_on_error') and not result.returncode == 0:
-            raise RuntimeError(f"{result.stderr}")
-            sys.exit(1)
+        if self.get('die_on_error') and not proc.returncode == 0:
+            raise RuntimeError(f"{stderr}")
 
-        output = result.stdout.rstrip()
         if cache:
-            self.set_cache(self.get('workdir'), self.get('cmd'), output)
-        return output, result
+            self.set_cache(self.get('workdir'), self.get('cmd'), stdout)
+        return stdout, proc
 
     @classmethod
     def get_cache(cls, workdir, cmd):
@@ -127,26 +132,28 @@ class Gitter(Lazyload):
         cls.verbose = verbose
 
     @classmethod
-    def validate_gh_version(cls):
-        """Check if the user has sufficient access to the github cli
+    async def validate_gh_version(cls):
+        """Check if the user has a sufficiently recent version of the GitHub CLI.
+        Exits the program if the version is not supported.
 
         Returns:
-            [result (bool), status (str)] : True/'' if the validation is OK, False/Error message if the validation fails
+            True if validation succeeds.
         """
-        [stdout, _] = Gitter(
+
+        [stdout, _] = await Gitter(
                 cmd="gh --version",
                 msg="Check if the user has access to right version of gh CLI").run()
-
+        
         # Validate that the version is => 2.55.0
         # The command returns something like this:
         #    gh version 2.65.0 (2025-01-06)
         #    https://github.com/cli/cli/releases/tag/v2.65.0
 
         version = stdout.split()[2]
-        if version < cls.reguired_version:
+        if version < cls.required_version:
             print(
-                f"gh version {version} is not supported. Please upgrade to version {cls.reguired_version} or higher", file=sys.stderr)
-            exit(1)
+                f"gh version {version} is not supported. Please upgrade to version {cls.required_version} or higher", file=sys.stderr)
+            sys.exit(1)
 
         return True
 

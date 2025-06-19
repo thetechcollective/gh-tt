@@ -97,7 +97,7 @@ def parse(args=None):
 
 async def main(args):
     Gitter.verbose(verbose=args.verbose)
-    Gitter.validate_gh_version()
+    await Gitter.validate_gh_version()
 
     if args.version:
         version = Version()
