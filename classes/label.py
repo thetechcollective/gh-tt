@@ -76,6 +76,14 @@ class Label(Lazyload):
     
     @classmethod
     def validate(cls, name: str, category: str) -> bool:
+        """
+        Validates that a given label (given by name) matches a label in the config.
+        If a matching labels is not found, the function exits the program.
+
+        Returns:
+            bool: True if a matching label is found in the config.
+        """
+
         config = Config().config()
         
         is_valid = False
