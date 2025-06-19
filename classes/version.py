@@ -44,4 +44,4 @@ class Version(Lazyload):
         return sha
 
     def _get_tags(self, raw_tags: str) -> str:
-        return ", ".join(raw_tags.split("\n") if raw_tags != "" else "The current SHA has no tags attached")
+        return ", ".join(raw_tags.split("\n"))
