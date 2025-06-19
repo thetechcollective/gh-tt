@@ -116,7 +116,7 @@ class Lazyload:
         self.set(prop, value)
         return value
 
-    def _assert_props(self, props: list[str]):
+    async def _assert_props(self, props: list[str]):
         """
         Assert that all properties in the list are loaded, and if no then initiate the load
         Args:
@@ -129,7 +129,7 @@ class Lazyload:
         for prop in props:
             if prop not in self.props or self.props[prop] is None:
                 dep_group = self._get_manifest_group(self._caller(), prop)    
-                self._load_manifest(dep_group)
+                await self._load_manifest(dep_group)
 
     def _caller(self):
         """Get the class name in lowercase to match the manifest"""
