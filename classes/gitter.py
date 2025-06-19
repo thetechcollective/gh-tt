@@ -186,7 +186,7 @@ class Gitter(Lazyload):
         return True
 
     @classmethod
-    def fetch(cls, prune=False, again=False):
+    async def fetch(cls, prune=False, again=False):
         """Fetch """
 
         if cls.fetched and not again:
@@ -198,7 +198,7 @@ class Gitter(Lazyload):
         if prune:
             msg += " and prune local branches and tags)"
 
-        [_, _] = Gitter(
+        [_, _] = await Gitter(
             cmd=f"git fetch --tags --all -f {prune_switch}",
             msg=f"{msg}").run()
 
