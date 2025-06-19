@@ -117,6 +117,7 @@ class Devbranch(Lazyload):
                     print(
                         "The branch will be squeezed, but the changes in the files listed above will not be included in the commit.", file=sys.stderr)
 
+        # TODO async execution - do these need to be sequential?
         await self.__load_squeezed_commit_message()
         await self._assert_props(['squeeze_sha1'])
         await self.__compare_before_after_trees()
@@ -199,6 +200,7 @@ class Devbranch(Lazyload):
     async def wrapup(self, message: str):
         """Mapped to the 'wrapup' subcommand in the main program"""
 
+        # TODO async - i think these can be run concurrently
         await self._load_issue_number()
         await self._load_status()
         await self._assert_props(['me', 'merge_base', 'remote_sha1', 'default_sha1' ])
@@ -240,7 +242,7 @@ class Devbranch(Lazyload):
         responsibles_alert = ''
         if responsibles:
             # Add the responsibls to a comment on the issue
-            [_, _] = Gitter(
+            [_, _] = await Gitter(
                 cmd=f"gh issue comment {self.get('issue_number')} --body '{responsibles}'",
                 msg="Add responsibles to the issue").run()
 
