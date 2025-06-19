@@ -119,7 +119,7 @@ async def main(args):
         if args.issue:
             if label is None:
                 try:
-                    label = Config()._config_dict['workon']['default_type_labels']['issue']
+                    label = Config().config()['workon']['default_type_labels']['issue']
                 except KeyError:
                     pass
 
@@ -128,7 +128,7 @@ async def main(args):
         elif args.title:
             if label is None:
                 try:
-                    label = Config()._config_dict['workon']['default_type_labels']['title']
+                    label = Config().config()['workon']['default_type_labels']['title']
                 except KeyError:
                     pass
             issue =  Issue.create_new(title=args.title, body=args.body)
