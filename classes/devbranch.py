@@ -319,7 +319,7 @@ class Devbranch(Lazyload):
                 print(f"⛔️ ERROR: Issue '{issue_number}' is closed, you must use --reopen if you want to work on this issue.", file=sys.stderr)
                 sys.exit(1)
             # Reopen the issue if it is closed
-            issue.reopen()
+            await issue.reopen()
 
         reuse = await self.__reuse_issue_branch(issue_number=issue_number)
         if not reuse:
@@ -337,14 +337,14 @@ class Devbranch(Lazyload):
 
         # assign the issue to the current user
         if self.get('assign'):
-            issue.assign(assignee='@me')
+            await issue.assign(assignee='@me')
 
         await issue.label(label=label)
 
 
         if msg:
             # add the body to the issue
-            issue.comment(msg=msg)
+            await issue.comment(msg=msg)
 
         # add the issue to the project and set the Status to "In Progess"
         project = Project()

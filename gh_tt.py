@@ -131,7 +131,7 @@ async def main(args):
                     label = Config().config()['workon']['default_type_labels']['title']
                 except KeyError:
                     pass
-            issue =  Issue.create_new(title=args.title, body=args.body)
+            issue = await Issue.create_new(title=args.title, body=args.body)
             await devbranch.set_issue(issue_number=issue.get('number'), assign=args.assignee, reopen=args.reopen, label=label)
           
     if args.command == 'wrapup':

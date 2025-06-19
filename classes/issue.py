@@ -37,7 +37,7 @@ class Issue(Lazyload):
             self.set(key, value)
 
     @classmethod
-    def create_new(cls, title=str, body=None, assign=None):
+    async def create_new(cls, title=str, body=None, assign=None):
         """Create a new issue on the current repository
         Works as an alternative to the constructor, call it on the class and it will return a new Issue object
 
@@ -50,7 +50,7 @@ class Issue(Lazyload):
         body_switch = f"--body '{body}'" if body is not None else "--body ''"
         assign_switch = f"--assignee '{assign}'" if assign is not None else ""
 
-        [output, result] = Gitter(
+        [output, _] = await Gitter(
             cmd=f"gh issue create --title '{title}' {body_switch} {assign_switch}",
             msg="Create a new issue").run()
 
@@ -70,11 +70,11 @@ class Issue(Lazyload):
         else:
             print(
                 f"ERROR: Could not capture the issue URL from the output:\n{output}", file=sys.stderr)
-            exit(1)
+            sys.exit(1)
 
         return cls(number=issue_number)
 
-    def add_to_project(self, owner=str, number=int):
+    async def add_to_project(self, owner: str, number: int):
         """Add the issue to a project column"""
 
         if self.get('item_id') is not None:
@@ -85,7 +85,7 @@ class Issue(Lazyload):
             cmd=f"gh project item-add {number}  --owner {owner} --url {url} --format json --jq '.id'",
             die_on_error=False,
             msg="Add the issue to a project column")
-        [item_id, result] = gitter.run()
+        [item_id, result] = await gitter.run()
 
         if result.returncode != 0:
             print(
@@ -96,12 +96,12 @@ class Issue(Lazyload):
 
         return item_id
 
-    def assign(self, assignee=str):
+    async def assign(self, assignee: str):
         """Assign the issue to a user"""
 
         issue_number = self.get('number')
 
-        [output, result] = Gitter(
+        [output, _] = await Gitter(
             cmd=f"gh issue edit {issue_number} --add-assignee '{assignee}'",
             msg=f"Assign @me to the issue").run()
 
@@ -129,17 +129,18 @@ class Issue(Lazyload):
 
         return output
 
-    def comment(self, msg: str):
+    async def comment(self, msg: str):
         """Add a comment to the issue"""
 
         issue_number = self.get('number')
 
-        [output, _] = Gitter(
+        [output, _] = await Gitter(
             cmd=f"gh issue comment {issue_number} --body '{msg}'",
             msg="Add a comment to the issue").run()
 
         return output
-    def reopen(self):
+    
+    async def reopen(self):
         """Reopen the issue"""
 
         await self._run('reopen')
