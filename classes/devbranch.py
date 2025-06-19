@@ -370,8 +370,15 @@ class Devbranch(Lazyload):
         self.set('ready_prefix', ready_prefix)
         
         await self._load_issue_number()
-        issue = await Issue(number=self.get('issue_number'))
-        project = await Project()
+
+        results = await asyncio.gather(
+            Issue(number=self.get('issue_number')),
+            Project()
+        )
+
+        issue = results[0]
+        project = results[1]
+        
         field = project.get('deliver_field')
         field_value = project.get('deliver_field_value')
         await project.update_field(url=issue.get(
