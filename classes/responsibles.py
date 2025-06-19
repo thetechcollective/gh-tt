@@ -248,11 +248,10 @@ class Responsibles():
 
         # Check if the user is a member of the team using the GitHub API
     
-        [_, result] = asyncio.run(
-            Gitter(
+        [_, result] = Gitter(
                 cmd=f"gh api orgs/{org}/teams/{team_name}/memberships/{user}",
                 msg="Checking if user is a member of the team",
                 die_on_error=False,
             ).run()
-        )
+
         return result.returncode == 0
