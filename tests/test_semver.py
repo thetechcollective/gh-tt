@@ -68,7 +68,7 @@ class TestSemver(unittest.TestCase):
             self.assertIn('git tag -a -m "1.0.12rc\nBumped patch from version \'1.0.11rc\' to \'1.0.12rc\'\nTest patch bump" 1.0.12rc\n', output)
 
 
-    @pytest.mark.unittest
+    @pytest.mark.dev
     def test_semver_load_dev(self):
         # Setup
         semver = Semver().from_json('tests/data/semver/semver_loaded_release.json')
