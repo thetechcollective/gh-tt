@@ -1,0 +1,57 @@
+{
+    "_loaded": [
+        "init"
+    ],
+    "number": 166,
+    "json": "{\"assignees\":[{\"id\":\"MDQ6VXNlcjI0NTU0OTk4\",\"login\":\"vemolista\",\"name\":\"Tomas Vemola\"}],\"closed\":true,\"comments\":[{\"id\":\"IC_kwDONySsWs6x56n7\",\"author\":{\"login\":\"vemolista\"},\"authorAssociation\":\"MEMBER\",\"body\":\"**Responsibles for the changeset:**\\n\\n- `classes/label.py` (@lakruzz)\\n- `gh_tt.py` (@lakruzz)\\n- `tests/test_label.py` (@lakruzz)\\n\\n\",\"createdAt\":\"2025-06-18T15:40:42Z\",\"includesCreatedEdit\":false,\"isMinimized\":false,\"minimizedReason\":\"\",\"reactionGroups\":[],\"url\":\"https://github.com/thetechcollective/gh-tt/issues/166#issuecomment-2984749563\",\"viewerDidAuthor\":true},{\"id\":\"IC_kwDONySsWs6x57_D\",\"author\":{\"login\":\"github-actions\"},\"authorAssociation\":\"NONE\",\"body\":\"Merged into main branch with commit 628caa8751c4a8868037c39308d41e46bc505af8\",\"createdAt\":\"2025-06-18T15:42:35Z\",\"includesCreatedEdit\":false,\"isMinimized\":false,\"minimizedReason\":\"\",\"reactionGroups\":[],\"url\":\"https://github.com/thetechcollective/gh-tt/issues/166#issuecomment-2984755139\",\"viewerDidAuthor\":false}],\"labels\":[{\"id\":\"LA_kwDONySsWs8AAAACCnLjjA\",\"name\":\"ad hoc\",\"description\":\"Ad hoc work, not part of a strict planned updstream kanban cycle\",\"color\":\"00aa00\"}],\"number\":166,\"title\":\"Test Label.validate()\",\"url\":\"https://github.com/thetechcollective/gh-tt/issues/166\"}",
+    "assignees": [
+        {
+            "id": "MDQ6VXNlcjI0NTU0OTk4",
+            "login": "vemolista",
+            "name": "Tomas Vemola"
+        }
+    ],
+    "closed": true,
+    "comments": [
+        {
+            "id": "IC_kwDONySsWs6x56n7",
+            "author": {
+                "login": "vemolista"
+            },
+            "authorAssociation": "MEMBER",
+            "body": "**Responsibles for the changeset:**\n\n- `classes/label.py` (@lakruzz)\n- `gh_tt.py` (@lakruzz)\n- `tests/test_issue.py` (@lakruzz)\n\n",
+            "createdAt": "2025-06-18T15:40:42Z",
+            "includesCreatedEdit": false,
+            "isMinimized": false,
+            "minimizedReason": "",
+            "reactionGroups": [],
+            "url": "https://github.com/thetechcollective/gh-tt/issues/166#issuecomment-2984749563",
+            "viewerDidAuthor": true
+        },
+        {
+            "id": "IC_kwDONySsWs6x57_D",
+            "author": {
+                "login": "github-actions"
+            },
+            "authorAssociation": "NONE",
+            "body": "Merged into main branch with commit 628caa8751c4a8868037c39308d41e46bc505af8",
+            "createdAt": "2025-06-18T15:42:35Z",
+            "includesCreatedEdit": false,
+            "isMinimized": false,
+            "minimizedReason": "",
+            "reactionGroups": [],
+            "url": "https://github.com/thetechcollective/gh-tt/issues/166#issuecomment-2984755139",
+            "viewerDidAuthor": false
+        }
+    ],
+    "labels": [
+        {
+            "id": "LA_kwDONySsWs8AAAACCnLjjA",
+            "name": "ad hoc",
+            "description": "Ad hoc work, not part of a strict planned updstream kanban cycle",
+            "color": "00aa00"
+        }
+    ],
+    "title": "Test Label.validate()",
+    "url": "https://github.com/thetechcollective/gh-tt/issues/166"
+}

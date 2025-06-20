@@ -13,6 +13,7 @@ import asyncio
 class_path = os.path.dirname(os.path.abspath(__file__)) + "/../classes"
 sys.path.append(class_path)
 
+from issue import Issue
 from config import Config
 from gitter import Gitter
 from devbranch import Devbranch
@@ -21,6 +22,16 @@ from devbranch import Devbranch
 
 class TestDevbranch(unittest.TestCase):
 
+
+    @pytest.mark.unittest
+    def test_wrapup_responsibles_notifies_only_on_new_changes(self):
+        issue = Issue().from_json(file="tests/data/issue/issue_responsibles_comment.json")
+        devbranch = Devbranch().from_json(file="tests/data/devbranch/devbranch_responsibles_comment.json")
+        comments = issue.get("comments")
+
+        responsibles = devbranch._get_responsibles(issue_comments=comments)
+
+        self.assertTrue(responsibles.find("tests/test_issue.py") == -1)
 
     @pytest.mark.dev
     def test_dev_set_issue(self):

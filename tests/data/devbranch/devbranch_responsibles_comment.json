@@ -1,0 +1,30 @@
+{
+    "_loaded": [
+        "init",
+        "remote-init",
+        "init-last",
+        "status"
+    ],
+    "unstaged_changes": [
+        "AM test.json"
+    ],
+    "staged_changes": [
+        " M .vscode/settings.json",
+        " M classes/devbranch.py",
+        " M classes/issue.py",
+        " M classes/responsibles.py",
+        " M tests/test_devbranch.py",
+        " M tests/test_issue.py"
+    ],
+    "is_dirty": false,
+    "issue_number": null,
+    "branch_name": "195-Avoid_notifying_responsibles_when_wrapuping_files_they_have_already_been_notified_about",
+    "sha1": "d3879ecbd123c13b6fd36e6e2cf02f85026fb742",
+    "status": " M .vscode/settings.json\n M classes/devbranch.py\n M classes/responsibles.py\n M tests/test_devbranch.py\n M tests/test_issue.py",
+    "remote": "origin",
+    "default_branch": "main",
+    "merge_base": "d3879ecbd123c13b6fd36e6e2cf02f85026fb742",
+    "default_sha1": "d3879ecbd123c13b6fd36e6e2cf02f85026fb742",
+    "remote_sha1": "d3879ecbd123c13b6fd36e6e2cf02f85026fb742",
+    "me": "vemolista"
+}

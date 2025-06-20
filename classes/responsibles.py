@@ -218,9 +218,11 @@ class Responsibles():
 
         new_line = '\n'
     
-        return f"**Responsibles for the changeset:**\n\n{new_line.join(markdown_list)}\n\n" 
+        return f"{cls.responsibles_markdown_prefix()}\n\n{new_line.join(markdown_list)}\n\n" 
 
-
+    @classmethod
+    def responsibles_markdown_prefix(cls):
+        return "**Responsibles for the changeset:**"
 
 
 
