@@ -7,8 +7,9 @@ from unittest.mock import patch, MagicMock
 from unittest.mock import Mock
 import pytest
 
-from classes.semver import Semver
-from classes.gitter import Gitter
+
+from semver import Semver
+from gitter import Gitter
 
 class TestSemver(unittest.TestCase):
 
@@ -16,7 +17,7 @@ class TestSemver(unittest.TestCase):
     @pytest.mark.unittest
     def test_semver_dev(self):
         # Setup
-        Gitter.verbose(False)
+        Gitter.verbose = False
         semver = Semver()
         self.assertIsInstance(semver, Semver)
         self.assertEqual(semver.get('initial'), '0.0.0')

@@ -3,9 +3,9 @@ import re
 import sys
 
 
-from classes.lazyload import Lazyload
-from classes.config import Config
-from classes.gitter import Gitter
+from lazyload import Lazyload
+from config import Config
+from gitter import Gitter
 
 class Semver(Lazyload):
     """Class used to represent the semver state of git repository"""
