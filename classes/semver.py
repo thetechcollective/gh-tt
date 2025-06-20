@@ -46,11 +46,11 @@ class Semver(Lazyload):
 
         Loads:
             - semver_tags: A dictionary with the semver tags categorized into release, prerelease and other.
-            - current_release: A tuple containing a three level interger array as key, and the current release semver tag.
+            - current_release: An array containing a three level interger array as key, and the current release semver tag.
             - next_release_major: The next major release semver tag.
             - next_release_minor: The next minor release semver tag.
             - next_release_patch: The next patch release semver tag.
-            - current_prerelease: A tuple containing a three level interger array as key, and the current prerelease semver tag.
+            - current_prerelease: An array containing a three level interger array as key, and the current prerelease semver tag.
             - next_prerelease_major: The next major prerelease semver tag.
             - next_prerelease_minor: The next minor prerelease semver tag.
             - next_prerelease_patch: The next patch prerelease semver tag.    
@@ -94,25 +94,25 @@ class Semver(Lazyload):
 
 
 
-        
-
-
-  
-
         for category in ['release', 'prerelease']:
 
-            if semver_tags[category] :
-                sorted_keys = sorted(semver_tags[category].keys())
+            sorted_keys = sorted(semver_tags[category].keys())
+            curcatkey = f"current_{category}"
 
+            if len(sorted_keys) == 0:
+                initial = self.get('initial')
+                self.set(curcatkey, [tuple(map(int, initial.split('.'))), None])
+            else:
                 self.set(f"current_{category}", [sorted_keys[-1], semver_tags[category][sorted_keys[-1]]])
-                curcatkey = f"current_{category}"
-                major = f"{self.props[curcatkey][0][0]+1}.0.0"
-                minor = f"{self.props[curcatkey][0][0]}.{self.props[curcatkey][0][1]+1}.0"
-                patch = f"{self.props[curcatkey][0][0]}.{self.props[curcatkey][0][1]}.{self.props[curcatkey][0][2]+1}"
-                
-                self.set(f"next_{category}_major", major)
-                self.set(f"next_{category}_minor", minor)
-                self.set(f"next_{category}_patch", patch)
+
+            curcatkey = f"current_{category}"
+            major = f"{self.props[curcatkey][0][0]+1}.0.0"
+            minor = f"{self.props[curcatkey][0][0]}.{self.props[curcatkey][0][1]+1}.0"
+            patch = f"{self.props[curcatkey][0][0]}.{self.props[curcatkey][0][1]}.{self.props[curcatkey][0][2]+1}"
+            
+            self.set(f"next_{category}_major", major)
+            self.set(f"next_{category}_minor", minor)
+            self.set(f"next_{category}_patch", patch)
 
         # convert the tuple keys to string for JSON serialization
         for category in ['release', 'prerelease']:
@@ -129,12 +129,11 @@ class Semver(Lazyload):
 
         if prerelease:
             if 'current_prerelease' not in self.props:
-                print("No prerelease tags defined")
-                sys.exit(0)
+                return None
             return self.props['current_prerelease'][1]
         else:
             if 'current_release' not in self.props:
-                print("No release tags defined")
+                return None
                 sys.exit(0)
             return self.props['current_release'][1]
 
