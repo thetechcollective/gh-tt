@@ -9,15 +9,10 @@ from unittest.mock import AsyncMock
 import pytest
 import asyncio
 
-# fmt: off
-class_path = os.path.dirname(os.path.abspath(__file__)) + "/../classes"
-sys.path.append(class_path)
-
 from issue import Issue
 from config import Config
 from gitter import Gitter
 from devbranch import Devbranch
-# fmt: on
 
 
 class TestDevbranch(unittest.TestCase):

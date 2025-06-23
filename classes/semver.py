@@ -1,0 +1,200 @@
+import asyncio
+import re
+import sys
+
+
+from lazyload import Lazyload
+from config import Config
+from gitter import Gitter
+
+class Semver(Lazyload):
+    """Class used to represent the semver state of git repository"""
+
+    def __init__(self, suffix:str=None, prefix:str=None, initial:str=None):
+        super().__init__()
+
+        if initial is not None and initial != '':
+            try:
+                assert re.match(r'^\d+\.\d+\.\d+$', initial), "Initial version must be in the format 'X.Y.Z' where X, Y, Z are integers."
+            except AssertionError as e:
+                print(f"Invalid initial version format: {e}", file=sys.stderr)
+                sys.exit(1)
+            self.set('initial', initial)
+        else:
+            self.set('initial', Config.config()['semver']['initial'])
+
+        if suffix is not None and suffix != '':
+            self.set('suffix', suffix)
+        else:
+            self.set('suffix', Config.config()['semver']['prerelease_suffix'])
+
+        if prefix is not None and prefix != '':
+            self.set('prefix', prefix)
+        else:
+            self.set('prefix', Config.config()['semver']['prefix']) 
+        
+
+    def __load_tags(self, reload=False):
+        """This methos does some post-processing of the raw list of tags
+        It categorizes the tags into semver categories: release, prerelease and other.
+        Release are defined as tags that match the semver pattern without a suffix.
+        Prerelease are defined as tags that match the semver pattern with a suffix.
+        Other are defined as tags that do not match the semver pattern.
+
+        Args:
+            reload (bool): If True, it will ignore any previously loaded tags and re-read the tags from the git repository.
+
+        Loads:
+            - semver_tags: A dictionary with the semver tags categorized into release, prerelease and other.
+            - current_release: An array containing a three level interger array as key, and the current release semver tag.
+            - next_release_major: The next major release semver tag.
+            - next_release_minor: The next minor release semver tag.
+            - next_release_patch: The next patch release semver tag.
+            - current_prerelease: An array containing a three level interger array as key, and the current prerelease semver tag.
+            - next_prerelease_major: The next major prerelease semver tag.
+            - next_prerelease_minor: The next minor prerelease semver tag.
+            - next_prerelease_patch: The next patch prerelease semver tag.    
+
+        Returns:
+            None
+
+        Raises:
+            None
+        """
+
+
+        if reload:
+            self.props.pop('tags')
+
+        asyncio.run(self._assert_props(['tags']))
+
+        tags = self.get('tags').split('\n')
+        semver_pattern = re.compile(r'^(.*?)(\d+)\.(\d+)\.(\d+)(.*)$')
+
+        semver_tags = {}
+        semver_tags['release'] = {}
+        semver_tags['prerelease'] = {}
+        semver_tags['other'] = {}
+        
+
+        for tag in tags:
+            category = 'other'
+            match = semver_pattern.search(tag)
+            if match:
+                if match.group(5):
+                    category = 'prerelease'
+                else:
+                    category = 'release'
+                
+                semver_tags[category][tuple(map(int, [match.group(2), match.group(3), match.group(4)]))] = tag
+                continue
+            else:
+                # If it doesn't match the semver pattern, we categorize it as 'other'
+                semver_tags['other'][tag] = tag
+
+
+
+        for category in ['release', 'prerelease']:
+
+            sorted_keys = sorted(semver_tags[category].keys())
+            curcatkey = f"current_{category}"
+
+            if len(sorted_keys) == 0:
+                initial = self.get('initial')
+                self.set(curcatkey, [tuple(map(int, initial.split('.'))), None])
+            else:
+                self.set(f"current_{category}", [sorted_keys[-1], semver_tags[category][sorted_keys[-1]]])
+
+            curcatkey = f"current_{category}"
+            major = f"{self.props[curcatkey][0][0]+1}.0.0"
+            minor = f"{self.props[curcatkey][0][0]}.{self.props[curcatkey][0][1]+1}.0"
+            patch = f"{self.props[curcatkey][0][0]}.{self.props[curcatkey][0][1]}.{self.props[curcatkey][0][2]+1}"
+            
+            self.set(f"next_{category}_major", major)
+            self.set(f"next_{category}_minor", minor)
+            self.set(f"next_{category}_patch", patch)
+
+        # convert the tuple keys to string for JSON serialization
+        for category in ['release', 'prerelease']:
+            if category in semver_tags:
+                # Convert tuple keys to comma-separated string without spaces or parentheses
+                semver_tags[category] = {",".join(map(str, k)): v for k, v in semver_tags[category].items()}
+
+        self.props['semver_tags'] = semver_tags
+
+    def get_current_semver(self, prerelease=False):
+        """Returns the current semver tag"""
+
+        self.__load_tags()
+
+        if prerelease:
+            if 'current_prerelease' not in self.props:
+                return None
+            return self.props['current_prerelease'][1]
+        else:
+            if 'current_release' not in self.props:
+                return None
+                sys.exit(0)
+            return self.props['current_release'][1]
+
+    
+    def bump(self, level=str, message:str=None, suffix:str=None, prefix:str=None, initial:str=None, prerelease=False, dry_run=False):
+
+        self.__load_tags()
+
+        if level not in ['major', 'minor', 'patch']:
+            print(f"Invalid level '{level}'. Must be one of: major, minor, patch.", file=sys.stderr)
+            sys.exit(1)
+
+        if initial is not None:
+            if not re.match(r'^\d+\.\d+\.\d+$', initial):
+                print(f"⛔️ ERROR: Invalid initial version format '{initial}'. Must be in the format 'X.Y.Z' where X, Y, Z are integers.", file=sys.stderr)
+                sys.exit(1)
+        else:
+            initial = self.get('initial')
+
+        if prefix is None:
+            prefix = self.get('prefix')
+
+        if prerelease:
+            if suffix is None:
+                suffix = self.get('suffix')
+        else:
+            suffix = ''
+
+        if message:
+            message = f"\n{message}"
+        else:
+            message = ""
+
+        pre = 'pre' if prerelease else ''
+
+        lookup_next =    f"next_{pre}release_{level}"
+        lookup_current = f"current_{pre}release"
+
+
+        next_tag = f"{self.get('prefix')}{self.get(lookup_next)}{suffix}"    
+
+
+        cmd = f"git tag -a -m \"{next_tag}\nBumped {level} from version '{self.get(lookup_current)[1]}' to '{next_tag}'{message}\" {next_tag}"
+
+        if dry_run:
+            print(f"{cmd}")
+            return cmd
+        
+        [value,_] = asyncio.run(Gitter(
+            cmd=cmd,
+            msg=f"Bumping {level} from version '{self.get(lookup_current)[1]}' to '{next_tag}'"
+        ).run())
+        return {next_tag}
+    
+    def list(self, prerelease=False):
+        """Lists the semver tags in the repository to stdout sorted by major, minor, patch."""
+        self.__load_tags()
+
+        category = 'prerelease' if prerelease else 'release'
+        
+        temp = {tuple(map(int, k.split(','))): v for k, v in self.props['semver_tags'][category].items()}
+        for k in sorted(temp.keys()):
+            print(temp[k])
+            

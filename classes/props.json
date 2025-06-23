@@ -141,6 +141,14 @@
       "msg": "Reopen the issue"
     }
   },
+  "semver":{
+    "tags": {
+      "cmd": "git tag --list --format='%(refname:short)'",
+      "msg": "List all tags in the repository",
+      "group": "init"
+    }
+
+  },
   "label": {
     "json_list_all": {
       "cmd": "gh label list --json name,description,color",

@@ -41,22 +41,26 @@
         "branch_prefix": "ready"
     }
   },
-  // Description strings are limited to 100 characters
+  "semver":{
+    "prerelease_suffix": "rc",
+    "prefix": "",
+    "initial": "0.0.0"
+  },
   "labels": {
-        "ad hoc": {
-          "color": "00aa00",
-          "description": "Ad hoc work, not part of a strict planned upstream kanban cycle",
-          "category": "type"
-        },
-        "development": {
-          "color": "00aa66",
-          "description": "Regular planned development work, part of a strict prioritized upstream kanban cycle",
-            "category": "type"
-        },
-        "rework": {
-          "color": "00aaaa",
-          "description": "Rework of existing code; may or may not be part of a strict prioritized upstream kanban cycle",
-          "category": "type"
-        }
+    "ad hoc": {
+      "color": "00aa00",
+      "description": "Ad hoc work, not part of a strict planned upstream kanban cycle",
+      "category": "type"
+    },
+    "development": {
+      "color": "00aa66",
+      "description": "Regular planned development work, part of a strict prioritized upstream kanban cycle",
+        "category": "type"
+    },
+    "rework": {
+      "color": "00aaaa",
+      "description": "Rework of existing code; may or may not be part of a strict prioritized upstream kanban cycle",
+      "category": "type"
     }
+  }
 }

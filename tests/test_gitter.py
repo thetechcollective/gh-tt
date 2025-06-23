@@ -9,8 +9,6 @@ import pytest
 from unittest.mock import AsyncMock
 import asyncio
 
-class_path = os.path.dirname(os.path.abspath(__file__)) + "/../classes"
-sys.path.append(class_path)
 
 from gitter import Gitter
 

@@ -1,17 +1,18 @@
 [run]
 # Include the main CLI script and the classes directory
 source = 
-    gh_semver.py
     classes/*
 
 # Exclude test files
 omit = 
     tests/*
+    classes/__init__.py
     setup.py
+    gh_*.py
 
 [report]
 # Fail the build if the coverage is less than 80%
-fail_under = 40
+fail_under = 54
 
 # Skip empty files
 skip_empty = True

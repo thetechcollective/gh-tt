@@ -6,8 +6,6 @@ from io import StringIO
 import sys
 from unittest.mock import patch, MagicMock
 
-class_path = os.path.dirname(os.path.abspath(__file__)) + "/../classes"
-sys.path.append(class_path)
 
 from config import Config
 

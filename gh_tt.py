@@ -17,17 +17,23 @@ from devbranch import Devbranch
 from gitter import Gitter
 from issue import Issue
 from config import Config
+from semver import Semver
 
 def parse(args=None):
     # Define the parent parser with the --verbose argument
     parent_parser = argparse.ArgumentParser(add_help=False)
-    parent_parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output')
-    parent_parser.add_argument('--version', action='store_true', help='Print info about the app and quit')
+    parent_parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output', default=False)
 
+    version_parser = argparse.ArgumentParser(add_help=False)
+    version_parser.add_argument('--version', action='store_true', help='Print version information and exit')
+
+    prerelease_parser = argparse.ArgumentParser(add_help=False)
+    prerelease_parser.add_argument('--prerelease', action='store_true', help='Set or read pre-release tags')
+    
     # Define command-line arguments
     parser = argparse.ArgumentParser(
         prog='gh tt', 
-        parents=[parent_parser],
+        parents=[parent_parser, version_parser],
         description="""
             A command-line tool to support a consistent team workflow. 
             It supports a number of subcommands which define the entire process: `workon`,
@@ -68,7 +74,7 @@ def parse(args=None):
             in 'thetechcollective/gh-tt' for details.
             """)
     
-    #Add the responsibles suncommand
+    #Add the responsibles subcommand
     responsibles_parser = subparsers.add_parser(
         'responsibles', 
         parents=[parent_parser], 
@@ -79,8 +85,34 @@ def parse(args=None):
     responsibles_parser.add_argument('--staged',  action='store_true', help='Get the list of responsibles for staged changes', required=False, default=False)
     responsibles_parser.add_argument('--exclude', type=str, help="Comma separated list of handles to exclude '@me' is supported too", required=False, default=None)
     responsibles_parser.set_defaults(command='responsibles')
-    # Add the project subcommand
+
+    # Add the semver subcommand
+    semver_parser = subparsers.add_parser(
+        'semver', 
+        parents=[parent_parser, prerelease_parser], 
+        help="Reads and sets the current version of the repo in semantic versioning format",
+        description="""
+            Supports reading and setting the current version of the repository in semantic 
+            versioning format in both 'release' and 'prerelease' context.  Versions are stored as 
+            tags in the repository.
+            """)
     
+    semver_sub_parser = semver_parser.add_subparsers(dest='semver_command')
+    semver_bump_parser = semver_sub_parser.add_parser('bump', parents=[parent_parser, prerelease_parser], help="Bumps the current version of the repository in semantic versioning format")
+    semver_bump_level_group = semver_bump_parser.add_mutually_exclusive_group(required=True)
+    semver_bump_level_group.add_argument('--major', dest='level',  help='Bump the major version, breaking change', action='store_const', const='major')
+    semver_bump_level_group.add_argument('--minor', dest='level',  help='Bump the minor version, new feature, non-breaking change', action='store_const', const='minor')
+    semver_bump_level_group.add_argument('--patch', dest='level',  help='Bump the patch version, bug fix or rework, non-breaking change', action='store_const', const='patch')
+    semver_bump_parser.add_argument('-m', '--message', type=str, help='Additional message for the annotated tag', required=False, default=None)
+    semver_bump_parser.add_argument('--suffix', type=str, help='Suffix to use for prerelease tags', required=False, default=None)
+    semver_bump_parser.add_argument('--prefix', type=str, help='Prefix to prepend the tag valid for both releases and prereleases', required=False, default=None)
+    semver_bump_parser.add_argument('--initial', type=str, help='Initial off-set, only relevant if there are not tags defined. Bust be a three-level-interger seperated by dots.', required=False, default=None)
+    run_group = semver_bump_parser.add_mutually_exclusive_group()
+    run_group.add_argument('--run', dest='run', action='store_true', help='Execute the command')
+    run_group.add_argument('--no-run', dest='run', action='store_false', help='Print the command without executing it')
+
+    semver_list_parser = semver_sub_parser.add_parser('list', parents=[parent_parser, prerelease_parser], help="Lists the version tags in the repository in semantic versioning format and sort order in either prerelease or release context")
+
     args = parser.parse_args(args)
 
     if args.command == "workon" and args.reopen and not args.issue:
@@ -104,7 +136,6 @@ if __name__ == "__main__":
     if args.version:
         version = Version()
         version.print()
-
         sys.exit(0)
 
     Gitter.read_cache()
@@ -144,6 +175,31 @@ if __name__ == "__main__":
 
     if args.command == 'responsibles':
        devbranch.responsibles(unstaged=args.unstaged, staged=args.staged, exclude=args.exclude)
+
+    if args.command == 'semver':
+        if args.semver_command == 'bump':
+            semver = Semver()
+            semver.bump(
+                level=args.level, 
+                message=args.message, 
+                suffix=args.suffix, 
+                prefix=args.prefix, 
+                initial=args.initial, 
+                prerelease=args.prerelease, 
+                dry_run=not args.run
+            )
+        elif args.semver_command == 'list':
+            semver = Semver()
+            semver.list(prerelease=args.prerelease)
+        elif args.semver_command is None:
+            current_semver = Semver().get_current_semver(prerelease=args.prerelease)
+            print(f"{current_semver}")
+
+        else:
+            if args.prerelease:
+                Version.read(prerelease=True)
+            else:
+                Version.read(prerelease=False)
             
     Gitter.write_cache()            
     exit(0)

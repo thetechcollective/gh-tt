@@ -7,8 +7,6 @@ from unittest.mock import Mock
 import pytest
 from io import StringIO
 
-class_path = os.path.dirname(os.path.abspath(__file__)) + "/../classes"
-sys.path.append(class_path)
 
 from project import Project
 

@@ -1,4 +1,3 @@
-from gitter import Gitter
 import os
 import sys
 import re
@@ -6,10 +5,9 @@ import json
 import asyncio
 
 
-# Add directory of this class to the general class_path
-# to allow import of sibling classes
-class_path = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(class_path)
+from gitter import Gitter
+
+
 
 def deep_update(dict1, dict2):
     """Recursively update dict1 with dict2 without deleting keys."""

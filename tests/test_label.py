@@ -3,9 +3,6 @@ import os
 import sys
 import pytest
 
-class_path = os.path.dirname(os.path.abspath(__file__)) + "/../classes"
-sys.path.append(class_path)
-
 from label import Label
 from gitter import Gitter
 

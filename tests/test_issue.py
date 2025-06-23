@@ -7,9 +7,6 @@ from unittest.mock import patch, MagicMock
 from unittest.mock import Mock
 import pytest
 
-class_path = os.path.dirname(os.path.abspath(__file__)) + "/../classes"
-sys.path.append(class_path)
-
 from issue import Issue
 from devbranch import Devbranch
 
