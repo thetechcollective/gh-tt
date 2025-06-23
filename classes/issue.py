@@ -19,15 +19,18 @@ sys.path.append(class_path)
 class Issue(Lazyload):
     """Class used to represent a GitHub issue - in context of the current development branch"""
 
-    def __init__(self, number=int):
+    def __init__(self):
         super().__init__()
 
-        self.set('number', number)
+    @classmethod
+    def load(cls, number: int):
+        issue = cls()
 
-        asyncio.run(self._load_manifest('init'))
+        issue.set('number', number)
+        asyncio.run(issue._load_manifest('init'))
 
         try:
-            issue_json = json.loads(self.get('json'))
+            issue_json = json.loads(issue.get('json'))
         except ValueError as e:
             pass
             print(
@@ -36,7 +39,9 @@ class Issue(Lazyload):
 
         # Iterate through issue_json and add each element to self.props
         for key, value in issue_json.items():
-            self.set(key, value)
+            issue.set(key, value)
+
+        return issue
 
     @classmethod
     def create_new(cls, title=str, body=None, assign=None):
@@ -75,7 +80,7 @@ class Issue(Lazyload):
                 f"ERROR: Could not capture the issue URL from the output:\n{output}", file=sys.stderr)
             exit(1)
 
-        return cls(number=issue_number)
+        return cls().load(number=issue_number)
 
     def add_to_project(self, owner=str, number=int):
         """Add the issue to a project column"""

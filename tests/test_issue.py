@@ -18,7 +18,7 @@ class TestIssue(unittest.TestCase):
     @pytest.mark.dev
     def test_issue_dev_no_mock(self):
         # This is a dev test that runs without mocking
-        issue = Issue(number=17)
+        issue = Issue.load(number=17)
         
         # Assertions
         self.assertTrue(True)
@@ -35,7 +35,7 @@ class TestIssue(unittest.TestCase):
                 }""", Mock(returncode=0, stderr='', stdout='')],  # Get the url and title from the issue
         ]
                
-        issue = Issue(number='17')
+        issue = Issue.load(number='17')
 
         # Assertions
         self.assertEqual(issue.get('number'), '17')
@@ -53,7 +53,7 @@ class TestIssue(unittest.TestCase):
                
         with self.assertRaises(SystemExit) as cm:
             with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
-                issue = Issue(number=17)
+                issue = Issue.load(number=17)
 
        # Assertions
         self.assertEqual(cm.exception.code, 1)
@@ -70,7 +70,7 @@ class TestIssue(unittest.TestCase):
         ]
         with self.assertRaises(SystemExit) as cm:
             with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
-                issue = Issue(number=17)
+                issue = Issue.load(number=17)
        # Assertions
         self.assertEqual(cm.exception.code, 1)
         self.assertIn("ERROR: Could not get the issue url or title on issue number: '17", mock_stderr.getvalue())
@@ -86,7 +86,7 @@ class TestIssue(unittest.TestCase):
         ]
         with self.assertRaises(SystemExit) as cm:
             with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
-                issue = Issue(number=17)
+                issue = Issue.load(number=17)
        # Assertions
         self.assertEqual(cm.exception.code, 1)
         self.assertIn("ERROR: Could not get the issue url or title from incomplete JSON", mock_stderr.getvalue())        
@@ -145,7 +145,7 @@ https://github.com/thetechcollective/gh-tt/issues/17
             ['PVTI_lAHOAAJfZM4AxVEKzgXi48Q', Mock(returncode=0, stderr='', stdout='')], # Add the issue to the project
         ]
                
-        issue = Issue(number='17')
+        issue = Issue.load(number='17')
         item_id = issue.add_to_project(owner='lakruzz', number='12')
 
         # Assertions
@@ -164,7 +164,7 @@ https://github.com/thetechcollective/gh-tt/issues/17
             ['', Mock(returncode=1, stderr='Error', stdout='')], # Add the issue to the project
         ]
                
-        issue = Issue(number='17')
+        issue = Issue.load(number='17')
 
         with self.assertRaises(SystemExit) as cm:
             with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
@@ -186,7 +186,7 @@ https://github.com/thetechcollective/gh-tt/issues/17
             ["https://github.com/thetechcollective/gh-tt/issues/17", Mock(returncode=0, stderr='', stdout='')],  # Assign the issue
         ]
         
-        issue = Issue(number=17)
+        issue = Issue.load(number=17)
         issue.assign(assignee='@me')
         
         # Assertions
@@ -195,7 +195,7 @@ https://github.com/thetechcollective/gh-tt/issues/17
     @pytest.mark.dev
     def test_issue_dev_no_mock(self):
         
-        issue = Issue(number=17)
+        issue = Issue.load(number=17)
         issue.assign(assignee='@me')
         
         # Assertions

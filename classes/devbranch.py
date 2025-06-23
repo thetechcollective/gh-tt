@@ -230,15 +230,11 @@ class Devbranch(Lazyload):
 
         self.set('commit_msg',f"\"{message} - #{self.get('issue_number')}\"")
 
-        change_list = self._get_pretty_changes()
-        responsibles = Responsibles().responsibles_as_markdown(
-            changeset=change_list,
-            exclude=[f"@{self.get('me')}"]
-        )
-        
         asyncio.run(self._run('commit_changes') )
         asyncio.run(self._push(force=True))
 
+        issue_comments = Issue().load(number=self.get('issue_number')).get("comments")
+        responsibles = self._get_responsibles(issue_comments=issue_comments)
 
         responsibles_alert = ''
         if responsibles:
@@ -255,6 +251,32 @@ class Devbranch(Lazyload):
         print(f"💡 Run: gh workflow view wrapup")      
         print(f"💡 Run: gh browse {self.get('issue_number')}")
         return True
+    
+    def _get_responsibles(self, issue_comments: list[str]):
+        change_list = self._get_pretty_changes()
+        changed_past = self._past_responsible_file_paths(issue_comments=issue_comments)
+        changed_new = set(change_list) - set(changed_past)
+        responsibles = Responsibles().responsibles_as_markdown(
+            changeset=changed_new,
+            exclude=[f"@{self.get('me')}", *changed_new]
+        )
+
+        return responsibles
+
+    def _past_responsible_file_paths(self, issue_comments: list[dict]):
+        """
+        Returns:
+            set: All file paths that responsibles have been previously notified about
+        """
+
+        comment_bodies = [comment["body"] for comment in issue_comments]
+
+        file_paths = set()
+        for body in comment_bodies:
+            if body.startswith(Responsibles.responsibles_markdown_prefix()):
+                matches = re.findall(r'`([^`]*)`', body)
+                file_paths = file_paths.union(set(matches))
+        return file_paths
 
     async def _load_status(self, reload: bool = False):
         """Load the status of the current branch sets the following properties:
@@ -317,7 +339,7 @@ class Devbranch(Lazyload):
         self.set('issue_number', issue_number)
         self.set('assign', assign)
 
-        issue = Issue(number=issue_number)
+        issue = Issue.load(number=issue_number)
 
         if issue.get('closed'): 
             if not reopen:
@@ -371,7 +393,7 @@ class Devbranch(Lazyload):
 
         
         asyncio.run(self._load_issue_number())
-        issue = Issue(number=self.get('issue_number'))
+        issue = Issue.load(number=self.get('issue_number'))
         project = Project()
         field = project.get('deliver_field')
         field_value = project.get('deliver_field_value')
