@@ -5,6 +5,27 @@ import re
 import asyncio
 import subprocess
 
+# Module helper
+def load_jsonc(jsonc_file: str) -> list[bool,dict]:
+    """Load a JSONC file (JSON with comments) and return the parsed data.
+    """
+    if os.path.exists(jsonc_file):
+        with open(jsonc_file, 'r') as f:
+            try:
+                # Load "JSON with comments"
+                lines = f.readlines()
+                lines = [line for line in lines if not re.match(
+                    r'^\s*//', line)]
+                config_data = ''.join(lines)
+                jsonc_file = json.loads(config_data)
+                return [True, jsonc_file]
+            except json.JSONDecodeError as e:
+                print(
+                    f"ERROR: Could not parse JSON from {jsonc_file}: {e}", file=sys.stderr)
+                sys.exit(1)
+    else:
+        return [False,{}]
+
 
 class Lazyload:
     """Base class for lazy loading properties"""
@@ -13,21 +34,17 @@ class Lazyload:
     _manifest = {}  # Class-level variable to store loaded properties
     _manifest_loaded = False
 
-    # Load the manifest file if it exists
-    if os.path.exists(_manifest_file):
-        with open(_manifest_file, 'r') as f:
-            try:
-                # Load "JSON with comments"
-                lines = f.readlines()
-                lines = [line for line in lines if not re.match(
-                    r'^\s*//', line)]
-                config_data = ''.join(lines)
-                _manifest = json.loads(config_data)
-                _manifest_loaded = True
-            except json.JSONDecodeError as e:
-                print(
-                    f"ERROR: Could not parse JSON from {_manifest_file}: {e}", file=sys.stderr)
-                sys.exit(1)
+    for allowed_option in [
+        os.path.dirname(os.path.abspath(__file__)) + "/props.json", 
+        os.path.dirname(os.path.abspath(__file__)) + "/props.jsonc"]:
+    
+        [loaded, manifest] = load_jsonc(allowed_option)
+        if loaded:
+            _manifest = manifest
+            _manifest_loaded = True
+            break
+    
+
 
     def __init__(self):
         self.props = {}
