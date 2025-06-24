@@ -110,6 +110,7 @@ def parse(args=None):
     run_group = semver_bump_parser.add_mutually_exclusive_group()
     run_group.add_argument('--run', dest='run', action='store_true', help='Execute the command')
     run_group.add_argument('--no-run', dest='run', action='store_false', help='Print the command without executing it')
+    semver_bump_parser.set_defaults(run=True, exclusive_groups=['bump'])
 
     semver_list_parser = semver_sub_parser.add_parser('list', parents=[parent_parser, prerelease_parser], help="Lists the version tags in the repository in semantic versioning format and sort order in either prerelease or release context")
 
