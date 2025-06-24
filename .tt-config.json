@@ -1,66 +1,6 @@
 {
-  "project": {
-    "owner": "",
-    "number": ""
-  },
-  "workon": {
-    // the status to set in the project when the workon subcommand is used
-    "status": "In Progress",
-    "policies":{
-    },
-    // labels which will be applied (depending on the flag used) by default if 
-    // no other `type` label has been applied to the issue
-    "default_type_labels": {
-         "title": "ad hoc",
-         "issue": "development"
+    "project": {
+        "owner": "thetechcollective",
+        "number": 12
     }
-  },
-  "squeeze": {
-    "policies":{
-        // "abort_for_rebase:true" will abort the squeeze if the default_branch has commits that are not in the branch
-        "abort_for_rebase": true,
-        // "allow-dirty:true" will run the squeeze, even with a dirty working directory. Will warn unless "quiet:true" 
-        "allow-dirty": true,
-        // "allow-staged:true" will run the squeeze, even with staged, uncommited changes. Will warn unless "quiet:true" 
-        "allow-staged": false,
-        // The closing keyword to use when closing the issue in the project - ignored if a valid closing keyword is found in the commit message
-        "close-keyword": "resolves",
-        // "quiet:true" will suppress the dirty/staged warnings
-        "quiet": false
-    }
-  },
-  "wrapup": {
-    "policies":{
-        "warn_about_rebase": true
-    }
-  },
-  "deliver": {
-    // the status to set in the project when the wrapup subcommand is used
-    "status": "Delivery Initiated",
-    "policies": {
-        "branch_prefix": "ready"
-    }
-  },
-  "semver":{
-    "prerelease_suffix": "rc",
-    "prefix": "",
-    "initial": "0.0.0"
-  },
-  "labels": {
-    "ad hoc": {
-      "color": "00aa00",
-      "description": "Ad hoc work, not part of a strict planned upstream kanban cycle",
-      "category": "type"
-    },
-    "development": {
-      "color": "00aa66",
-      "description": "Regular planned development work, part of a strict prioritized upstream kanban cycle",
-        "category": "type"
-    },
-    "rework": {
-      "color": "00aaaa",
-      "description": "Rework of existing code; may or may not be part of a strict prioritized upstream kanban cycle",
-      "category": "type"
-    }
-  }
 }

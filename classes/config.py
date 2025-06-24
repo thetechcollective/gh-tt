@@ -20,7 +20,7 @@ def deep_update(dict1, dict2):
 
 def add_config(config_file: str, config_dict: dict):
 
-    """Helper function to update the configuration dictionary and add it to the input paramaeter
+    """Helper function to update the configuration dictionary and add it to the input parameter
     Args:
         file (str): The path to the config file to add
     Raises:
@@ -39,6 +39,19 @@ def add_config(config_file: str, config_dict: dict):
             sys.exit(1)              
     return config_dict
 
+def load_default_configuration(config_dict: dict, config_files: list):
+    # Default configuration file name MUST exist
+    default_config_file_name = '.tt-config-default.json'
+    default_config_path = os.path.dirname(os.path.abspath(__file__)) + f"/{default_config_file_name}"
+    assert os.path.exists(default_config_path), f"Default config file '{default_config_path}' not found."
+
+    # Initialize with defaults
+    config_dict = add_config(default_config_path, config_dict)
+    config_files.append(default_config_path)
+
+    return config_dict, config_files
+
+
 class Config():
     """Class used to represent the project configuration and policies for the subcommands.
     
@@ -51,20 +64,12 @@ class Config():
     # Class-level configuration dictionary
     _config_dict = {}
     _config_files = []  # List to hold the configuration files in the order they are read
-    _config_file_name = '.tt-config.json'
+    _project_config_file_name = '.tt-config.json'
 
-    # Default configuration file name MUST exist in the source code root directory (one level up from this file)
-    _app_config_file = os.path.dirname(os.path.abspath(__file__)) + f"/../{_config_file_name}"
-    assert os.path.exists(_app_config_file), f"Application config file '{_app_config_file}' not found."
-
-    _config_dict = add_config(_app_config_file, _config_dict)
-    _config_files.append(_app_config_file)  
-
-    # Add the project default config file if it exists
-    _project_config_file = f"{Gitter.git_root}/{_config_file_name}"
-    if os.path.exists(_project_config_file):
-        _config_dict = add_config(_project_config_file, _config_dict)
-        _config_files.append(_project_config_file)  
+    _config_dict, _config_files = load_default_configuration(
+        config_dict=_config_dict,
+        config_files=_config_files
+    )
 
     @classmethod
     def config_files(cls):
@@ -75,8 +80,15 @@ class Config():
         return cls._config_files
 
     @classmethod
-    def config(cls) -> dict:
+    def config(cls, load_only_default: bool = False) -> dict:
         """Public class property to get the config dict"""
+        
+        if not load_only_default:
+            _project_config_file = f"{Gitter.git_root}/{cls._project_config_file_name}"
+            if os.path.exists(_project_config_file):
+                cls._config_dict = add_config(_project_config_file, cls._config_dict)
+                cls._config_files.append(_project_config_file)
+        
         return cls._config_dict
     
     @classmethod
@@ -92,3 +104,16 @@ class Config():
         add_config(config_file, cls._config_dict)
         cls._config_files.append(config_file)
         return cls._config_dict
+    
+    @classmethod
+    def clear_config(cls):
+        """Assigns empty values to class properties"""
+
+        cls._config_dict = {}
+        cls._config_files = []
+
+        # Reload the default configuration
+        cls._config_dict, cls._config_files = load_default_configuration(
+            config_dict=cls._config_dict,
+            config_files=cls._config_files
+        )

@@ -1,3 +1,4 @@
+from config import Config
 from lazyload import Lazyload
 from gitter import Gitter
 import os
@@ -25,13 +26,20 @@ class Project(Lazyload):
         self.set('config_file', None)
         self.set('gh_validated', False)
 
-        # Config - can be set in the .gitconfig file in the repo root
+        # Config - can be set in the .tt-config.json file in the repo root
         # Example:
-        # [project]
-        #   owner = thetechcollective
-        #   number = 12
-        #   workon = Status:In Progress
-        #   deliver = Status:Delivery Initiated
+        # {
+        #     "project": {
+        #         "owner": "thetechcollective",
+        #         "number": "12"
+        #     },
+        #     "workon": {
+        #         "status": "In Progress"
+        #     },
+        #     "deliver": {
+        #         "status": "Delivery Initiated"
+        #     }
+        # }
 
         self.set('project_owner', owner)
         self.set('project_number', number)
@@ -203,64 +211,38 @@ class Project(Lazyload):
         """Read the configuration file and set the properties"""
 
         complete = False
-        # Get the git root directory and set the config file
-        git_root = Gitter.git_root
-        self.set('config_file', f"{git_root}/.gitconfig")
 
-        # Check if the project owner can be read from .gitconfig
-        [project_owner, result] = asyncio.run(Gitter(
-            cmd=f"git config --get -f {self.get('config_file')} project.owner",
-            msg="Get the project owner from .gitconfig",
-            die_on_error=False).run()
-        )
+        config = Config().config()
 
-        # only override the default values if sucesfully read
-        if not project_owner == '':
+        try:
+            project_owner = config["project"]["owner"]
+            project_number = config["project"]["number"]
+        except:
+            print("⚠️ Could not find project owner or project number information in config.")
+            project_owner = None
+            project_number = None
+
+        if project_owner is not None:
             self.set('project_owner', project_owner)
 
-        # Check if the project number can be read from .gitconfig
-        [project_number, result] = asyncio.run(Gitter(
-            cmd=f"git config --get -f {self.get('config_file')} project.number",
-            msg="Get the project number from .gitconfig",
-            die_on_error=False).run()
-        )
-        # only override the default values if sucesfully read
-        if not project_number == '':
+        if project_number is not None:
             self.set('project_number', project_number)
-
+        
         # The configuration is complete if both project owner and number are set, the action triggers are optional since they have default values
         complete = True
 
-        # Check if the workon action trigger can be read from .gitconfig
-        [workon_action, result] = asyncio.run(Gitter(
-            cmd=f"git config --get -f {self.get('config_file')} project.workon",
-            msg="Get the workon trigger action from .gitconfig",
-            die_on_error=False).run()
-        )
-        # split the workon action on : into field and value
-        # only override the default values if both field and value are sucesfully read
         try:
-            [workon_field, workon_field_value] = workon_action.split(':')
-            if not workon_field == '' and not workon_field_value == '':
-                self.set('workon_field', workon_field)
-                self.set('workon_field_value', workon_field_value)
-        except ValueError as e:
-            pass
+            workon_action = config["workon"]["status"]
+            deliver_action = config["deliver"]["status"]
+        except:
+            print("⚠️ Could not find workon status or deliver status information in config.")
+            workon_action = None
+            deliver_action = None
 
-        # Check if the workon action trigger can be read from .gitconfig
-        [deliver_action, result] = asyncio.run(Gitter(
-            cmd=f"git config --get -f {self.get('config_file')} project.deliver",
-            msg="Get the deliver trigger action from .gitconfig",
-            die_on_error=False).run()
-        )
-        # split the workon action on : into field and value
-        # only override the default values if both field and value are sucesfully read
-        try:
-            [deliver_field, deliver_field_value] = deliver_action.split(':')
-            if not deliver_field == '' and not deliver_field_value == '':
-                self.set('deliver_field', deliver_field)
-                self.set('deliver_field_value', deliver_field_value)
-        except ValueError as e:
-            pass
+        if workon_action is not None:
+            self.set('workon_action', workon_action)
+
+        if deliver_action is not None:
+            self.set('deliver_action', deliver_action)
 
         return complete
