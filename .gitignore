@@ -9,3 +9,4 @@ logs/
 **/.venv/
 _temp.token
 dist/
+temp/

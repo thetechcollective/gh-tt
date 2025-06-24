@@ -99,3 +99,15 @@ class TestSemver(unittest.TestCase):
 
 
 
+    @pytest.mark.dev
+    def test_semver_dev(self):
+        # Setup
+        semver = Semver()
+        pre_note = semver.note(prerelease=True)
+        print (pre_note)
+        self.assertIsInstance(pre_note, str)
+
+        note = semver.note()
+        print (note)
+  
+        note = semver.note(filename='temp/release_notes.md')

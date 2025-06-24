@@ -20,9 +20,11 @@
   sha1 = rev-parse --short HEAD
   get-message = log -1 --pretty=%B
   sweep = "!f() { git fetch --prune && git checkout main && git pull && for branch in $(git branch -vv | grep ': gone]' | awk \"{print \\$1}\"); do git branch -D \"$branch\"; done; }; f"
-  prerelease = "!f() { git push --tag && gh release create `gh semver` --latest --verify-tag --prerelease --generate-notes; }; f"
+  prerelease = "!f() { git push --tag && gh release create `gh semver --prerelease` --verify-tag --prerelease --notes-file `git root`/$1 ; }; f"
+  release = "!f() { git push --tag && gh release create `gh semver` --latest --verify-tag  --notes-file `git root`/$1; }; f"
   issue-number = "!f() { git rev-parse --abbrev-ref HEAD | grep -oE '^[0-9]+'; }; f"
   mark-stable = "!f() { git checkout main && git tag -f stable && git push origin --tags --force; }; f"
+  version-all = "!f() { pwd && python3 --version && git --version && gh --version && gh extension list; }; f"
 
 [project]
   owner   = thetechcollective

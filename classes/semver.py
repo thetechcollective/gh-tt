@@ -1,6 +1,7 @@
 import asyncio
 import re
 import sys
+import os
 
 
 from lazyload import Lazyload
@@ -198,3 +199,88 @@ class Semver(Lazyload):
         for k in sorted(temp.keys()):
             print(temp[k])
             
+    
+    def note(self, prerelease=False, filename:str=None) -> str:
+        """Generates a release note either for a release or a prerelease, based on the set of current semver tags.
+
+        Args:
+            prerelease (bool): If True, it will generate a note based on (current_release..current_prerelease). 
+                               If False it will generate a note based on (previous_release..current_release)
+                               Defaults to False.
+            filename (str): If provided, the note will be written to this file. If None, it will be printed to stdout.
+        
+        Returns:
+            str: The markdown note of changes between the two references.
+
+        Raises:
+            SystemExit(1): If the logical references are not valid tags in the git repo
+
+        """
+
+        self.__load_tags()
+
+        if prerelease:
+           from_ref = self.get_current_semver()
+           to_ref = self.get_current_semver(prerelease=True)
+        else:
+              sorted_keys = sorted(self.get('semver_tags')['release'].keys())
+              previous_release = self.get('semver_tags')['release'][sorted_keys[-2]]
+
+              from_ref = previous_release
+              to_ref = self.get_current_semver()
+
+        note = self.note_md(from_ref=from_ref, to_ref=to_ref)
+
+        if filename is not None:
+            # make sure the directory exists
+            directory = os.path.dirname(filename)
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            with open(filename, 'w') as f:
+                f.write(note)
+        else:
+            print(note)
+        return note
+    
+
+    
+    def note_md(self, from_ref:str, to_ref:str) -> str:
+        """Generates a markdown note of changes between (from_ref..to_ref).
+        The note is desinged to be saved to a file and attached to a GitHub release note (gh relsease create --notes-file ...).
+        It will include a link to the changes between the two references, and a list of commits with their dates, commit messages, sha and authors.
+
+        Args:
+            from_ref (str): The reference to start from, defaults to the current semver tag.
+            to_ref (str): The reference to end at, defaults to the next semver tag.
+
+        Returns:
+            str: The markdown note.
+
+        Raises:
+            SystemExit(1): If from_ref or to_ref are not valid tags in the git repo.
+        """
+
+        self.__load_tags()
+
+        assert from_ref is not None, "from_ref must be provided"
+        assert to_ref is not None, "to_ref must be provided"
+
+        note = f"""## Release Notes for {to_ref}\n
+This release includes the following [changes since {from_ref}](../../compare/{from_ref}..{to_ref}):\n"""
+
+        cmd=f"git log --format='%n- **%cd**: %s%n%h %an' --date=format:'%Y-%m-%d' {from_ref}..{to_ref}"
+        msg=f"Generating release notes from {from_ref} to {to_ref}" 
+
+        [value, _] = asyncio.run(
+            Gitter(
+                cmd=cmd,
+                msg=msg).run())
+        
+        note += value
+
+        return note
+
+
+        
+
+        

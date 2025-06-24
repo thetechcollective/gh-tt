@@ -111,8 +111,9 @@ def parse(args=None):
     run_group.add_argument('--run', dest='run', action='store_true', help='Execute the command')
     run_group.add_argument('--no-run', dest='run', action='store_false', help='Print the command without executing it')
     semver_bump_parser.set_defaults(run=True, exclusive_groups=['bump'])
-
     semver_list_parser = semver_sub_parser.add_parser('list', parents=[parent_parser, prerelease_parser], help="Lists the version tags in the repository in semantic versioning format and sort order in either prerelease or release context")
+    semver_note_parser = semver_sub_parser.add_parser('note', parents=[parent_parser, prerelease_parser], help="Generates a release note either for a release or a prerelease, based on the set of current semver tags")
+    semver_note_parser.add_argument('--filename', type=str, help='If provided, the note will be written to this file. If None, it will be printed to stdout.', required=False, default=None)
 
     args = parser.parse_args(args)
 
@@ -189,18 +190,23 @@ if __name__ == "__main__":
                 prerelease=args.prerelease, 
                 dry_run=not args.run
             )
+
         elif args.semver_command == 'list':
             semver = Semver()
             semver.list(prerelease=args.prerelease)
+
+        elif args.semver_command == 'note':
+            semver = Semver()
+            if args.filename:
+                note = semver.note(prerelease=args.prerelease, filename=args.filename)
+                print(f"{args.filename}")
+            else:
+                note = semver.note(prerelease=args.prerelease)
+                print(note)
+
         elif args.semver_command is None:
             current_semver = Semver().get_current_semver(prerelease=args.prerelease)
             print(f"{current_semver}")
-
-        else:
-            if args.prerelease:
-                Version.read(prerelease=True)
-            else:
-                Version.read(prerelease=False)
             
     Gitter.write_cache()            
     exit(0)
