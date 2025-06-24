@@ -42,7 +42,7 @@ def test_read_app_defaults_static(default_config):
     """Test app defaults"""
     config, files, _ = default_config
     assert len(files) == 1, "Expected exactly one config file"
-    assert re.search(r'../.tt-config-default.json', files[0]), "File name does not match expected pattern"
+    assert re.search(r'../.tt-config.json', files[0]), "File name does not match expected pattern"
     
     assert config['project']['owner'] == '', "Project owner should be empty by default"
     assert config['project']['number'] == '', "Project number should be empty by default"

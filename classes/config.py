@@ -39,10 +39,9 @@ def add_config(config_file: str, config_dict: dict):
             sys.exit(1)              
     return config_dict
 
-def load_default_configuration(config_dict: dict, config_files: list):
-    # Default configuration file name MUST exist
-    default_config_file_name = '.tt-config-default.json'
-    default_config_path = os.path.dirname(os.path.abspath(__file__)) + f"/{default_config_file_name}"
+def load_default_configuration(config_file_name: str, config_dict: dict, config_files: list):
+    # Default configuration file MUST exist
+    default_config_path = os.path.dirname(os.path.abspath(__file__)) + f"/{config_file_name}"
     assert os.path.exists(default_config_path), f"Default config file '{default_config_path}' not found."
 
     # Initialize with defaults
@@ -64,9 +63,10 @@ class Config():
     # Class-level configuration dictionary
     _config_dict = {}
     _config_files = []  # List to hold the configuration files in the order they are read
-    _project_config_file_name = '.tt-config.json'
+    _config_file_name = '.tt-config.json'
 
     _config_dict, _config_files = load_default_configuration(
+        config_file_name=_config_file_name,
         config_dict=_config_dict,
         config_files=_config_files
     )
@@ -84,7 +84,7 @@ class Config():
         """Public class property to get the config dict"""
         
         if not load_only_default:
-            _project_config_file = f"{Gitter.git_root}/{cls._project_config_file_name}"
+            _project_config_file = f"{Gitter.git_root}/{cls._config_file_name}"
             if os.path.exists(_project_config_file):
                 cls._config_dict = add_config(_project_config_file, cls._config_dict)
                 cls._config_files.append(_project_config_file)
@@ -114,6 +114,7 @@ class Config():
 
         # Reload the default configuration
         cls._config_dict, cls._config_files = load_default_configuration(
+            config_file_name=cls._config_file_name,
             config_dict=cls._config_dict,
             config_files=cls._config_files
         )
