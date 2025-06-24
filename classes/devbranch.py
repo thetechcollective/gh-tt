@@ -146,7 +146,7 @@ class Devbranch(Lazyload):
         
         return True
 
-    def _develop(self):
+    def __develop(self):
         """Develop on the issue branch, creating a new branch if needed"""
         
         asyncio.run(self._assert_props(['issue_number', 'default_branch', 'branch_name']))
