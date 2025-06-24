@@ -31,6 +31,10 @@ jobs:
         source .venv/bin/activate
         uv sync --extra dev
 
+    - name: Run linter
+      run : |
+        uv run ruff check . --exit-zero --output-format github
+
     - name: Test with pytest
       run: |
         source .venv/bin/activate
