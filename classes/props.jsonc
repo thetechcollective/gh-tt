@@ -154,7 +154,7 @@
       "msg": "Reopen the issue"
     },
     "create_new_issue": {
-        "cmd": "gh issue create --title {title} --body {body} {assignee_switch}",
+        "cmd": "gh issue create --title {title} --body '{body}' {assignee_switch}",
         "msg": "Create a new issue in a repository"
     }
   },

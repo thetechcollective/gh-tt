@@ -53,7 +53,7 @@ class Issue(Lazyload):
         issue = Issue()
         output = asyncio.run(issue._run('create_new_issue', {
             "title": title,
-            "body": f"'{body}'" if body else "''",
+            "body": f"{body}" if body else "''",
             "assignee_switch": f"--assignee {assign}" if assign else ""
         }))
 
