@@ -42,6 +42,10 @@ jobs:
           uv sync --extra dev
           gh extension install thetechcollective/gh-set-status --pin stable
 
+      - name: Run linter
+        run: |
+          uv run ruff check . --exit-zero --output-format github
+
       - name: Test with pytest
         id: Unittest
         env:

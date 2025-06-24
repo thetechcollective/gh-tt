@@ -24,7 +24,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest",
-    "pytest-cov"
+    "pytest-cov",
+    "ruff>=0.12.0",
 ]
 
 build = [
@@ -32,3 +33,5 @@ build = [
     "packaging"
 ]
 
+[tool.ruff.lint]
+select = ["I"]
