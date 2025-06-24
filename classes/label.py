@@ -1,17 +1,14 @@
-from project import Project
 from lazyload import Lazyload
 from config import Config
 from gitter import Gitter
 import os
-import subprocess
 import sys
-import re
 import json
 import asyncio
 
 
 class Label(Lazyload):
-    """Class used to represent a GitHub issue - in context of the current development branch"""
+    """Class used to represent a GitHub issue label"""
 
     _all = {}
     _loaded=False
@@ -34,23 +31,21 @@ class Label(Lazyload):
         if not found:
             if create:
                 try:
-                    config = Config()._config_dict
-                    color = config['labels'][name]['color']
-                    description = config['labels'][name]['description']
+                    config = Config().config()
+                    self.set("color", config['labels'][name]['color'])
+                    self.set("description", config['labels'][name]['description'])
                 except KeyError as e:
                     print(f"ERROR: Label '{name}' not defined in the config file", file=sys.stderr)
                     sys.exit(1)
 
-                self.props = self.create_new(name=name, description=description, color=color, force=True).props
+                self.props = self._create_new(name=name).props
             else:                
                 print(f"ERROR: Label '{name}' doesn't exist in current git context", file=sys.stderr)
                 sys.exit(1)
 
 
-    @classmethod
-    def create_new(cls, name=str, description:str=None, color:str=None, force:bool=False):
+    def _create_new(cls, name: str):
         """Create a new label in the current repository
-        Works as an alternative to the constructor, call it on the class and it will return a new Label object
 
         Args:
             name (str): The name of the label (required)
@@ -59,15 +54,9 @@ class Label(Lazyload):
             force: Update color and description if the label already exist (invalid if description or color is None, defaults to False)
         """
 
-        description_switch = f" --description '{description}'" if description is not None else ''
-        color_switch = f" --color {color}" if color is not None else ''
-        force_switch = ' --force' if force and description is not None and color is not None else ''
-
-        [output, result] = asyncio.run(Gitter(
-            cmd=f"gh label create '{name}'{description_switch}{color_switch}{force_switch}",
-            msg="Create a new lable").run()
-        )
+        asyncio.run(cls._run('create_new'))
         cls._loaded = False
+
         return cls(name=name)
     
     @classmethod

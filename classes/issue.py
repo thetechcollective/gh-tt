@@ -50,15 +50,14 @@ class Issue(Lazyload):
             assign: Assign to the issue (defaults to the current user)
         """
 
-        body_switch = f"--body '{body}'" if body is not None else "--body ''"
-        assign_switch = f"--assignee '{assign}'" if assign is not None else ""
+        issue = Issue()
+        output = asyncio.run(issue._run('create_new_issue', {
+            "title": title,
+            "body": f"'{body}'" if body else "''",
+            "assignee_switch": f"--assignee {assign}" if assign else ""
+        }))
 
-        [output, result] = asyncio.run(Gitter(
-            cmd=f"gh issue create --title '{title}' {body_switch} {assign_switch}",
-            msg="Create a new issue").run()
-        )
-
-        # The output is a mulitiline string like this:
+        # The output is a multitiline string like this:
         #
         #   Creating issue in lakruzz/gitsquash_lab
         #
@@ -77,28 +76,6 @@ class Issue(Lazyload):
             exit(1)
 
         return cls().load(number=issue_number)
-
-    def add_to_project(self, owner=str, number=int):
-        """Add the issue to a project column"""
-
-        if self.get('item_id') is not None:
-            return self.get('item_id')
-
-        url = self.get('url')
-        gitter = Gitter(
-            cmd=f"gh project item-add {number}  --owner {owner} --url {url} --format json --jq '.id'",
-            die_on_error=False,
-            msg="Add the issue to a project column")
-        [item_id, result] = gitter.run()
-
-        if result.returncode != 0:
-            print(
-                f"ERROR: Could not add the issue to the project {owner}/{number}\n{result.stderr}", file=sys.stderr)
-            exit(1)
-
-        self.set('item_id', item_id)
-
-        return item_id
 
     def assign(self, assignee=str):
         """Assign the issue to a user"""

@@ -129,11 +129,8 @@ class Gitter(Lazyload):
         Returns:
             [result (bool), status (str)] : True/'' if the validation is OK, False/Error message if the validation fails
         """
-        [stdout, _] = asyncio.run(
-            Gitter(
-                cmd="gh --version",
-                msg="Check if the user has access to right version of gh CLI").run()
-        )
+
+        stdout = asyncio.run(cls()._run("validate_gh_version"))
 
         # Validate that the version is => 2.55.0
         # The command returns something like this:
@@ -149,12 +146,10 @@ class Gitter(Lazyload):
         return True
 
     @classmethod
-    def validate_gh_scope(cls, scope=str):
+    def validate_gh_scope(cls, scope: str):
         """Check if the user has sufficient access to the github cli"""
 
-        [stdout, result] = asyncio.run(Gitter(
-            cmd="gh auth status",
-            msg="Check if the user has sufficient access to update projects").run())
+        stdout = asyncio.run(cls()._run("validate_gh_scope"))
 
         # Valiadate that we have reaacce to projects
         # The command returns something like this:

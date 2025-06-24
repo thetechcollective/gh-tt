@@ -57,15 +57,3 @@ class TestResponsibles(unittest.TestCase):
         )
 
         self.assertTrue(True)
-
-
-    @pytest.mark.dev
-    def test_is_responsible(self):
-        """Test app defaults"""
-        Gitter().verbose = True
-        all = Responsibles().is_member('@thetechcollective/all', '@lakruzz')
-        ai_gov = Responsibles().is_member('@thetechcollective/ai-gov', '@lakruzz')
-        arla_devx = Responsibles().is_member('@arla-omb/devx', '@lakruzz')
-
-
-        self.assertTrue(True)

@@ -129,6 +129,18 @@
     "commit_changes": {
       "cmd": "git commit -m {commit_msg}",
       "msg": "Commit changes"
+    },
+    "develop_on_branch": {
+        "cmd": "gh issue develop {issue_number} -b {default_branch} -n {branch_name} -c",
+        "msg": "Link a branch to an issue (creating the branch if necessary)"
+    },
+    "add_responsibles_comment": {
+        "cmd": "gh issue comment {issue_number} --body '{responsibles_comment_content}'",
+        "msg": "Add a comment to the issue notifying responsbiles of changes"
+    },
+    "git_push": {
+        "cmd": "git push {force_switch}",
+        "msg": "Push the branch to the remote"
     }
   },
   "issue": {
@@ -140,6 +152,10 @@
     "reopen":{
       "cmd": "gh issue reopen {number}",
       "msg": "Reopen the issue"
+    },
+    "create_new_issue": {
+        "cmd": "gh issue create --title {title} --body {body} {assignee_switch}",
+        "msg": "Create a new issue in a repository"
     }
   },
   "semver":{
@@ -154,6 +170,10 @@
     "json_list_all": {
       "cmd": "gh label list --json name,description,color",
       "msg": "List all labels in repo"
+    },
+    "create_new": {
+        "cmd": "gh label create '{name}' -d '{description}' -c '{color}' --force",
+        "msg": "Create a new label in a repository"
     }
   },
   "version": {
@@ -164,6 +184,16 @@
     "sha_tags": {
         "cmd": "git tag --points-at {sha}",
         "msg": "Get a list of tags for a given SHA"
+    }
+  },
+  "gitter": {
+    "validate_gh_version": {
+        "cmd": "gh --version",
+        "msg": "Check if the user has access to right version of gh CLI"
+    },
+    "validate_gh_scope": {
+        "cmd": "gh auth status",
+        "msg": "Check if the user has sufficient access to update projects"
     }
   }
 }

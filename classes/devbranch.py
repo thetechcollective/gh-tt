@@ -120,15 +120,12 @@ class Devbranch(Lazyload):
 
         return self.get('squeeze_sha1')
 
-    async def _push(self, force=False):
+    def _push(self, force=False):
         # push the branch to the remote
-        force_switch = ''
-        if force == True:
-            force_switch = '--force-with-lease'
 
-        [output, result] = await Gitter(
-            cmd=f"git push {force_switch}",
-            msg="Push the branch to the remote").run()
+        _ = asyncio.run(self._run("git_push", {
+            "force_switch": "--force-with-lease" if force else ""
+        }))
 
         return True
 
@@ -149,17 +146,11 @@ class Devbranch(Lazyload):
         
         return True
 
-    def __develop(self, issue_number=int, branch_name=str):
-        """Develop on the issue branch, creating a new branch if needed
-        Args:
-            issue_number (int): The issue number to develop on
-            branch_name (str): The name of the branch to develop on
-        """
+    def _develop(self):
+        """Develop on the issue branch, creating a new branch if needed"""
         
-        [output, result] = asyncio.run(Gitter(
-            cmd=f"gh issue develop {issue_number} -b {self.get('default_branch')} -n {self.get('branch_name')} -c",
-            msg=f"gh develop {issue_number} on new branch {branch_name}").run()
-        )
+        asyncio.run(self._assert_props(['issue_number', 'default_branch', 'branch_name']))
+        asyncio.run(self._run("develop_on_branch"))
 
     async def __reuse_issue_branch(self, issue_number=int):
         """Check if there is a local or remote branch with the issue number and switch to it
@@ -214,7 +205,7 @@ class Devbranch(Lazyload):
 
             if not self.get('sha1') == self.get('remote_sha1'):                
                 print("👉 The branch is ahead of its remote; ...pushing")
-                asyncio.run(self._push(force=True))
+                self._push(force=True)
             return
 
         # If nothing is staged, stage all changes
@@ -226,20 +217,16 @@ class Devbranch(Lazyload):
         self.set('commit_msg',f"\"{message} - #{self.get('issue_number')}\"")
 
         asyncio.run(self._run('commit_changes') )
-        asyncio.run(self._push(force=True))
+        self._push(force=True)
 
         issue_comments = Issue().load(number=self.get('issue_number')).get("comments")
-        responsibles = self._get_responsibles(issue_comments=issue_comments)
+        self.set('responsibles_comment_content', self._get_responsibles(issue_comments=issue_comments))
 
         responsibles_alert = ''
-        if responsibles:
-            # Add the responsibls to a comment on the issue
-            [_, _] = asyncio.run(Gitter(
-                cmd=f"gh issue comment {self.get('issue_number')} --body '{responsibles}'",
-                msg="Add responsibles to the issue").run()
-            )
+        if self.get('responsibles_comment_content'):
+            asyncio.run(self._run("add_responsibles_comment"))
 
-            responsibles_alert = f"\n☝️ You touched on files that have named responsibles {responsibles}\nThey are now mentioned in the issue."
+            responsibles_alert = f"\n☝️ You touched on files that have named responsibles {self.get('responsibles_comment_content')}\nThey are now mentioned in the issue."
 
 
         print(f"👍 SUCCESS: Branch has got a new commit that mentions issue '#{self.get('issue_number')}' and it's pushed\n{responsibles_alert}")
@@ -351,7 +338,7 @@ class Devbranch(Lazyload):
                 '[^a-zA-Z0-9_-]', '', re.sub(' ', '_', issue_title))
             branch_name = f"{issue_number}-{branch_valid_title}"
             self.set('branch_name', branch_name)
-            self.__develop(issue_number=issue_number, branch_name=branch_name)
+            self.__develop()
 
         # at this point the branch should exist and is checked out - either through a local branch, a remote branch or a new branch
 

@@ -1,9 +1,12 @@
+import subprocess
 from gitter import Gitter
 import os
 import sys
 import re
 import json
 import asyncio
+
+from lazyload import Lazyload
 
 
 
@@ -219,38 +222,3 @@ class Responsibles():
     @classmethod
     def responsibles_markdown_prefix(cls):
         return "**Responsibles for the changeset:**"
-
-
-
-
-    
-    @classmethod
-    def is_member(cls, team:str, user:str) -> bool:
-        """Check if a user is a member of a team.
-
-        Args:
-            team (str): The fully qualified name of the team to check (format @org/team).
-            user (str): The user name to check (format @user).
-
-        Returns:
-            bool: True if the user memberership is confirmed. False otherwise.
-        """
-        # Strip the @ from the team and user names
-        team = team.lstrip('@')
-        user = user.lstrip('@')
-
-        # splilt the team on '/' into org and team_name
-        if '/' not in team:
-            raise ValueError("Team name must be in the format @org/team")
-        org, team_name = team.split('/', 1)
-
-        # Check if the user is a member of the team using the GitHub API
-    
-        [_, result] = asyncio.run(
-            Gitter(
-                cmd=f"gh api orgs/{org}/teams/{team_name}/memberships/{user}",
-                msg="Checking if user is a member of the team",
-                die_on_error=False,
-            ).run()
-        )
-        return result.returncode == 0

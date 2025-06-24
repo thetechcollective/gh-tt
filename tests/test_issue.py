@@ -131,47 +131,6 @@ https://github.com/thetechcollective/gh-tt/issues/17
 
     #@pytest.mark.unittest
     @patch('issue.Gitter')
-    def test_issue_add_to_project_success(self, MockGitter):
-        # Setup
-        mock_gitter_instance = MockGitter.return_value
-        mock_gitter_instance.run.side_effect = [
-            ["""{
-                  "title": "Add a 'deliver' subcommand",
-                  "url": "https://github.com/thetechcollective/gh-tt/issues/17"
-                }""", Mock(returncode=0, stderr='', stdout='')],  # Get the url and title from the issue
-            ['PVTI_lAHOAAJfZM4AxVEKzgXi48Q', Mock(returncode=0, stderr='', stdout='')], # Add the issue to the project
-        ]
-               
-        issue = Issue.load(number='17')
-        item_id = issue.add_to_project(owner='lakruzz', number='12')
-
-        # Assertions
-        self.assertEqual(item_id, 'PVTI_lAHOAAJfZM4AxVEKzgXi48Q')
-
-    #@pytest.mark.unittest
-    @patch('issue.Gitter')
-    def test_issue_add_to_project_failure(self, MockGitter):
-        # Setup
-        mock_gitter_instance = MockGitter.return_value
-        mock_gitter_instance.run.side_effect = [
-            ["""{
-                  "title": "Add a 'deliver' subcommand",
-                  "url": "https://github.com/thetechcollective/gh-tt/issues/17"
-                }""", Mock(returncode=0, stderr='', stdout='')],  # Get the url and title from the issue
-            ['', Mock(returncode=1, stderr='Error', stdout='')], # Add the issue to the project
-        ]
-               
-        issue = Issue.load(number='17')
-
-        with self.assertRaises(SystemExit) as cm:
-            with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
-                item_id = issue.add_to_project(owner='lakruzz', number='12')
-       # Assertions
-        self.assertEqual(cm.exception.code, 1)
-        self.assertIn("ERROR: Could not add the issue to the project lakruzz/1", mock_stderr.getvalue())     
-        
-    #@pytest.mark.unittest
-    @patch('issue.Gitter')
     def test_issue_assign_success(self, MockGitter):
         # Setup
         mock_gitter_instance = MockGitter.return_value

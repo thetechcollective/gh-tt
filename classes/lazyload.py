@@ -255,24 +255,49 @@ class Lazyload:
             msg
         )
 
-    async def _run(self, prop:str, die_on_error: bool = True):
-        """Run a property command and return the value
+    async def _run(self, prop:str, args: dict[str] = {}, die_on_error: bool = True) -> str:
+        """Run a property command and return the value.
+
+        Given a property command `prop`, `_run`:
+        1. Finds the command in the manifest
+        2. Expands any parameters in the command with props from the caller, or `args`
+        3. Runs the commands
+        4. Returns the output of the command
+        
         Args:
-            prop (str): The property to run
+            prop (str): The property to run.
+            args (str): Optional dict used to expand keywords in the props definition.
+                        Values in the dict will be used over properties on the caller.
+            die_on_error (bool): Specifies what to do if running the command gives a non-zero exit code.
+                                 `True` raises an exception.
+                                 `False` does not raise.
         Returns:
-            str: The value of the property after running the command
+            str: The value of the property after running the command.
         """
 
         msg   = self._manifest[self._caller()][prop].get('msg')
-        cmd   = self._manifest[self._caller()][prop].get('cmd')
+        cmd   = self._manifest[self._caller()][prop].get('cmd', None)
         group = self._manifest[self._caller()][prop].get('group', None)
 
-        assert not group, f"ERROR: _run method should not be used for properties that aren't part of a group. Use _assert_props() instead"
+        assert cmd is not None, f"ERROR: Command '{prop}' is not defined in the manifest for caller {self._caller()}"
+        assert not group, f"ERROR: _run method should not be used for properties that are a part of a group. Use _assert_props() instead"
 
-        # Find occurrences of {.*} in text (e.g., {someprop} and replace them with the property values)
+        # Find occurrences of {.*} in text (e.g., {someprop} and replace them with values from the caller, or `args`)
         matches = re.findall(r'(?<!{)\{(?!{)(.*?)\}', cmd)
         for match in matches:
-            cmd = cmd.replace(f"{{{match}}}", str(self.get(match)))
+            replacement = None
+            try:
+                replacement = str(self.get(match))
+            except AssertionError:
+                # If a prop is not available on the caller, it's ok
+                # We'll get it from args
+                pass
+            
+            if args.get(match, None) is not None:
+                replacement = args[match]
+            
+            assert replacement is not None, f"ERROR: Value for parameter '{match}' found in neither caller '{self._caller()}' props, nor args dictionary '{json.dumps(args)}'"
+            cmd = cmd.replace(f"{{{match}}}", replacement)
 
         # Find and expand occurrences of {{.*}} in text (e.g., {{tree}})  and replace them with just a single '{' '}' e.g. {tree}
         matches = re.findall(r'{{(.*?)}}', cmd)
@@ -290,9 +315,5 @@ class Lazyload:
              raise subprocess.CalledProcessError(
                 result.returncode, cmd, output=result.stdout, stderr=result.stderr)
         return value
-
-
-        
-
 
 
