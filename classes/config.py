@@ -6,6 +6,7 @@ import asyncio
 
 
 from gitter import Gitter
+from lazyload import Lazyload
 
 
 
@@ -51,7 +52,7 @@ def load_default_configuration(config_file_name: str, config_dict: dict, config_
     return config_dict, config_files
 
 
-class Config():
+class Config(Lazyload):
     """Class used to represent the project configuration and policies for the subcommands.
     
     Purely static class, all methods are class methods.
@@ -82,13 +83,18 @@ class Config():
     @classmethod
     def config(cls, load_only_default: bool = False) -> dict:
         """Public class property to get the config dict"""
+
+        if load_only_default:
+            return cls._config_dict
         
-        if not load_only_default:
-            _project_config_file = f"{Gitter.git_root}/{cls._config_file_name}"
-            if os.path.exists(_project_config_file):
-                cls._config_dict = add_config(_project_config_file, cls._config_dict)
-                cls._config_files.append(_project_config_file)
-        
+        _project_config_file = f"{Gitter.git_root}/{cls._config_file_name}"
+
+        if os.path.exists(_project_config_file):
+            cls._config_dict = add_config(_project_config_file, cls._config_dict)
+            cls._config_files.append(_project_config_file)
+
+        cls.__assert_required(_project_config_file)
+
         return cls._config_dict
     
     @classmethod
@@ -118,3 +124,52 @@ class Config():
             config_dict=cls._config_dict,
             config_files=cls._config_files
         )
+
+    @classmethod
+    def __assert_required(cls, config_path: str):
+        props_set_from_gitconfig = []
+        gitconfig_file = f"{Gitter.git_root}/.gitconfig"
+
+        project_owner = None
+        project_number = None
+
+        if not cls._config_dict.get('project', {}).get('owner'):
+            project_owner = asyncio.run(cls()._run('project_owner', args={'gitconfig_file': gitconfig_file}))
+            if project_owner:
+                props_set_from_gitconfig.append('project_owner')
+
+        if not cls._config_dict.get('project', {}).get('number'):
+            project_number = asyncio.run(cls()._run('project_number', args={'gitconfig_file': gitconfig_file}))
+            if project_number:
+                props_set_from_gitconfig.append('project_number')
+        
+        if props_set_from_gitconfig:
+            print(f"⚠️  DEPRECATED: .gitconfig based configuration is deprecated.")
+            print(f"🔨  Your {config_path} file will be updated with values found in .gitconfig.")
+            print(f"⚠️  Review the updated {config_path} and consider checking it in.")
+
+            data = {}
+            if os.path.exists(config_path):
+                with open(config_path, "r") as file:
+                    try:
+                        data = json.load(file)
+                    except json.JSONDecodeError:
+                        print(f"🛑 ERROR: Could not parse existing config file.", file=sys.stderr)
+                        sys.exit(1)
+
+            data["project"] = data.get("project", {})
+
+            if project_owner is not None:
+                data["project"]["owner"] = data["project"].get("owner", project_owner)
+
+            if project_number is not None:
+                data["project"]["number"] = data["project"].get("number", int(project_number))
+
+            with open(config_path, "w") as file:
+                json.dump(data, file, indent=4)
+
+            add_config(config_path, cls._config_dict)
+
+        if not all([cls._config_dict['project']['owner'], cls._config_dict['project']['number']]):
+            print(f"🛑 ERROR: Could not load information about project owner or project number from configuration. Missing values are not currently supported. Please specify a 'project' key with 'owner' and 'number' key-value pairs in .tt-config.json.")
+            sys.exit(1)

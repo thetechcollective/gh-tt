@@ -4,7 +4,6 @@ import sys
 import json
 from io import StringIO
 from unittest.mock import patch, MagicMock
-from unittest.mock import Mock
 from unittest.mock import AsyncMock
 import pytest
 import asyncio
@@ -102,31 +101,20 @@ class TestDevbranch(unittest.TestCase):
         devbranch = Devbranch().from_json(
             file='tests/data/devbranch/devbranch-squeeze.json')
 
-        # Create a single loop for all test cases
-        loop = asyncio.new_event_loop()
         # no diffs
-        diff = loop.run_until_complete(
-            devbranch._Devbranch__compare_before_after_trees())
+        diff = devbranch._Devbranch__compare_before_after_trees()
         self.assertTrue(diff)
         mock_run.assert_called_once_with('compare_trees')
         mock_run.reset_mock()
 
         # Some diffs
         with self.assertRaises(SystemExit) as cm:
-            diff = loop.run_until_complete(
-                devbranch._Devbranch__compare_before_after_trees())
+            diff = devbranch._Devbranch__compare_before_after_trees()
             
         self.assertEqual(cm.exception.code, 1)
         self.assertRegex(mock_stderr.getvalue(), r"FATAL:\nThe squeezed commit tree (.*) is not identical to the one on the issue branch" )
         mock_run.assert_called_once_with('compare_trees')
         mock_run.reset_mock()
-
-
-
-
-        loop.close()
-
-
 
     @pytest.mark.unittest
     def test__load_squeezed_commit_message(self):
@@ -136,11 +124,7 @@ class TestDevbranch(unittest.TestCase):
         devbranch = Devbranch().from_json(
             file='tests/data/devbranch/devbranch-squeeze.json')
 
-        # Create a single loop for all test cases
-        loop = asyncio.new_event_loop()
-        # no diffs
-        message = loop.run_until_complete(
-            devbranch._Devbranch__load_squeezed_commit_message())
+        message = devbranch._Devbranch__load_squeezed_commit_message()
         self.assertRegex(
             message,
             r"^Add support for .*ready.*resolves #91"
@@ -149,8 +133,6 @@ class TestDevbranch(unittest.TestCase):
             message,
             r".*a201d0f.*"
         )
-
-        loop.close()
 
     @pytest.mark.unittest
     @patch('sys.stderr', new_callable=StringIO)
@@ -207,7 +189,7 @@ class TestDevbranch(unittest.TestCase):
 
     @pytest.mark.unittest
     @patch('devbranch.Devbranch._assert_props', new_callable=AsyncMock)
-    @patch('devbranch.Devbranch._Devbranch__compare_before_after_trees', new_callable=AsyncMock)
+    @patch('devbranch.Devbranch._Devbranch__compare_before_after_trees', new_callable=MagicMock)
     def test__squeeze_success(self, mock_compare_before_after_trees, mock_assert_props):
 
         mock_compare_before_after_trees.return_value = True
@@ -217,8 +199,6 @@ class TestDevbranch(unittest.TestCase):
         devbranch = Devbranch().from_json(
             file='tests/data/devbranch/devbranch-squeeze.json')
 
-        # Create a single loop for all test cases
-        loop = asyncio.new_event_loop()
         Config._config_dict['squeeze']['policies']['abort_for_rebase'] = False
         Config._config_dict['squeeze']['policies']['allow-dirty'] = True
         Config._config_dict['squeeze']['policies']['quiet'] == False
@@ -230,16 +210,10 @@ class TestDevbranch(unittest.TestCase):
             "pre-squeeze"
         ]
 
-        squeezed_sha = loop.run_until_complete(
-                devbranch._Devbranch__squeeze())
-
+        squeezed_sha = devbranch._Devbranch__squeeze()
              
         self.assertEqual(squeezed_sha, 'e4bba5cbd37f72b64c647f3504c7fac66518ab9f')
         mock_assert_props.assert_called_with(['squeeze_sha1'])
-
-        loop.close()
-
-
 
     @pytest.mark.unittest
     @patch('devbranch.Devbranch._force_prop_reload', new_callable=AsyncMock)
@@ -251,16 +225,12 @@ class TestDevbranch(unittest.TestCase):
         devbranch = Devbranch().from_json(
             file='tests/data/devbranch/devbranch-squeeze.json')
 
-        # Create a single loop for all test cases
-        loop = asyncio.new_event_loop()
         # no diffs
-
         self.assertEqual(devbranch.get('unstaged_changes'), None)
         self.assertEqual(devbranch.get('staged_changes'), None)
         self.assertEqual(devbranch.get('is_dirty'), None)
 
-        loop.run_until_complete(
-            devbranch._load_status())
+        devbranch._load_status()
         
         self.assertTrue(devbranch.get('is_dirty'))
 
@@ -271,18 +241,10 @@ class TestDevbranch(unittest.TestCase):
         self.assertIn("?? tests/test_config.py", devbranch.get('unstaged_changes'))
 
         # Run again, to check if it is cached (nothing is change but used to get coverage on the retun-when-already-loaded branch)
-        loop.run_until_complete(
-            devbranch._load_status())
+        devbranch._load_status()
         
-        loop.run_until_complete(
-            devbranch._load_status(reload=True))
+        devbranch._load_status(reload=True)
         mock_force_prop_reload.assert_called_once_with('status')
-        
-  
-
-        loop.close()
-
-
 
 if __name__ == '__main__':
     unittest.main()

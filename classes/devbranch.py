@@ -36,18 +36,18 @@ class Devbranch(Lazyload):
         self.set('issue_number',f"{match.group(1)}")
         return True
 
-    async def __load_squeezed_commit_message(self):
+    def __load_squeezed_commit_message(self):
         """
         Build the multiline commit message for the collapsed commit.
         The first line is the issue title, followed by the commit messages
         for each commit on the branch (excluding the merge base).
         """
-        await self._load_issue_number()
+        asyncio.run(self._load_issue_number())
 
-        await self._assert_props([
+        asyncio.run(self._assert_props([
             'issue_title',
             'commit_log'
-        ])
+        ]))
 
         # Build the final message
         close_keyword = Config.config()['squeeze']['policies']['close-keyword']
@@ -62,19 +62,19 @@ class Devbranch(Lazyload):
                  f"{safe_title} – {close_keyword} #{issue_number}\n\n{safe_commit_log}")
         return self.get('squeeze_message')
 
-    async def __squeeze(self):
+    def __squeeze(self):
         """
         Squeeze the current branch into a single commit
         """
 
-        await self._load_status()
+        self._load_status()
 
         # Abort for rebase if we must
-        await self._assert_props([
+        asyncio.run(self._assert_props([
             'merge_base',
             'default_sha1',
             'default_branch'
-        ])
+        ]))
         if Config.config()['squeeze']['policies']['abort_for_rebase']:
             if self.get('default_sha1') != self.get('merge_base'):
                 print(f"⛔️ ERROR: The '{self.get('default_branch')}' branch has commits your branch has never seen. A rebase is required.", file=sys.stderr)
@@ -112,11 +112,11 @@ class Devbranch(Lazyload):
                     print(
                         "The branch will be squeezed, but the changes in the files listed above will not be included in the commit.", file=sys.stderr)
 
-        await self.__load_squeezed_commit_message()
+        self.__load_squeezed_commit_message()
 
-        await self._assert_props(['squeeze_sha1'])
+        asyncio.run(self._assert_props(['squeeze_sha1']))
 
-        await self.__compare_before_after_trees()
+        self.__compare_before_after_trees()
 
         return self.get('squeeze_sha1')
 
@@ -129,15 +129,15 @@ class Devbranch(Lazyload):
 
         return True
 
-    async def __compare_before_after_trees(self):
+    def __compare_before_after_trees(self):
         """
         Verify that the new commit tree on the collapsed branch is identical to the old commit
         """
-        await self._assert_props(['sha1', 'squeeze_sha1'])
+        asyncio.run(self._assert_props(['sha1', 'squeeze_sha1']))
 
         sha1 = self.get('sha1')
         squeeze_sha1 = self.get('squeeze_sha1')
-        diff = await self._run('compare_trees')
+        diff = asyncio.run(self._run('compare_trees'))
 
         if diff != '':
             print(
@@ -189,7 +189,7 @@ class Devbranch(Lazyload):
         """Mapped to the 'wrapup' subcommand in the main program"""
 
         asyncio.run(self._load_issue_number())
-        asyncio.run(self._load_status())
+        self._load_status()
         asyncio.run(self._assert_props(['me', 'merge_base', 'remote_sha1', 'default_sha1' ]))
 
         if Config.config()['wrapup']['policies']['warn_about_rebase'] and not self.get('merge_base') == self.get('default_sha1'):
@@ -212,7 +212,7 @@ class Devbranch(Lazyload):
         if not len(self.get('staged_changes')) > 0:
             # Stage all changes if nothing is staged
             asyncio.run(self._run('add_all'))
-            asyncio.run(self._load_status(reload=True))
+            self._load_status(reload=True)
 
         self.set('commit_msg',f"\"{message} - #{self.get('issue_number')}\"")
 
@@ -260,7 +260,7 @@ class Devbranch(Lazyload):
                 file_paths = file_paths.union(set(matches))
         return file_paths
 
-    async def _load_status(self, reload: bool = False):
+    def _load_status(self, reload: bool = False):
         """Load the status of the current branch sets the following properties:
         - 'status': The output of `git status --porcelain`
         - 'is_dirty': True if there are unstaged or staged changes
@@ -272,10 +272,10 @@ class Devbranch(Lazyload):
                 # If the status is already loaded, return
                 return
 
-        await self._assert_props(['status'])
+        asyncio.run(self._assert_props(['status']))
 
         if reload:
-            await self._force_prop_reload('status')
+            asyncio.run(self._force_prop_reload('status'))
 
         self.props['unstaged_changes'] = []
         self.props['staged_changes'] = []
@@ -300,7 +300,7 @@ class Devbranch(Lazyload):
             list: A list of changes with the tailing ' M', 'MM', 'A ' or '??' removed
         """
         asyncio.run(self._assert_props(['status']))
-        asyncio.run(self._load_status())
+        self._load_status()
         changes = []
         if staged:
             changes.extend(self.get('staged_changes'))
@@ -355,10 +355,10 @@ class Devbranch(Lazyload):
             # add the body to the issue
             issue.comment(msg=msg)
 
-        # add the issue to the project and set the Status to "In Progess"
+        # add the issue to the project and set the Status
         project = Project()
-        workon_field = project.get('workon_field')
-        workon_field_value = project.get('workon_field_value')
+        workon_field = "Status"
+        workon_field_value = project.get('workon_action')
 
         # TODO get the values from the config
         project.update_field(url=issue.get(
@@ -369,7 +369,7 @@ class Devbranch(Lazyload):
 
         asyncio.run(self._assert_props(['branch_name', 'remote']))
 
-        asyncio.run(self.__squeeze())
+        self.__squeeze()
         ready_prefix = Config.config()['deliver']['policies']['branch_prefix']
         self.set('ready_prefix', ready_prefix)
 
@@ -377,8 +377,8 @@ class Devbranch(Lazyload):
         asyncio.run(self._load_issue_number())
         issue = Issue.load(number=self.get('issue_number'))
         project = Project()
-        field = project.get('deliver_field')
-        field_value = project.get('deliver_field_value')
+        field = "Status"
+        field_value = project.get('deliver_action')
         project.update_field(url=issue.get(
             'url'), field=field, field_value=field_value)
 
@@ -402,7 +402,7 @@ class Devbranch(Lazyload):
         exclude_list = [item.replace('@me', f"@{self.get('me')}") for item in exclude_list]
 
         asyncio.run(self._load_issue_number())
-        asyncio.run(self._load_status())
+        self._load_status()
         change_list = self._get_pretty_changes(staged=staged, unstaged=unstaged)
         responsibles = Responsibles().responsibles_parse(
             changeset=change_list,

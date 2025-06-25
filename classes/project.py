@@ -2,7 +2,6 @@ from config import Config
 from lazyload import Lazyload
 from gitter import Gitter
 import os
-import subprocess
 import sys
 import re
 import json
@@ -19,41 +18,19 @@ class Project(Lazyload):
 
     # Instance methods
 
-    def __init__(self, owner=None, number=None):
+    def __init__(self):
         super().__init__()
 
         self.set('workdir', os.getcwd())
         self.set('config_file', None)
         self.set('gh_validated', False)
 
-        # Config - can be set in the .tt-config.json file in the repo root
-        # Example:
-        # {
-        #     "project": {
-        #         "owner": "thetechcollective",
-        #         "number": "12"
-        #     },
-        #     "workon": {
-        #         "status": "In Progress"
-        #     },
-        #     "deliver": {
-        #         "status": "Delivery Initiated"
-        #     }
-        # }
+        config = Config().config()
 
-        self.set('project_owner', owner)
-        self.set('project_number', number)
-        self.set('workon_field', 'Status')
-        self.set('workon_field_value', 'In Progress')
-        self.set('deliver_field', 'Status')
-        self.set('deliver_field_value', 'Delivery Initiated')
-
-        self.__read_config()
-
-        if not self.get('project_owner') or not self.get('project_number'):
-            print(
-                f"Project owner or number not set - null values are currently not supported", file=sys.stderr)
-            sys.exit(1)
+        self.set('project_owner', config['project']['owner'])
+        self.set('project_number', config['project']['number'])
+        self.set('workon_action', config['workon']['status'])
+        self.set('deliver_action', config['deliver']['status'])
 
     def get_project_id(self, owner=None, number=None):
         """Get the project id from the project owner and number
@@ -206,43 +183,3 @@ class Project(Lazyload):
             msg="Add the issue to the project").run(cache=True)
         )
         return id
-
-    def __read_config(self):
-        """Read the configuration file and set the properties"""
-
-        complete = False
-
-        config = Config().config()
-
-        try:
-            project_owner = config["project"]["owner"]
-            project_number = config["project"]["number"]
-        except:
-            print("⚠️ Could not find project owner or project number information in config.")
-            project_owner = None
-            project_number = None
-
-        if project_owner is not None:
-            self.set('project_owner', project_owner)
-
-        if project_number is not None:
-            self.set('project_number', project_number)
-        
-        # The configuration is complete if both project owner and number are set, the action triggers are optional since they have default values
-        complete = True
-
-        try:
-            workon_action = config["workon"]["status"]
-            deliver_action = config["deliver"]["status"]
-        except:
-            print("⚠️ Could not find workon status or deliver status information in config.")
-            workon_action = None
-            deliver_action = None
-
-        if workon_action is not None:
-            self.set('workon_action', workon_action)
-
-        if deliver_action is not None:
-            self.set('deliver_action', deliver_action)
-
-        return complete
