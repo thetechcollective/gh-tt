@@ -23,11 +23,5 @@
   prerelease = "!f() { git push --tag && gh release create `gh semver --prerelease` --verify-tag --prerelease --notes-file `git root`/$1 ; }; f"
   release = "!f() { git push --tag && gh release create `gh semver` --latest --verify-tag  --notes-file `git root`/$1; }; f"
   issue-number = "!f() { git rev-parse --abbrev-ref HEAD | grep -oE '^[0-9]+'; }; f"
-  mark-stable = "!f() { git checkout main && git tag -f stable && git push origin --tags --force; }; f"
+  mark-stable = "!f() { echo git checkout main && git tag -f stable $1 && git push origin --tags --force; }; f"
   version-all = "!f() { pwd && python3 --version && git --version && gh --version && gh extension list; }; f"
-
-[project]
-  owner   = thetechcollective
-  number  = 12
-  workon  = Status:In Progress
-  deliver = Status:Delivery Initiated
