@@ -12,7 +12,6 @@ class_path = os.path.dirname(os.path.abspath(__file__)) + "/classes"
 sys.path.append(class_path)
 
 from label import Label
-from version import Version
 from devbranch import Devbranch
 from gitter import Gitter
 from issue import Issue
@@ -136,8 +135,7 @@ if __name__ == "__main__":
     Gitter.validate_gh_version()
 
     if args.version:
-        version = Version()
-        version.print()
+        Gitter.version()
         sys.exit(0)
 
     Gitter.read_cache()

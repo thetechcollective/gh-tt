@@ -165,6 +165,10 @@ class Gitter(Lazyload):
             exit(1)
 
         return True
+    
+    @classmethod
+    def version(cls):
+        print(asyncio.run(cls()._run("version_context")))
 
     @classmethod
     async def fetch(cls, prune=False, again=False):

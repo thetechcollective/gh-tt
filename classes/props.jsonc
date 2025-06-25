@@ -194,6 +194,10 @@
     "validate_gh_scope": {
         "cmd": "gh auth status",
         "msg": "Check if the user has sufficient access to update projects"
+    },
+    "version_context": {
+        "cmd": "pwd && python3 --version && git --version && gh --version && gh extension list",
+        "msg": "Get information on the context the tool is running in"
     }
   }
 }
