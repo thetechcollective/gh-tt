@@ -1,15 +1,16 @@
-from config import Config
-from lazyload import Lazyload
-from responsibles import Responsibles
-from issue import Issue
-from project import Project
-from gitter import Gitter
+import asyncio
 import os
+import re
 import subprocess
 import sys
-import re
-import asyncio
 from datetime import datetime
+
+from config import Config
+from gitter import Gitter
+from issue import Issue
+from lazyload import Lazyload
+from project import Project
+from responsibles import Responsibles
 
 
 class Devbranch(Lazyload):

@@ -1,13 +1,13 @@
-import unittest
 import os
 import sys
-import pytest
+import unittest
 from io import StringIO
-import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from responsibles import Responsibles
+import pytest
 from gitter import Gitter
+from responsibles import Responsibles
+
 
 class TestResponsibles(unittest.TestCase):
 

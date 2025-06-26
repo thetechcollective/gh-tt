@@ -1,12 +1,12 @@
-import os
-import sys
-import subprocess
-from pprint import pprint
-import json
 import asyncio
-
+import json
+import os
+import subprocess
+import sys
+from pprint import pprint
 
 from lazyload import Lazyload
+
 
 class Gitter(Lazyload):
     """Class used to run sub process commands (optimized for git and gh commands).

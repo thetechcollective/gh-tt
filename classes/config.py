@@ -1,13 +1,11 @@
-import os
-import sys
-import re
-import json
 import asyncio
-
+import json
+import os
+import re
+import sys
 
 from gitter import Gitter
 from lazyload import Lazyload
-
 
 
 def deep_update(dict1, dict2):

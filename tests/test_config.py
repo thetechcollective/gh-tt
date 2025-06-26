@@ -1,11 +1,10 @@
-import re
 import os
+import re
 import sys
+
 import pytest
-import sys
-
-
 from config import Config
+
 
 @pytest.fixture(scope="function")
 def config() -> tuple[dict, list, Config]:

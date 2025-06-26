@@ -1,16 +1,16 @@
-import unittest
+import asyncio
+import json
 import os
 import sys
-import json
-from io import StringIO 
-from unittest.mock import patch, MagicMock
-from unittest.mock import Mock
-import pytest
-import asyncio
+import unittest
+from io import StringIO
+from unittest.mock import MagicMock, Mock, patch
 
-from gitter import Gitter
+import pytest
 from devbranch import Devbranch
+from gitter import Gitter
 from lazyload import Lazyload
+
 
 class TestLazyLoad(unittest.TestCase):
 

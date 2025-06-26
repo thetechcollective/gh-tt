@@ -1,14 +1,14 @@
-import unittest
+import json
 import os
 import sys
-import json
-from io import StringIO 
-from unittest.mock import patch, MagicMock
-from unittest.mock import Mock
-import pytest
+import unittest
+from io import StringIO
+from unittest.mock import MagicMock, Mock, patch
 
-from semver import Semver
+import pytest
 from gitter import Gitter
+from semver import Semver
+
 
 class TestSemver(unittest.TestCase):
 

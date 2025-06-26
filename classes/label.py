@@ -1,10 +1,11 @@
-from lazyload import Lazyload
-from config import Config
-from gitter import Gitter
+import asyncio
+import json
 import os
 import sys
-import json
-import asyncio
+
+from config import Config
+from gitter import Gitter
+from lazyload import Lazyload
 
 
 class Label(Lazyload):

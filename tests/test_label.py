@@ -1,10 +1,11 @@
-import unittest
 import os
 import sys
-import pytest
+import unittest
 
-from label import Label
+import pytest
 from gitter import Gitter
+from label import Label
+
 
 class TestLabel(unittest.TestCase):
 

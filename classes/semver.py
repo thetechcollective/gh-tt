@@ -1,12 +1,12 @@
 import asyncio
+import os
 import re
 import sys
-import os
 
-
-from lazyload import Lazyload
 from config import Config
 from gitter import Gitter
+from lazyload import Lazyload
+
 
 class Semver(Lazyload):
     """Class used to represent the semver state of git repository"""

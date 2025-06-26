@@ -1,9 +1,10 @@
-import os
-import sys
-import json
-import re
 import asyncio
+import json
+import os
+import re
 import subprocess
+import sys
+
 
 # Module helper
 def load_jsonc(jsonc_file: str) -> list[bool,dict]:
@@ -304,7 +305,7 @@ class Lazyload:
         for match in matches:
             cmd = cmd.replace(f"{{{{{match}}}}}", f"{{{match}}}")
 
-        from gitter import Gitter # avoid circular import
+        from gitter import Gitter  # avoid circular import
 
         [value, result] = await Gitter(
             cmd=f"{cmd}",

@@ -1,15 +1,12 @@
-import unittest
+import asyncio
+import json
 import os
 import sys
-import json
-from io import StringIO 
-from unittest.mock import patch, MagicMock
-from unittest.mock import Mock
+import unittest
+from io import StringIO
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import AsyncMock
-import asyncio
-
-
 from gitter import Gitter
 
 

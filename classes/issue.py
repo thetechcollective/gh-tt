@@ -1,15 +1,15 @@
-from config import Config
-from project import Project
-from lazyload import Lazyload
-from gitter import Gitter
-from label import Label
+import asyncio
+import json
 import os
+import re
 import subprocess
 import sys
-import re
-import json
-import asyncio
 
+from config import Config
+from gitter import Gitter
+from label import Label
+from lazyload import Lazyload
+from project import Project
 
 
 class Issue(Lazyload):

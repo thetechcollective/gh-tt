@@ -1,14 +1,14 @@
-import unittest
+import json
 import os
 import sys
-import json
-from io import StringIO 
-from unittest.mock import patch, MagicMock
-from unittest.mock import Mock
-import pytest
+import unittest
+from io import StringIO
+from unittest.mock import MagicMock, Mock, patch
 
-from issue import Issue
+import pytest
 from devbranch import Devbranch
+from issue import Issue
+
 
 class TestIssue(unittest.TestCase):
 

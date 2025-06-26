@@ -1,14 +1,12 @@
-import subprocess
-from gitter import Gitter
-import os
-import sys
-import re
-import json
 import asyncio
+import json
+import os
+import re
+import subprocess
+import sys
 
+from gitter import Gitter
 from lazyload import Lazyload
-
-
 
 # Module level helper functions
 

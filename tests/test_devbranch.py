@@ -1,17 +1,16 @@
-import unittest
+import asyncio
+import json
 import os
 import sys
-import json
+import unittest
 from io import StringIO
-from unittest.mock import patch, MagicMock
-from unittest.mock import AsyncMock
-import pytest
-import asyncio
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from issue import Issue
+import pytest
 from config import Config
-from gitter import Gitter
 from devbranch import Devbranch
+from gitter import Gitter
+from issue import Issue
 
 
 class TestDevbranch(unittest.TestCase):

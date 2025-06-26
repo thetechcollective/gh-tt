@@ -1,22 +1,23 @@
 #!/usr/bin/env python3
 
+import argparse
 import asyncio
 import os
-import sys
-import argparse
-import re
 import pprint
+import re
+import sys
 
 # Add the subdirectory containing the classes to the general class_path
 class_path = os.path.dirname(os.path.abspath(__file__)) + "/classes"
 sys.path.append(class_path)
 
-from label import Label
+from config import Config
 from devbranch import Devbranch
 from gitter import Gitter
 from issue import Issue
-from config import Config
+from label import Label
 from semver import Semver
+
 
 def parse(args=None):
     # Define the parent parser with the --verbose argument

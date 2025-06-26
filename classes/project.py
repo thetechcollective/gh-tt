@@ -1,11 +1,12 @@
-from config import Config
-from lazyload import Lazyload
-from gitter import Gitter
-import os
-import sys
-import re
-import json
 import asyncio
+import json
+import os
+import re
+import sys
+
+from config import Config
+from gitter import Gitter
+from lazyload import Lazyload
 
 
 class Project(Lazyload):
