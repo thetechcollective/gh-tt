@@ -33,5 +33,99 @@ build = [
     "packaging"
 ]
 
+[tool.ruff]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pyenv",
+    ".pytest_cache",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    ".vscode",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "site-packages",
+    "venv",
+    "temp",
+]
+
+# Generous line length for wide screens
+line-length = 180
+
+indent-width = 4
+target-version = "py313"
+
+
 [tool.ruff.lint]
-select = ["I"]
+# See https://docs.astral.sh/ruff/rules/
+select = [
+    "B",
+    "I",
+    "ERA",
+    "F",
+    "E",
+    "S",
+    "RUF",
+    "SIM",
+    "UP",
+    "N",
+    "ASYNC",
+    "FBT",
+    "A",
+    "C4",
+    "C90",
+    "DTZ",
+    "T",
+    "ISC",
+    "PIE",
+    "PT",
+    "RET",
+    "TID",
+    "ARG",
+    "PTH",
+    "PERF",
+    "FURB"
+]
+ignore = [
+    # Allow use of `assert`
+    "S101",
+    # Allow use of `print()`
+    "T201",
+    # The vast majority of violations for this rule
+    # are comments or f-strings. Since there's 100+
+    # error coming up which have little effect on the
+    # code, I'm ignoring the rule for now. @vemolista
+    "E501",
+    # pytest vs. standard library unittest usage is for a later discussion.
+    # The ruleset is both selected and ignored to signal the need for alignment.
+    "PT", 
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.flake8-tidy-imports]
+# Disallow all relative imports.
+ban-relative-imports = "all"
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10

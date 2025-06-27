@@ -10,7 +10,16 @@
         "${workspaceFolder}/tests",
         "${workspaceFolder}"
     ],
+    "[python]": {
+        "editor.defaultFormatter": null,
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "never",
+            "source.organizeImports": "never"
+        }
+    },
+    "ruff.configuration": "${workspaceFolder}/pyproject.toml",
     "python.defaultInterpreterPath": ".venv/bin/python",
+    "python.languageServer": "Pylance",
     "github-actions.workflows.pinned.workflows": [
         ".github/workflows/ready.yml"
     ]
