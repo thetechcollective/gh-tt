@@ -13,35 +13,21 @@ permissions:
   issues: write
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
 
-    - uses: actions/checkout@v4
+  call_pytest_with_coverage:
+    name: Run Pytest with Coverage
+    permissions:
+      statuses: write
+    uses: thetechcollective/workflows/.github/workflows/pytest_with_coverage.yml@main
 
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v3
-      with:
-        python-version: "3.13"
-
-    - name: Install uv and dependencies
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        uv venv
-        source .venv/bin/activate
-        uv sync --extra dev
-
-    - name: Run linter
-      run : |
-        uv run ruff check . --output-format github --exit-zero
-
-    - name: Test with pytest
-      run: |
-        source .venv/bin/activate
-        pytest --cov=. --cov-config=.coveragerc -m unittest
+  call_ruff_formatting:
+    name: Run Ruff Formatting
+    permissions:
+      statuses: write
+    uses: thetechcollective/workflows/.github/workflows/ruff_check.yml@main
 
   merge:
-    needs: check
+    needs: call_pytest_with_coverage
     runs-on: ubuntu-latest
     steps:
 
