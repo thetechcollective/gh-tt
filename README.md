@@ -5,13 +5,17 @@ This utility supports the workflow used by the _.tech that_ full-stack team with
  - [The opinionated .tech that workflow](docs/workflow.md)
  - [How we work with _mentorship_ over _pull requests_](docs/responsibles.md)
 
+**More goodies in the discussions**
+- [The Discussions on the repo](https://github.com/thetechcollective/gh-tt/discussions) contains a lot of additional persepective and refections on how the get the most our of this `gh tt` utiilty.
+
+
 ## Introduction
 In short, `gh-tt` supports a workflow that
 1. follows trunk-based development practices (`main` is the only long-lived branch)
-2. does **not** rely on Pull Requests
-3. works with [RESPONSIBLES](docs/responsibles.md) (CODEOWNERS reimplemented for the PR-less team)
+2. does **not** rely on Pull Requests, wait states and bureaucracy
+3. works with [RESPONSIBLES](docs/responsibles.md) (CODEOWNERS re-implemented for the PR-less team)
 
-`gh tt` implements ideas from DevOps, GitOps and CI/CD, wrapped up into a sweet, deeply configurable, workflow. It looks something like this:
+`gh tt` implements ideas from DevOps, GitOps and CI/CD, wrapped up into a sweet, highly configurable, workflow. It looks something like this:
 1. `gh tt workon -i 101` - start working on issue #101
     - Create a new development branch and switch to it
     - Move the issue to `In Progress` in a GitHub Project
@@ -54,18 +58,18 @@ gh extension install thetechcollective/gh-tt
 The extension requires write access to GitHub Projects (scope `project`). If you don't have it, you'll be prompted with instructions.
 
 ### Configure required values
-Create a `tt-config.json` in the root of your repository. You can take inspiration from the default configuration file, [classes/tt-config.json](classes/tt-config.json).
+Create a `.tt-config.json` in the root of your repository. You can take inspiration from the default configuration file, [classes/tt-config.json](classes/tt-config.json).
 
 > [!IMPORTANT]
 > `gh tt` requires a GitHub Project to work with.
 
 The minimal required configuration looks like:
 
-```json
+```jsonc
 {
     "project": {
-        "owner": "thetechcollective",
-        "number": 1
+        "owner": "your-github-organization",
+        "number": 1 # The project number
     }
 }
 ```
@@ -105,7 +109,7 @@ _temp.token
 
 Run `gh tt -h` to see the syntax.
 
-The extension provides four subcommands: `workon`, `wrapup`, and `deliver`, `responsibles`. See the [workflow](docs/workflow.md) for details.
+The extension provides four subcommands: `workon`, `wrapup`, and `deliver`, `responsibles` and `semver`. See the [workflow](docs/workflow.md) for details.
 
 > [!TIP]
 > Each subcommand supports the `-h, --help` option to display in-detail guidance for the specific subcommand, e.g.
@@ -172,4 +176,7 @@ gh workon        # instead of gh tt workon
 gh wrapup        # instead of gh tt wrapup
 gh deliver       # instead of gh tt deliver
 gh responsibles  # instead of gh tt responsibles
+gh semver        # instead of gh tt semver
 ```
+
+Your feedback - or requst for help - is always welcome: Use [the Issues](https://github.com/thetechcollective/gh-tt/issues) or [the Discussions](https://github.com/thetechcollective/gh-tt/discussions) to communicate.
