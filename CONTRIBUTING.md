@@ -36,9 +36,9 @@ pytest --cov=. --cov-config=.coveragerc -m unittest
 
 You can also use VS Code's "Testing" tab to run unit tests. It should work out of the box with the settings in `.vscode/settings.json`.
 
-To run `gh tt` with the changes you have on your dev branch, use `python -m gh_tt`
+To run `gh tt` with the changes you have on your dev branch, you can run the entry script
 
 E.g. to run `wrapup` using the code on the current branch 
 ```sh
-python -m gh_tt wrapup -m "Fix"
+./gh-tt wrapup -m "Fix"
 ```
