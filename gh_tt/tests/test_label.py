@@ -3,8 +3,8 @@ import sys
 import unittest
 
 import pytest
-from gitter import Gitter
-from label import Label
+from gh_tt.classes.gitter import Gitter
+from gh_tt.classes.label import Label
 
 
 class TestLabel(unittest.TestCase):

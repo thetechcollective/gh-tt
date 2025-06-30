@@ -5,8 +5,8 @@ from io import StringIO
 from unittest.mock import MagicMock, patch
 
 import pytest
-from gitter import Gitter
-from responsibles import Responsibles
+from gh_tt.classes.gitter import Gitter
+from gh_tt.classes.responsibles import Responsibles
 
 
 class TestResponsibles(unittest.TestCase):

@@ -5,12 +5,12 @@ import subprocess
 import sys
 from datetime import datetime
 
-from config import Config
-from gitter import Gitter
-from issue import Issue
-from lazyload import Lazyload
-from project import Project
-from responsibles import Responsibles
+from gh_tt.classes.config import Config
+from gh_tt.classes.gitter import Gitter
+from gh_tt.classes.issue import Issue
+from gh_tt.classes.lazyload import Lazyload
+from gh_tt.classes.project import Project
+from gh_tt.classes.responsibles import Responsibles
 
 
 class Devbranch(Lazyload):

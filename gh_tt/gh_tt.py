@@ -1,22 +1,14 @@
 #!/usr/bin/env python3
 
 import argparse
-import asyncio
-import os
-import pprint
-import re
 import sys
 
-# Add the subdirectory containing the classes to the general class_path
-class_path = os.path.dirname(os.path.abspath(__file__)) + "/classes"
-sys.path.append(class_path)
-
-from config import Config
-from devbranch import Devbranch
-from gitter import Gitter
-from issue import Issue
-from label import Label
-from semver import Semver
+from gh_tt.classes.config import Config
+from gh_tt.classes.devbranch import Devbranch
+from gh_tt.classes.gitter import Gitter
+from gh_tt.classes.issue import Issue
+from gh_tt.classes.label import Label
+from gh_tt.classes.semver import Semver
 
 
 def parse(args=None):
@@ -129,7 +121,7 @@ def parse(args=None):
 
     return args
 
-if __name__ == "__main__":
+def main():
     args = parse(sys.argv[1:])
 
     Gitter.verbose(verbose=args.verbose)

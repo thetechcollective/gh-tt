@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pprint import pprint
 
-from lazyload import Lazyload
+from gh_tt.classes.lazyload import Lazyload
 
 
 class Gitter(Lazyload):

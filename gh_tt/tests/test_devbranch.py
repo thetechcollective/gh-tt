@@ -7,10 +7,10 @@ from io import StringIO
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from config import Config
-from devbranch import Devbranch
-from gitter import Gitter
-from issue import Issue
+from gh_tt.classes.config import Config
+from gh_tt.classes.devbranch import Devbranch
+from gh_tt.classes.gitter import Gitter
+from gh_tt.classes.issue import Issue
 
 
 class TestDevbranch(unittest.TestCase):
@@ -18,8 +18,8 @@ class TestDevbranch(unittest.TestCase):
 
     @pytest.mark.unittest
     def test_wrapup_responsibles_notifies_only_on_new_changes(self):
-        issue = Issue().from_json(file="tests/data/issue/issue_responsibles_comment.json")
-        devbranch = Devbranch().from_json(file="tests/data/devbranch/devbranch_responsibles_comment.json")
+        issue = Issue().from_json(file="gh_tt/tests/data/issue/issue_responsibles_comment.json")
+        devbranch = Devbranch().from_json(file="gh_tt/tests/data/devbranch/devbranch_responsibles_comment.json")
         comments = issue.get("comments")
 
         responsibles = devbranch._get_responsibles(issue_comments=comments)
@@ -44,26 +44,26 @@ class TestDevbranch(unittest.TestCase):
     @pytest.mark.unittest
     def test_load_issue_number_success(self):
         devbranch = Devbranch().from_json(
-            file='tests/data/devbranch/.tt-config-set_issue.json')
+            file='gh_tt/tests/data/devbranch/.tt-config-set_issue.json')
         asyncio.run(devbranch._load_issue_number())
         self.assertEqual(devbranch.get('issue_number'), '95')
 
     @pytest.mark.unittest
     def test_load_issue_number_none(self):
-        devbranch = Devbranch().from_json(file='tests/data/devbranch/main.json')
+        devbranch = Devbranch().from_json(file='gh_tt/tests/data/devbranch/main.json')
         asyncio.run(devbranch._load_issue_number())
         self.assertEqual(devbranch.get('issue_number'), None)
         self.assertEqual(devbranch.get('branch_name'), 'main')
 
     @pytest.mark.unittest
-    @patch('devbranch.Devbranch._run', new_callable=AsyncMock)
+    @patch('gh_tt.classes.devbranch.Devbranch._run', new_callable=AsyncMock)
     def test__reuse_issue_branch(self, mock_run):
         mock_run.return_value = ""
 
         Gitter.verbose = True
         # Load the recorded instance of Devbranch
         devbranch = Devbranch().from_json(
-            file='tests/data/devbranch/workon_reuse_issue_branch.json')
+            file='gh_tt/tests/data/devbranch/workon_reuse_issue_branch.json')
 
         # Create a single loop for all test cases
         loop = asyncio.new_event_loop()
@@ -87,7 +87,7 @@ class TestDevbranch(unittest.TestCase):
         loop.close()
 
     @pytest.mark.unittest
-    @patch('devbranch.Devbranch._run', new_callable=AsyncMock)
+    @patch('gh_tt.classes.devbranch.Devbranch._run', new_callable=AsyncMock)
     @patch('sys.stderr', new_callable=StringIO)
     def test__compare_before_after_trees(self, mock_stderr, mock_run):
         mock_run.side_effect = [
@@ -98,7 +98,7 @@ class TestDevbranch(unittest.TestCase):
         Gitter.verbose = True
         # Load the recorded instance of Devbranch
         devbranch = Devbranch().from_json(
-            file='tests/data/devbranch/devbranch-squeeze.json')
+            file='gh_tt/tests/data/devbranch/devbranch-squeeze.json')
 
         # no diffs
         diff = devbranch._Devbranch__compare_before_after_trees()
@@ -121,7 +121,7 @@ class TestDevbranch(unittest.TestCase):
         Gitter.verbose = True
         # Load the recorded instance of Devbranch
         devbranch = Devbranch().from_json(
-            file='tests/data/devbranch/devbranch-squeeze.json')
+            file='gh_tt/tests/data/devbranch/devbranch-squeeze.json')
 
         message = devbranch._Devbranch__load_squeezed_commit_message()
         self.assertRegex(
@@ -140,7 +140,7 @@ class TestDevbranch(unittest.TestCase):
         Gitter.verbose = True
         # Load the recorded instance of Devbranch
         devbranch = Devbranch().from_json(
-            file='tests/data/devbranch/devbranch-squeeze.json')
+            file='gh_tt/tests/data/devbranch/devbranch-squeeze.json')
 
         # Create a single loop for all test cases
         loop = asyncio.new_event_loop()
@@ -187,8 +187,8 @@ class TestDevbranch(unittest.TestCase):
 
 
     @pytest.mark.unittest
-    @patch('devbranch.Devbranch._assert_props', new_callable=AsyncMock)
-    @patch('devbranch.Devbranch._Devbranch__compare_before_after_trees', new_callable=MagicMock)
+    @patch('gh_tt.classes.devbranch.Devbranch._assert_props', new_callable=AsyncMock)
+    @patch('gh_tt.classes.devbranch.Devbranch._Devbranch__compare_before_after_trees', new_callable=MagicMock)
     def test__squeeze_success(self, mock_compare_before_after_trees, mock_assert_props):
 
         mock_compare_before_after_trees.return_value = True
@@ -196,7 +196,7 @@ class TestDevbranch(unittest.TestCase):
         Gitter.verbose = True
         # Load the recorded instance of Devbranch
         devbranch = Devbranch().from_json(
-            file='tests/data/devbranch/devbranch-squeeze.json')
+            file='gh_tt/tests/data/devbranch/devbranch-squeeze.json')
 
         Config._config_dict['squeeze']['policies']['abort_for_rebase'] = False
         Config._config_dict['squeeze']['policies']['allow-dirty'] = True
@@ -215,14 +215,14 @@ class TestDevbranch(unittest.TestCase):
         mock_assert_props.assert_called_with(['squeeze_sha1'])
 
     @pytest.mark.unittest
-    @patch('devbranch.Devbranch._force_prop_reload', new_callable=AsyncMock)
+    @patch('gh_tt.classes.devbranch.Devbranch._force_prop_reload', new_callable=AsyncMock)
     def test_load_status(self, mock_force_prop_reload):
         mock_force_prop_reload.return_value = None
 
         Gitter.verbose = True
         # Load the recorded instance of Devbranch
         devbranch = Devbranch().from_json(
-            file='tests/data/devbranch/devbranch-squeeze.json')
+            file='gh_tt/tests/data/devbranch/devbranch-squeeze.json')
 
         # no diffs
         self.assertEqual(devbranch.get('unstaged_changes'), None)

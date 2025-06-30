@@ -4,12 +4,12 @@
 ## Our extension our rules!
 Feel free to create a fork and fool around - following your own rules. But if you wish any of your contributions to be merged into the product's `main` prepare a pull request in your own fork.
 
-If you are a trusted contributer and already have write acces to the repo, consider:
+If you are a trusted contributor and already have write acces to the repo, consider:
 
 1. No commit can be accepted on _our_ `main`, unless it references a [GitHub issue](https://github.com/thetechcollective/gh-tt/issues)[^issue] in the commit message.
 2. Development branches must be created using `gh tt workon` - so they refer to the issue they belong to.
-3. Develompent branches with more than one commit must all reference the issue the belong ot `gh tt wrapup` does that for you!
-4. Development branches must squezed in branches with just one single commit that can be _fast-forward only_. These branses must be prefixed with `ready/` to trigger the right workflow `gh tt deliver` does that for you.
+3. Development branches with more than one commit must all reference the issue they belong to - `gh tt wrapup` does that for you!
+4. Development branches must be squezeed to branches with just one single commit that can be merged _fast-forward only_. These branches must be prefixed with `ready/` to trigger the right workflow. `gh tt deliver` does that for you.
 5. Coverage on all unittests should be at least the same percentage — or higher, as it was in the commit you branched out from.
 
 [^issue]: If there isn't any issue to work on, feel free to create it. The repo is Open Source, and while you don't have access to push to main, you do have access to create new issues.
@@ -23,5 +23,22 @@ After that, you should do **ONE THING manually**😱[^manual]: In the Command Pa
 
 [^manual]: This is not ideal, but we havn't figured out how to add this specific setting to the configuration - please chip in with suggestions if you know how!
 
-<img src="https://github.com/user-attachments/assets/92391bee-ffe4-473e-b83a-900dcac4cf52" align="right"/>
-Now you are good to go - start by going to the testing console and run the unittests.
+### Testing
+You can run unit tests with pytest
+```sh
+pytest -m unittest
+```
+
+With coverage
+```sh
+pytest --cov=. --cov-config=.coveragerc -m unittest
+```
+
+You can also use VS Code's "Testing" tab to run unit tests. It should work out of the box with the settings in `.vscode/settings.json`.
+
+To run `gh tt` with the changes you have on your dev branch, use `python -m gh_tt`
+
+E.g. to run `wrapup` using the code on the current branch 
+```sh
+python -m gh_tt wrapup -m "Fix"
+```

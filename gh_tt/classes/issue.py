@@ -5,11 +5,11 @@ import re
 import subprocess
 import sys
 
-from config import Config
-from gitter import Gitter
-from label import Label
-from lazyload import Lazyload
-from project import Project
+from gh_tt.classes.config import Config
+from gh_tt.classes.gitter import Gitter
+from gh_tt.classes.label import Label
+from gh_tt.classes.lazyload import Lazyload
+from gh_tt.classes.project import Project
 
 
 class Issue(Lazyload):

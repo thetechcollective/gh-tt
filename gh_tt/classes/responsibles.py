@@ -5,8 +5,8 @@ import re
 import subprocess
 import sys
 
-from gitter import Gitter
-from lazyload import Lazyload
+from gh_tt.classes.gitter import Gitter
+from gh_tt.classes.lazyload import Lazyload
 
 # Module level helper functions
 

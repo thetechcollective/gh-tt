@@ -123,7 +123,7 @@ class Lazyload:
         Returns:
             value: The value of the property after running the command
         """
-        from gitter import Gitter
+        from gh_tt.classes.gitter import Gitter
 
         await Gitter.fetch()
 
@@ -305,7 +305,7 @@ class Lazyload:
         for match in matches:
             cmd = cmd.replace(f"{{{{{match}}}}}", f"{{{match}}}")
 
-        from gitter import Gitter  # avoid circular import
+        from gh_tt.classes.gitter import Gitter  # avoid circular import
 
         [value, result] = await Gitter(
             cmd=f"{cmd}",

@@ -4,8 +4,8 @@ import os
 import re
 import sys
 
-from gitter import Gitter
-from lazyload import Lazyload
+from gh_tt.classes.gitter import Gitter
+from gh_tt.classes.lazyload import Lazyload
 
 
 def deep_update(dict1, dict2):

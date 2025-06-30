@@ -1,6 +1,6 @@
 {
     "python.testing.pytestArgs": [
-        "tests",
+        "gh_tt/tests",
         "-m unittest"      
     ],
     "python.testing.unittestEnabled": false,

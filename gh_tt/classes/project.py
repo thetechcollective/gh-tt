@@ -4,9 +4,9 @@ import os
 import re
 import sys
 
-from config import Config
-from gitter import Gitter
-from lazyload import Lazyload
+from gh_tt.classes.config import Config
+from gh_tt.classes.gitter import Gitter
+from gh_tt.classes.lazyload import Lazyload
 
 
 class Project(Lazyload):

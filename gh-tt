@@ -9,4 +9,4 @@ ensure_python3() {
 }
 
 ensure_python3
-python3 $(dirname "$0")/gh_tt.py "$@"
+python3 $(dirname "$0")/gh_tt/gh_tt.py "$@"

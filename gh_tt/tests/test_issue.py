@@ -6,8 +6,8 @@ from io import StringIO
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from devbranch import Devbranch
-from issue import Issue
+from gh_tt.classes.devbranch import Devbranch
+from gh_tt.classes.issue import Issue
 
 
 class TestIssue(unittest.TestCase):

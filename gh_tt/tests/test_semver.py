@@ -6,8 +6,8 @@ from io import StringIO
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from gitter import Gitter
-from semver import Semver
+from gh_tt.classes.gitter import Gitter
+from gh_tt.classes.semver import Semver
 
 
 class TestSemver(unittest.TestCase):
@@ -41,7 +41,7 @@ class TestSemver(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
     def test_semver_list(self, mock_stdout):
         # Setup
-        semver = Semver().from_json('tests/data/semver/semver_loaded_release_and_prerelease.json')
+        semver = Semver().from_json('gh_tt/tests/data/semver/semver_loaded_release_and_prerelease.json')
         self.assertIsInstance(semver, Semver)
 
         mock_stdout.flush()
@@ -70,7 +70,7 @@ class TestSemver(unittest.TestCase):
     @patch('sys.stdout', new_callable=StringIO)
     def test_semver_first_prerelease(self, mock_stdout):
         # Setup
-        semver = Semver().from_json('tests/data/semver/semver_loaded_release.json')
+        semver = Semver().from_json('gh_tt/tests/data/semver/semver_loaded_release.json')
         self.assertIsInstance(semver, Semver)
 
         semver.list(prerelease=True)

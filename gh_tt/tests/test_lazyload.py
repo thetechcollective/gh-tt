@@ -7,9 +7,9 @@ from io import StringIO
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from devbranch import Devbranch
-from gitter import Gitter
-from lazyload import Lazyload
+from gh_tt.classes.devbranch import Devbranch
+from gh_tt.classes.gitter import Gitter
+from gh_tt.classes.lazyload import Lazyload
 
 
 class TestLazyLoad(unittest.TestCase):

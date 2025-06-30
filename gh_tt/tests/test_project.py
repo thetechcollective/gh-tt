@@ -6,7 +6,7 @@ from io import StringIO
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-from project import Project
+from gh_tt.classes.project import Project
 
 
 class TestProject(unittest.TestCase):

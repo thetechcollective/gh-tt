@@ -3,7 +3,7 @@ import re
 import sys
 
 import pytest
-from config import Config
+from gh_tt.classes.config import Config
 
 
 @pytest.fixture(scope="function")
@@ -78,7 +78,7 @@ def test_read_project_static(default_config):
     """Test project specifics """
     _, _, configClass = default_config
 
-    config = configClass.add_config('tests/data/.tt-config-project.json')
+    config = configClass.add_config('gh_tt/tests/data/.tt-config-project.json')
     files = Config.config_files()
     assert len(files) == 2
     assert re.search(r'.tt-config-project.json', files[1])
@@ -95,7 +95,7 @@ def test_read_malformed_static_exit(capsys, default_config):
     _, _, configClass = default_config
     
     with pytest.raises(SystemExit) as cm:
-            configClass.add_config('tests/data/.tt-config-malformed.json')
+            configClass.add_config('gh_tt/tests/data/.tt-config-malformed.json')
 
     # Assertions
     assert cm.value.code == 1
@@ -110,7 +110,7 @@ def test_read_nonexisting_static_exit(default_config):
     _, _, configClass = default_config
 
     with pytest.raises(FileNotFoundError) as cm:
-        configClass.add_config('tests/data/.tt-config-nonexisting.json')
+        configClass.add_config('gh_tt/tests/data/.tt-config-nonexisting.json')
     
     assert "No such file or directory" in str(cm.value)
 

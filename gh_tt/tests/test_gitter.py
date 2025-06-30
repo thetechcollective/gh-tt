@@ -7,13 +7,13 @@ from io import StringIO
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
-from gitter import Gitter
+from gh_tt.classes.gitter import Gitter
 
 
 class TestGitter(unittest.TestCase):
 
     @pytest.mark.unittest
-    @patch('gitter.Gitter.run',new_callable=AsyncMock)
+    @patch('gh_tt.classes.gitter.Gitter.run',new_callable=AsyncMock)
     def test_gitter_validate_gh_version_success(self, mock_gitter_run):
         # Setup
         stdout = "gh version 2.65.0 (2025-01-06)\nhttps://github.com/cli/cli/releases/tag/v2.65.0"
@@ -25,7 +25,7 @@ class TestGitter(unittest.TestCase):
 
 
     @pytest.mark.unittest
-    @patch('gitter.Gitter.run',new_callable=AsyncMock)
+    @patch('gh_tt.classes.gitter.Gitter.run',new_callable=AsyncMock)
     def test_gitter_validate_gh_version_failure(self, mock_gitter_run):
         stdout = "gh version 2.54.0 (2024-01-06)\nhttps://github.com/cli/cli/releases/tag/v2.54.0"
         result_mock = Mock(returncode=0, stderr="")
@@ -40,7 +40,7 @@ class TestGitter(unittest.TestCase):
         self.assertIn(f"gh version 2.54.0 is not supported. Please upgrade to version {Gitter.reguired_version} or higher", mock_stderr.getvalue())           
 
     @pytest.mark.unittest
-    @patch('gitter.Gitter.run',new_callable=AsyncMock)
+    @patch('gh_tt.classes.gitter.Gitter.run',new_callable=AsyncMock)
     def test_gitter_validate_gh_scope_success(self, mock_gitter_run):
         stdout = """github.com
   ✓ Logged in to github.com account lakruzz (/home/vscode/.config/gh/hosts.yml)
@@ -55,7 +55,7 @@ class TestGitter(unittest.TestCase):
         self.assertTrue(valid)
         
     @pytest.mark.unittest
-    @patch('gitter.Gitter.run',new_callable=AsyncMock)
+    @patch('gh_tt.classes.gitter.Gitter.run',new_callable=AsyncMock)
     def test_gitter_validate_gh_scope_failure(self, mock_gitter_run):
         stdout = """github.com
   ✓ Logged in to github.com account lakruzz (/home/vscode/.config/gh/hosts.yml)
@@ -76,7 +76,7 @@ class TestGitter(unittest.TestCase):
         self.assertIn(f"gh token does not have the required scope '{value}'", mock_stderr.getvalue())  
 
     @pytest.mark.unittest
-    @patch('gitter.Gitter.run',new_callable=AsyncMock)
+    @patch('gh_tt.classes.gitter.Gitter.run',new_callable=AsyncMock)
     def test_gitter_fetch(self, mock_gitter_run):
         stdout = ""
         result_mock = Mock(returncode=0, stderr="")
