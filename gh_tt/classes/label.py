@@ -44,8 +44,7 @@ class Label(Lazyload):
                 print(f"ERROR: Label '{name}' doesn't exist in current git context", file=sys.stderr)
                 sys.exit(1)
 
-
-    def _create_new(cls, name: str):
+    def _create_new(self, name: str):
         """Create a new label in the current repository
 
         Args:
@@ -55,10 +54,10 @@ class Label(Lazyload):
             force: Update color and description if the label already exist (invalid if description or color is None, defaults to False)
         """
 
-        asyncio.run(cls._run('create_new'))
-        cls._loaded = False
+        asyncio.run(self._run('create_new'))
+        Label._loaded = False
 
-        return cls(name=name)
+        return Label(name=name)
     
     @classmethod
     def validate(cls, name: str, category: str) -> bool:
