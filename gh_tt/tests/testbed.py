@@ -1,14 +1,15 @@
 import asyncio
-from contextlib import contextmanager
 import json
 import os
-from pathlib import Path
 import tempfile
 import uuid
+from contextlib import contextmanager
 from datetime import UTC, datetime
+from pathlib import Path
 
 from gh_tt.classes.gitter import Gitter
 
+OWNER = "gh-tt-qa"
 
 class Testbed:
 
@@ -25,14 +26,14 @@ class Testbed:
         """Returns state of the testbed to a blank slate
         
         Args:
-            repository_html_url (str): url of the repository to clean up, e.g. https://github.com/vemolista/test-repo
+            repository_html_url (str): url of the repository to clean up, e.g. https://github.com/gh-tt-qa/test-repo
             project_number (int): number of the project to clean up
         """
 
         # TODO: change to run in CI
 
         asyncio.run(Gitter(
-            cmd=f'gh project delete {project_number} --owner @me',
+            cmd=f'gh project delete {project_number} --owner {OWNER}',
             msg='Delete GH project'
         ).run())
 

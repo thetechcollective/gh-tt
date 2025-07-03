@@ -1,7 +1,6 @@
 {
     "python.testing.pytestArgs": [
         "gh_tt/tests",
-        "-m unittest"      
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
@@ -11,7 +10,7 @@
         "${workspaceFolder}"
     ],
     "[python]": {
-        "editor.defaultFormatter": null,
+        "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.codeActionsOnSave": {
             "source.fixAll": "never",
             "source.organizeImports": "never"

@@ -9,9 +9,11 @@ from gh_tt.tests.testbed import Testbed
 
 @pytest.mark.integration
 def test_workon_success():
-    [owner, _] = Testbed.gitter_run(
+    [test_executor, _] = Testbed.gitter_run(
         cmd='gh api user -H "X-Github-Next-Global-ID: 1" | jq -r .login'
     )
+
+    owner = "gh-tt-qa"
     
     repo_url, project_number = Testbed.create_github_resources(owner=owner)
 
@@ -53,7 +55,7 @@ def test_workon_success():
             projects = json.loads(projects_data)
 
             assert str(branch_name).startswith(issue_number), "Current branch is not prefixed with issue number"
-            assert issue['assignees'][0]['login'] == owner, "Issue is not assigned"
+            assert issue['assignees'][0]['login'] == test_executor, "Issue is not assigned"
             assert issue['projectItems'], "Issue is not connected to any project"
             assert not issue['closed'], "Issue is closed"
 
