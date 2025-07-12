@@ -119,7 +119,7 @@
       "msg": "Verify that the new squeezed commit tree is identical to the one on the issue branch"
     },
     "push_squeeze": {
-      "cmd": "git push --force-with-lease {remote} {squeeze_sha1}:refs/heads/{ready_prefix}/{branch_name}",
+      "cmd": "git push --force {remote} {squeeze_sha1}:refs/heads/{ready_prefix}/{branch_name}",
       "msg": "Push the squeezed sha to the remote as a ready branch"
     },
     "add_all": {
