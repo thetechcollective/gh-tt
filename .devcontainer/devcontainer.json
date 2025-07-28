@@ -29,7 +29,8 @@
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 
     "remoteEnv": {
-        "UV_LINK_MODE": "copy"
+        "UV_LINK_MODE": "copy",
+        "UV_VENV_CLEAR": "1"
     }
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
