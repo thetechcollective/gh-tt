@@ -17,7 +17,6 @@
 // group. And it may have an implicit dependency - as described above
 {
   "devbranch": {
-
     // init
     // cheep to run - doesn'nt depend on external com
     // has no dependencies
@@ -47,6 +46,11 @@
     "default_branch": {
       "cmd": "gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'",
       "msg": "Get the name of the default branch from GitHub",
+      "group": "remote-init"
+    },
+    "repository": {
+      "cmd": "gh repo view --json nameWithOwner -q '.nameWithOwner'",
+      "msg": "Get the current repository name in the format 'owner/repo'",
       "group": "remote-init"
     },
     // init-last
@@ -131,16 +135,16 @@
       "msg": "Commit changes"
     },
     "develop_on_branch": {
-        "cmd": "gh issue develop {issue_number} -b {default_branch} -n {branch_name} -c",
-        "msg": "Link a branch to an issue (creating the branch if necessary)"
+      "cmd": "gh issue develop {issue_number} -b {default_branch} -n {branch_name} -c",
+      "msg": "Link a branch to an issue (creating the branch if necessary)"
     },
     "add_responsibles_comment": {
-        "cmd": "gh issue comment {issue_number} --body '{responsibles_comment_content}'",
-        "msg": "Add a comment to the issue notifying responsbiles of changes"
+      "cmd": "gh issue comment {issue_number} --body '{responsibles_comment_content}'",
+      "msg": "Add a comment to the issue notifying responsbiles of changes"
     },
     "git_push": {
-        "cmd": "git push {force_switch}",
-        "msg": "Push the branch to the remote"
+      "cmd": "git push {force_switch}",
+      "msg": "Push the branch to the remote"
     }
   },
   "issue": {
@@ -149,22 +153,21 @@
       "msg": "Get the properties from the issue",
       "group": "init"
     },
-    "reopen":{
+    "reopen": {
       "cmd": "gh issue reopen {number}",
       "msg": "Reopen the issue"
     },
     "create_new_issue": {
-        "cmd": "gh issue create --title '{title}' --body '{body}' {assignee_switch}",
-        "msg": "Create a new issue in a repository"
+      "cmd": "gh issue create --title '{title}' --body '{body}' {assignee_switch}",
+      "msg": "Create a new issue in a repository"
     }
   },
-  "semver":{
+  "semver": {
     "tags": {
       "cmd": "git tag --list --format='%(refname:short)'",
       "msg": "List all tags in the repository",
       "group": "init"
     }
-
   },
   "label": {
     "json_list_all": {
@@ -172,42 +175,42 @@
       "msg": "List all labels in repo"
     },
     "create_new": {
-        "cmd": "gh label create '{name}' -d '{description}' -c '{color}' --force",
-        "msg": "Create a new label in a repository"
+      "cmd": "gh label create '{name}' -d '{description}' -c '{color}' --force",
+      "msg": "Create a new label in a repository"
     }
   },
   "version": {
     "extension_list": {
-        "cmd": "gh extension list",
-        "msg": "Get a list of installed gh extensions"
+      "cmd": "gh extension list",
+      "msg": "Get a list of installed gh extensions"
     },
     "sha_tags": {
-        "cmd": "git tag --points-at {sha}",
-        "msg": "Get a list of tags for a given SHA"
+      "cmd": "git tag --points-at {sha}",
+      "msg": "Get a list of tags for a given SHA"
     }
   },
   "gitter": {
     "validate_gh_version": {
-        "cmd": "gh --version",
-        "msg": "Check if the user has access to right version of gh CLI"
+      "cmd": "gh --version",
+      "msg": "Check if the user has access to right version of gh CLI"
     },
     "validate_gh_scope": {
-        "cmd": "gh auth status",
-        "msg": "Check if the user has sufficient access to update projects"
+      "cmd": "gh auth status",
+      "msg": "Check if the user has sufficient access to update projects"
     },
     "version_context": {
-        "cmd": "pwd && python3 --version && git --version && gh --version && gh extension list",
-        "msg": "Get information on the context the tool is running in"
-    }
-  },
-  "config": {
-    "project_owner": {
-      "cmd": "git config --get --default '' -f {gitconfig_file} project.owner",
-      "msg": "Get the project owner from .gitconfig"
+      "cmd": "pwd && python3 --version && git --version && gh --version && gh extension list",
+      "msg": "Get information on the context the tool is running in"
+    },
+    "config": {
+      "project_owner": {
+        "cmd": "git config --get --default '' -f {gitconfig_file} project.owner",
+        "msg": "Get the project owner from .gitconfig"
       },
-    "project_number": {
-      "cmd": "git config --get --default '' -f {gitconfig_file} project.number",
-      "msg": "Get the project number from .gitconfig"
+      "project_number": {
+        "cmd": "git config --get --default '' -f {gitconfig_file} project.number",
+        "msg": "Get the project number from .gitconfig"
+      }
     }
   }
 }

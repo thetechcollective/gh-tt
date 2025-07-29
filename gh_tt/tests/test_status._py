@@ -1,0 +1,232 @@
+import asyncio
+import json
+import os
+import sys
+import unittest
+from io import StringIO
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
+from gh_tt.classes.status import Status
+
+
+class TestStatus(unittest.TestCase):
+
+    @pytest.mark.unittest
+    @patch('gh_tt.classes.status.Gitter')
+    def test_set_status_success_with_env_vars(self, MockGitter):
+        """Test successful status setting with environment variables"""
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.return_value = asyncio.Future()
+        mock_gitter_instance.run.return_value.set_result(['{"message": "status created"}', Mock(returncode=0)])
+        
+        # Set up environment variables
+        with patch.dict(os.environ, {
+            'GITHUB_REPOSITORY': 'thetechcollective/gh-tt',
+            'GITHUB_SHA': 'abc123def456',
+            'GITHUB_SERVER_URL': 'https://github.com',
+            'GITHUB_RUN_ID': '12345',
+            'GITHUB_ACTION': 'test-action'
+        }):
+            result = Status.set_status_sync('success', 'All tests passed')
+        
+        # Assertions
+        self.assertTrue(result)
+        mock_gitter_instance.run.assert_called_once()
+
+    @pytest.mark.unittest
+    @patch('gh_tt.classes.status.Gitter')
+    def test_set_status_success_without_env_vars(self, MockGitter):
+        """Test successful status setting without environment variables"""
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = [
+            asyncio.Future(),  # For repository info
+            asyncio.Future(),  # For SHA
+            asyncio.Future()   # For setting status
+        ]
+        
+        # Set up the futures
+        mock_gitter_instance.run.side_effect[0].set_result(['thetechcollective/gh-tt', Mock(returncode=0)])
+        mock_gitter_instance.run.side_effect[1].set_result(['abc123def456', Mock(returncode=0)])
+        mock_gitter_instance.run.side_effect[2].set_result(['{"message": "status created"}', Mock(returncode=0)])
+        
+        result = Status.set_status_sync('pending', 'Tests are running')
+        
+        # Assertions
+        self.assertTrue(result)
+        self.assertEqual(mock_gitter_instance.run.call_count, 3)
+
+    @pytest.mark.unittest
+    def test_set_status_invalid_state(self):
+        """Test status setting with invalid state"""
+        with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
+            result = Status.set_status_sync('invalid_state', 'Test description')
+        
+        # Assertions
+        self.assertFalse(result)
+        self.assertIn("Invalid state 'invalid_state'", mock_stderr.getvalue())
+
+    @pytest.mark.unittest
+    def test_set_status_missing_required_args(self):
+        """Test status setting with missing required arguments"""
+        with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
+            result = Status.set_status_sync('', 'Test description')
+        
+        # Assertions
+        self.assertFalse(result)
+        self.assertIn("Required arguments 'state' and 'description' must be provided", mock_stderr.getvalue())
+
+    @pytest.mark.unittest
+    @patch('gh_tt.classes.status.Gitter')
+    def test_set_status_repository_lookup_failure(self, MockGitter):
+        """Test status setting when repository lookup fails"""
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = Exception("API error")
+        
+        with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
+            result = Status.set_status_sync('success', 'Test description')
+        
+        # Assertions
+        self.assertFalse(result)
+        self.assertIn("Could not determine repository", mock_stderr.getvalue())
+
+    @pytest.mark.unittest
+    @patch('gh_tt.classes.status.Gitter')
+    def test_poll_success_with_env_vars(self, MockGitter):
+        """Test successful status polling with environment variables"""
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.return_value = asyncio.Future()
+        
+        status_response = {
+            "state": "success",
+            "statuses": [
+                {
+                    "context": "test-action",
+                    "state": "success",
+                    "description": "All tests passed"
+                }
+            ]
+        }
+        
+        mock_gitter_instance.run.return_value.set_result([json.dumps(status_response), Mock(returncode=0)])
+        
+        # Set up environment variables
+        with patch.dict(os.environ, {
+            'GITHUB_REPOSITORY': 'thetechcollective/gh-tt',
+            'GITHUB_SHA': 'abc123def456'
+        }):
+            result = Status.poll_sync()
+        
+        # Assertions
+        self.assertEqual(result['state'], 'success')
+        self.assertEqual(len(result['statuses']), 1)
+        mock_gitter_instance.run.assert_called_once()
+
+    @pytest.mark.unittest
+    @patch('gh_tt.classes.status.Gitter')
+    def test_poll_without_env_vars(self, MockGitter):
+        """Test successful status polling without environment variables"""
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = [
+            asyncio.Future(),  # For repository info
+            asyncio.Future(),  # For SHA
+            asyncio.Future()   # For polling status
+        ]
+        
+        status_response = {
+            "state": "pending",
+            "statuses": [
+                {
+                    "context": "gh-tt",
+                    "state": "pending",
+                    "description": "Tests are running"
+                }
+            ]
+        }
+        
+        # Set up the futures
+        mock_gitter_instance.run.side_effect[0].set_result(['thetechcollective/gh-tt', Mock(returncode=0)])
+        mock_gitter_instance.run.side_effect[1].set_result(['abc123def456', Mock(returncode=0)])
+        mock_gitter_instance.run.side_effect[2].set_result([json.dumps(status_response), Mock(returncode=0)])
+        
+        result = Status.poll_sync()
+        
+        # Assertions
+        self.assertEqual(result['state'], 'pending')
+        self.assertEqual(mock_gitter_instance.run.call_count, 3)
+
+    @pytest.mark.unittest
+    @patch('gh_tt.classes.status.Gitter')
+    def test_poll_api_failure(self, MockGitter):
+        """Test status polling when API call fails"""
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.side_effect = [
+            asyncio.Future(),  # For repository info
+            asyncio.Future(),  # For SHA
+            Exception("API error")  # For polling status
+        ]
+        
+        # Set up the futures
+        mock_gitter_instance.run.side_effect[0].set_result(['thetechcollective/gh-tt', Mock(returncode=0)])
+        mock_gitter_instance.run.side_effect[1].set_result(['abc123def456', Mock(returncode=0)])
+        
+        with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
+            result = Status.poll_sync()
+        
+        # Assertions
+        self.assertIsNone(result)
+        self.assertIn("Failed to get commit status", mock_stderr.getvalue())
+
+    @pytest.mark.unittest
+    def test_validate_state_valid(self):
+        """Test state validation with valid states"""
+        self.assertTrue(Status._validate_state('success'))
+        self.assertTrue(Status._validate_state('pending'))
+        self.assertTrue(Status._validate_state('failure'))
+        self.assertTrue(Status._validate_state('error'))
+
+    @pytest.mark.unittest
+    def test_validate_state_invalid(self):
+        """Test state validation with invalid state"""
+        with patch('sys.stderr', new_callable=StringIO):
+            self.assertFalse(Status._validate_state('invalid'))
+
+    @pytest.mark.unittest
+    @patch('gh_tt.classes.status.Gitter')
+    def test_get_repository_info_success(self, MockGitter):
+        """Test successful repository info retrieval"""
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.return_value = asyncio.Future()
+        mock_gitter_instance.run.return_value.set_result(['thetechcollective/gh-tt', Mock(returncode=0)])
+        
+        result = asyncio.run(Status._get_repository_info())
+        
+        # Assertions
+        self.assertEqual(result, 'thetechcollective/gh-tt')
+        mock_gitter_instance.run.assert_called_once()
+
+    @pytest.mark.unittest
+    @patch('gh_tt.classes.status.Gitter')
+    def test_get_commit_sha_success(self, MockGitter):
+        """Test successful commit SHA retrieval"""
+        # Setup
+        mock_gitter_instance = MockGitter.return_value
+        mock_gitter_instance.run.return_value = asyncio.Future()
+        mock_gitter_instance.run.return_value.set_result(['abc123def456', Mock(returncode=0)])
+        
+        result = asyncio.run(Status._get_commit_sha())
+        
+        # Assertions
+        self.assertEqual(result, 'abc123def456')
+        mock_gitter_instance.run.assert_called_once()
+
+
+if __name__ == '__main__':
+    unittest.main()

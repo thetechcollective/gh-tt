@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# Pre-commit hook to run static checks
+# This runs cspell and markdownlint before allowing a commit
+
+echo "🔍 Running pre-commit checks..."
+
+# Run the static checks - same as in the GitHub workflow
+PASS=TRUE
+
+# Same as in github workflow
+
+# Ruff check
+RUFF_OUT=$(ruff check --output-format=concise . 2>&1)
+
+if [ $? -eq 0 ]; then
+    echo "   ✅ Ruff check"
+else
+    echo "   ❌ Ruff check"
+    PASS=FALSE
+    RUFF=FALSE
+fi
+
+# Pytest with coverage
+# Capture only STDERR (errors and summary), discard STDOUT (individual test progress)
+PYTEST_OUT=$(pytest --cov=. --cov-report= -m unittest --tb=no -q 2>&1)
+
+if [ $? -eq 0 ]; then
+    echo "   ✅ Pytest with coverage"
+else
+    echo "   ❌ Pytest with coverage"
+    PASS=FALSE
+    PYTEST=FALSE
+fi
+
+CSPELL_OUT=$( cspell lint --no-progress 2>&1)
+
+if [ $? -eq 0 ]; then
+    echo "   ✅ CSpell check"
+else
+    echo "   ❌ CSpell check"
+    PASS=FALSE
+    CSPELL=FALSE
+fi
+
+if [ "$PASS" == "TRUE" ]; then
+    exit 0
+else
+    echo ""
+    if [ "$RUFF" == "FALSE" ]; then
+        echo "Ruff issues:"
+        echo "${RUFF_OUT}"
+        echo ""
+    fi
+    if [ "$PYTEST" == "FALSE" ]; then
+        echo "Pytest issues:"
+        echo "${PYTEST_OUT}"
+        echo ""
+    fi
+    if [ "$CSPELL" == "FALSE" ]; then
+        echo "CSpell issues:"
+        echo "${CSPELL_OUT}"
+        echo ""
+    fi
+    echo "👉  Fix the issues above before committing."
+    echo "💡  You can run the same checks manually with: '.githooks/pre-commit'"
+    exit 1
+fi
+

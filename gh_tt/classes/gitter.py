@@ -171,6 +171,11 @@ class Gitter(Lazyload):
         print(asyncio.run(cls()._run("version_context")))
 
     @classmethod
+    def get_commit_sha(cls):
+        """Get current commit SHA"""
+        return asyncio.run(cls()._run("get_commit_sha"))
+
+    @classmethod
     async def fetch(cls, prune=False, again=False):
         """Fetch """
 

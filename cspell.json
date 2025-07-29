@@ -1,0 +1,43 @@
+{
+    "version": "0.2",
+    "language": "en",
+    "ignorePaths": [
+        "**/node_modules/**",
+        "**/.git/**",
+        "**/.github/**",
+        "**/.vscode/**",
+        "**/.cspell/**",
+        "**/logs/**",
+        "**/tmp/**",
+        "**/temp/**"
+    ],
+    "files": [
+        "**/*.md",
+        "**/*.txt",
+        "_data/**/*.json",
+        "**/*.yml",
+        "**/*.yaml",
+        "**/LICENSE"
+    ],
+    "words": [
+        "lakruzz",
+        "albertbanke",
+        "ravvnen",
+        "thetechcollective",
+        "workon",
+        "wrapup",
+        "responsibles",
+        "codeowners",
+        "squezeed",
+        "devcontainer",
+        "devcontainers"
+    ],
+    "ignoreWords": [
+        "cspell",
+        "ffmerge",
+        "cspellrc",
+        "pytest",
+        "coveragerc",
+        "pyproject"
+    ]
+}

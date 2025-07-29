@@ -8,7 +8,10 @@
 		"ghcr.io/devcontainers/features/common-utils:2": {},
 		"ghcr.io/devcontainers/features/github-cli:1": {},
 		"ghcr.io/devcontainers/features/python:1": {},
-		"ghcr.io/hspaans/devcontainer-features/pytest:1": {}
+		"ghcr.io/hspaans/devcontainer-features/pytest:1": {},
+		"ghcr.io/devcontainers-extra/features/npm-packages:1": {
+			"packages": ["cspell", "markdownlint-cli2"]
+		}		
 	},
 	"customizations": {
 		"vscode": {
@@ -16,7 +19,8 @@
 				"ms-python.debugpy",
 				"ms-python.python",
 				"ms-python.vscode-pylance",
-                "charliermarsh.ruff"
+				"streetsidesoftware.code-spell-checker",
+				"charliermarsh.ruff"
 			]	
 		}
 	},

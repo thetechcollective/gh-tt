@@ -18,9 +18,9 @@ gitGraph
 ### Workon
 When an issue is worked on 
 
-- [x] An existing branch that matches the definion of an _issue branch_ must be reused if it exists either locally or remote
+- [x] An existing branch that matches the definition of an _issue branch_ must be reused if it exists either locally or remote
 - [x] or else created
-- [x] Must be registered with the issue as a _devlopment branch_ (`gh issue develop ...`) (implies being made made available to `origin` immidiately upon creation)
+- [x] Must be registered with the issue as a _development branch_ (`gh issue develop ...`) (implies being made made available to `origin` immediately upon creation)
 - [x] Must have it's upstream set to a branch with the same name in `origin`
 
 If the repo is connected to a kanban board:
@@ -29,7 +29,7 @@ If the repo is connected to a kanban board:
 - [x] The issue must be updated to status 'work in progress'
 - [x] The person who began working on the issue must be assigned to the issue
 
-During development the devoper can share the branch with co-workers (`workon`, `pull`, `push`) and create as many commits as desired
+During development the developer can share the branch with co-workers (`workon`, `pull`, `push`) and create as many commits as desired
 
 ```mermaid
 gitGraph

@@ -1,3 +1,4 @@
+<!-- cspell:ignore Hackity, clickity -->
 # gh-tt
 This utility supports the workflow used by the _.tech that_ full-stack team within [_.the tech collective_](https://thetechcollective.eu/). It is designed as an [opinionated flow](docs/workflow.md). If you share our values and like our process, you can easily set this up for your own team.
 
@@ -6,7 +7,7 @@ This utility supports the workflow used by the _.tech that_ full-stack team with
  - [How we work with _mentorship_ over _pull requests_](docs/responsibles.md)
 
 **More goodies in the discussions**
-- [The Discussions on the repo](https://github.com/thetechcollective/gh-tt/discussions) contains a lot of additional persepective and refections on how the get the most our of this `gh tt` utiilty.
+- [The Discussions on the repo](https://github.com/thetechcollective/gh-tt/discussions) contains a lot of additional perspective and reflections on how the get the most our of this `gh tt` utility.
 
 
 ## Introduction
@@ -75,7 +76,7 @@ The minimal required configuration looks like:
 ```
 
 ### Configure optional values
-You might also want to configure which `Status` issues are assigned when executing `workon` (start working on an issue) and `deliver` (finish and push to `main` if CI passses).
+You might also want to configure which `Status` issues are assigned when executing `workon` (start working on an issue) and `deliver` (finish and push to `main` if CI passes).
 
 The defaults are
 ```json
@@ -179,4 +180,4 @@ gh responsibles  # instead of gh tt responsibles
 gh semver        # instead of gh tt semver
 ```
 
-Your feedback - or requst for help - is always welcome: Use [the Issues](https://github.com/thetechcollective/gh-tt/issues) or [the Discussions](https://github.com/thetechcollective/gh-tt/discussions) to communicate.
+Your feedback - or request for help - is always welcome: Use [the Issues](https://github.com/thetechcollective/gh-tt/issues) or [the Discussions](https://github.com/thetechcollective/gh-tt/discussions) to communicate.

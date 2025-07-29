@@ -16,14 +16,20 @@ permissions:
 
 jobs:
 
-  call_pytest_with_coverage:
-    name: Run Pytest with Coverage
+  pytest_with_coverage:
+    name: Testing
     permissions:
       statuses: write
-    uses: thetechcollective/workflows/.github/workflows/pytest_with_coverage.yml@main
+    uses: lakruzz/workflows/.github/workflows/pytest_with_coverage.yml@experimental
 
-  call_ruff_formatting:
-    name: Run Ruff Formatting
+  ruff_linting:
+    name: Linting
     permissions:
       statuses: write
-    uses: thetechcollective/workflows/.github/workflows/ruff_check.yml@main
+    uses: lakruzz/workflows/.github/workflows/ruff_check.yml@experimental
+
+  cspel_check:
+    name: Spelling
+    permissions:
+      statuses: write
+    uses: lakruzz/workflows/.github/workflows/cspell_check.yml@experimental

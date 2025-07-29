@@ -5,11 +5,6 @@
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    "python.analysis.extraPaths": [
-        "${workspaceFolder}/classes",
-        "${workspaceFolder}/tests",
-        "${workspaceFolder}"
-    ],
     "[python]": {
         "editor.defaultFormatter": null,
         "editor.codeActionsOnSave": {

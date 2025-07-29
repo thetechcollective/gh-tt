@@ -421,3 +421,7 @@ class Devbranch(Lazyload):
             print(f"{file_path} ({responsibles})")
 
 
+    def get_sync(self, key: str):
+        """Get a property value by key"""
+        asyncio.run(self._assert_props([key]))
+        return super().get(key)

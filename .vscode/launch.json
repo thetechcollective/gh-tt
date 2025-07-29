@@ -7,35 +7,17 @@
 
 
 
-        {
-            "name": "Python Debugger: gh_tt.py with Arguments",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/gh_tt.py",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/../gitsquash_lab/testbed",
-            "args": "${command:pickArgs}"
-        },
 
         {
             "name": "Python Debugger: gh_tt.py with Arguments (in current workspace)",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/gh_tt.py",
+            "program": "-m gh_tt",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": "${command:pickArgs}"
         },
 
-        {
-            "name": "Python Debugger: gh_tt.py with workon -t\"new blaha issue\" -v",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/gh_tt.py",
-            "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/../gitsquash_lab/testbed",
-            "args": "workon -t'new blaha issue' -v"
-        },
         
         {
             "name": "Python Debugger: Current File",

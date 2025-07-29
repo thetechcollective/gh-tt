@@ -1,0 +1,151 @@
+import argparse
+
+
+def tt_parse(args=None):
+    # Define the parent parser with the --verbose argument
+    parent_parser = argparse.ArgumentParser(add_help=False)
+    parent_parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output', default=False)
+
+    version_parser = argparse.ArgumentParser(add_help=False)
+    version_parser.add_argument('--version', action='store_true', help='Print version information and exit')
+
+    prerelease_parser = argparse.ArgumentParser(add_help=False)
+    prerelease_parser.add_argument('--prerelease', action='store_true', help='Set or read pre-release tags')
+    
+    # Define command-line arguments
+    parser = argparse.ArgumentParser(
+        prog='gh tt', 
+        parents=[parent_parser, version_parser],
+        description="""
+            A command-line tool to support a consistent team workflow. 
+            It supports a number of subcommands which define the entire process: `workon`,
+            `wrapup`, `deliver`.  Use the `-h|--help` switch on each to learn more. The extension utilizes 
+            the GitHub CLI tool `gh` to interact with GitHub and therefore it's provided as a gh extension. 
+            GitHub Projects integration is supported. It enables issues to automatically 
+            propagate through the columns in the (kanban) board. Please consult the README.md file 
+            in 'thetechcollective/gh-tt' for more information on how to enable this feature 
+            - and many more neat tricks.  
+            """,)
+
+    subparsers = parser.add_subparsers(dest='command')
+
+    # Add workon subcommand
+    workon_parser = subparsers.add_parser('workon', parents=[parent_parser], help='Set the issue number context to work on')
+    workon_group = workon_parser.add_mutually_exclusive_group()
+    workon_group.add_argument('-i', '--issue', type=int, help='Issue number')
+    workon_group.add_argument('-t', '--title', type=str, help='Title for the new issue')
+    workon_parser.add_argument('--type', type=str, help='Set an issue type label', default=None)
+    workon_parser.add_argument('-b', '--body', dest='body', type=str, help='Optional body (issue comment) for the new issue')
+    workon_parser.add_argument('-r', '--reopen', action='store_true', help='Reopens a closed issue. Required when you want to continue working on a closed issue.', default=False)
+    assign_group = workon_parser.add_mutually_exclusive_group()
+    assign_group.add_argument('--assign', dest='assignee', action='store_true', help='Assign @me to the issue (default)')
+    assign_group.add_argument('--no-assign', dest='assignee', action='store_false', help='Do not assign anybody to the issue')
+    workon_parser.set_defaults(assignee=True, exclusive_groups=['workon'])
+    
+    # Add wrapup subcommand
+    wrapup_parser = subparsers.add_parser('wrapup', parents=[parent_parser], help='Commit the status of the current issue branch and push it to the remote',)
+    wrapup_message_group = wrapup_parser.add_mutually_exclusive_group(required=True)
+    wrapup_message_group.add_argument('message', nargs='?', help='Message for the commit (short hand positional option - no flag needed, mutually exclusive with -m|--message)')
+    wrapup_message_group.add_argument('-m', '--message', dest='message_by_flag', type=str, help='Message for the commit')
+    wrapup_poll_group = wrapup_parser.add_mutually_exclusive_group()
+    wrapup_poll_group.add_argument('--poll', dest='poll', action='store_true', help='Poll the status until it is set to success or failure (default)')
+    wrapup_poll_group.add_argument('--no-poll', dest='poll', action='store_false', help='Do not continue to poll the status, just fire and forget')
+    wrapup_parser.set_defaults(poll=True)
+
+
+    # Add deliver subcommand
+    subparsers.add_parser(
+        'deliver', 
+        parents=[parent_parser], help="Create a collapsed 'ready' branch for the current issue branch and push it to the remote",
+        description="""
+            Squeezes the issue branch into one commit and pushes it to the remote on separate "ready/*" branch.
+            A seperate workflow should be defined for ready branches. The command takes no parameters.
+            Policies for the delivery can be set in the configuration file '.tt-config.json'. Consult the README
+            in 'thetechcollective/gh-tt' for details.
+            """)
+    
+    #Add the responsibles subcommand
+    responsibles_parser = subparsers.add_parser(
+        'responsibles', 
+        parents=[parent_parser], 
+        help="List the responsibles for the current issue branch",
+        description="""
+            Lists the responsibles for the current change set""")
+    responsibles_parser.add_argument('--unstaged', action='store_true', help='Get the list of responsibles for all dirty, but unstaged changes', required=False, default=False)
+    responsibles_parser.add_argument('--staged',  action='store_true', help='Get the list of responsibles for staged changes', required=False, default=False)
+    responsibles_parser.add_argument('--exclude', type=str, help="Comma separated list of handles to exclude '@me' is supported too", required=False, default=None)
+    responsibles_parser.set_defaults(command='responsibles')
+
+    # Add the semver subcommand
+    semver_parser = subparsers.add_parser(
+        'semver', 
+        parents=[parent_parser, prerelease_parser], 
+        help="Reads and sets the current version of the repo in semantic versioning format",
+        description="""
+            Supports reading and setting the current version of the repository in semantic 
+            versioning format in both 'release' and 'prerelease' context.  Versions are stored as 
+            tags in the repository.
+            """)
+    
+    semver_sub_parser = semver_parser.add_subparsers(dest='semver_command')
+    semver_bump_parser = semver_sub_parser.add_parser('bump', parents=[parent_parser, prerelease_parser], help="Bumps the current version of the repository in semantic versioning format")
+    semver_bump_level_group = semver_bump_parser.add_mutually_exclusive_group(required=True)
+    semver_bump_level_group.add_argument('--major', dest='level',  help='Bump the major version, breaking change', action='store_const', const='major')
+    semver_bump_level_group.add_argument('--minor', dest='level',  help='Bump the minor version, new feature, non-breaking change', action='store_const', const='minor')
+    semver_bump_level_group.add_argument('--patch', dest='level',  help='Bump the patch version, bug fix or rework, non-breaking change', action='store_const', const='patch')
+    semver_bump_parser.add_argument('-m', '--message', type=str, help='Additional message for the annotated tag', required=False, default=None)
+    semver_bump_parser.add_argument('--suffix', type=str, help='Suffix to use for prerelease tags', required=False, default=None)
+    semver_bump_parser.add_argument('--prefix', type=str, help='Prefix to prepend the tag valid for both releases and prereleases', required=False, default=None)
+    semver_bump_parser.add_argument('--initial', type=str, help='Initial off-set, only relevant if there are not tags defined. Bust be a three-level-interger seperated by dots.', required=False, default=None)
+    run_group = semver_bump_parser.add_mutually_exclusive_group()
+    run_group.add_argument('--run', dest='run', action='store_true', help='Execute the command')
+    run_group.add_argument('--no-run', dest='run', action='store_false', help='Print the command without executing it')
+    semver_bump_parser.set_defaults(run=True, exclusive_groups=['bump'])
+    semver_sub_parser.add_parser('list', parents=[parent_parser, prerelease_parser], help="Lists the version tags in the repository in semantic versioning format and sort order in either prerelease or release context")
+    semver_note_parser = semver_sub_parser.add_parser('note', parents=[parent_parser, prerelease_parser], help="Generates a release note either for a release or a prerelease, based on the set of current semver tags")
+    semver_note_parser.add_argument('--filename', type=str, help='If provided, the note will be written to this file. If None, it will be printed to stdout.', required=False, default=None)
+
+    # Add a status subcommand
+    status_parser = subparsers.add_parser(
+        'status', 
+        parents=[parent_parser], 
+        help="Set or get the status of a commit",
+        description="""
+            Set or get the status of a commit. The command supports setting the status with a state, description, context, and target URL.
+            It also supports polling the status of a commit by its SHA.
+            """)
+
+    # Define a parent parser both set and get can use, that defines an optional --sha SHA
+    status_parent_parser = argparse.ArgumentParser(add_help=False)
+    status_parent_parser.add_argument('--sha', type=str, help='SHA of the commit. Default is HEAD', default=None)
+
+    # Add two status sub commands; set and get    
+    status_sub_parser = status_parser.add_subparsers(dest='status_command')
+    status_set_parser = status_sub_parser.add_parser('set', help="Set the status of a commit", parents=[status_parent_parser])
+    status_sub_parser.add_parser('get', help="Get the status of a commit", parents=[status_parent_parser])
+
+    def valid_status_states(value):
+        valid_states = ['success', 'failure', 'pending', 'queued']
+        if value not in valid_states:
+            raise argparse.ArgumentTypeError(f"Invalid state: {value}. Must be one of {', '.join(valid_states)}.")
+        return value
+
+    status_set_parser.add_argument('--state', type=valid_status_states, help='State of the commit status (success, failure, pending or queued)', required=True)
+    status_set_parser.add_argument('--description', type=str, help='Description of the commit status', required=True)
+    status_set_parser.add_argument('--context', type=str, help='Context (name) of the commit status. Can be omitted in context of a GitHub Action in which case it will default to the Action ID', default=None)
+    status_set_parser.add_argument('--target-url', type=str, help='Target URL for the commit status. Can be omitted in context of a GitHub Action in which case it will default to the URL to the action run', default=None)
+
+
+    args = parser.parse_args(args)
+
+    if args.command == "workon" and args.reopen and not args.issue:
+        parser.error("🛑 --reopen flag can only be used with the `workon --issue` command")
+
+    if not args.command and not args.version:
+        parser.print_help()
+        parser.exit(0)
+
+    if args.command == 'responsibles' and not (args.unstaged or args.staged):
+        parser.error("You must specify either --unstaged or --staged  or both for the responsibles command")
+
+    return args
