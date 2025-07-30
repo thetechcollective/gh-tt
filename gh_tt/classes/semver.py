@@ -11,7 +11,7 @@ from gh_tt.classes.lazyload import Lazyload
 class Semver(Lazyload):
     """Class used to represent the semver state of git repository"""
 
-    def __init__(self, suffix:str=None, prefix:str=None, initial:str=None):
+    def __init__(self, suffix: str | None = None, prefix: str | None = None, initial: str | None = None):
         super().__init__()
 
         if initial is not None and initial != '':
@@ -139,7 +139,7 @@ class Semver(Lazyload):
             return self.props['current_release'][1]
 
     
-    def bump(self, level=str, message:str=None, suffix:str=None, prefix:str=None, initial:str=None, prerelease=False, dry_run=False):
+    def bump(self, level: str, message: str | None, suffix: str | None = None, prefix: str | None = None, initial: str | None = None, prerelease=False, dry_run=False):
 
         self.__load_tags()
 
