@@ -1,9 +1,10 @@
 import os
+from pathlib import Path
 import re
 import sys
 
 import pytest
-from gh_tt.classes.config import Config
+from gh_tt.classes.config import Config, LoadStrategy
 
 
 @pytest.fixture(scope="function")
@@ -22,7 +23,7 @@ def config() -> tuple[dict, list, Config]:
     return (config, config_files, Config)
 
 @pytest.fixture(scope="function")
-def default_config() -> tuple[dict, list, Config]:
+def default_config() -> tuple[dict, list[Path], Config]:
     """
     Loads a config with default values only
 
@@ -31,7 +32,7 @@ def default_config() -> tuple[dict, list, Config]:
     """
 
     Config.clear_config()
-    config = Config.config(load_only_default=True)
+    config = Config.config(load_only_default=LoadStrategy.ONLY_DEFAULT_CONFIG)
     config_files = Config.config_files()
     return (config, config_files, Config)
 
@@ -41,7 +42,7 @@ def test_read_app_defaults_static(default_config):
     """Test app defaults"""
     config, files, _ = default_config
     assert len(files) == 1, "Expected exactly one config file"
-    assert re.search(r'../.tt-config.json', files[0]), "File name does not match expected pattern"
+    assert re.search(r'../.tt-config.json', files[0].as_posix()), "File name does not match expected pattern"
     
     assert config['project']['owner'] == '', "Project owner should be empty by default"
     assert config['project']['number'] == '', "Project number should be empty by default"

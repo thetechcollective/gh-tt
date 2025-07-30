@@ -1,8 +1,10 @@
 import asyncio
 import json
-import os
 import re
 import sys
+from enum import Enum, auto
+from pathlib import Path
+from typing import ClassVar
 
 from gh_tt.classes.gitter import Gitter
 from gh_tt.classes.lazyload import Lazyload
@@ -26,7 +28,7 @@ def add_config(config_file: str, config_dict: dict):
         FileNotFoundError: If the file does not exist
         JSONDecodeError: If the file is not a valid JSON file
     """
-    with open(config_file, 'r') as f:
+    with Path.open(config_file) as f:
         try:
             lines = f.readlines()
             lines = [line for line in lines if not re.match(r'^\s*//', line)]
@@ -40,8 +42,8 @@ def add_config(config_file: str, config_dict: dict):
 
 def load_default_configuration(config_file_name: str, config_dict: dict, config_files: list):
     # Default configuration file MUST exist
-    default_config_path = os.path.dirname(os.path.abspath(__file__)) + f"/{config_file_name}"
-    assert os.path.exists(default_config_path), f"Default config file '{default_config_path}' not found."
+    default_config_path = Path(__file__).resolve().parent / config_file_name
+    assert Path.exists(default_config_path), f"Default config file '{default_config_path}' not found."
 
     # Initialize with defaults
     config_dict = add_config(default_config_path, config_dict)
@@ -49,6 +51,9 @@ def load_default_configuration(config_file_name: str, config_dict: dict, config_
 
     return config_dict, config_files
 
+class LoadStrategy(Enum):
+    ONLY_DEFAULT_CONFIG = auto()
+    ALL_CONFIGS = auto()
 
 class Config(Lazyload):
     """Class used to represent the project configuration and policies for the subcommands.
@@ -60,8 +65,8 @@ class Config(Lazyload):
     """
 
     # Class-level configuration dictionary
-    _config_dict = {}
-    _config_files = []  # List to hold the configuration files in the order they are read
+    _config_dict: ClassVar[dict] = {}
+    _config_files: ClassVar[list] = []  # List to hold the configuration files in the order they are read
     _config_file_name = '.tt-config.json'
 
     _config_dict, _config_files = load_default_configuration(
@@ -79,15 +84,15 @@ class Config(Lazyload):
         return cls._config_files
 
     @classmethod
-    def config(cls, load_only_default: bool = False) -> dict:
+    def config(cls, load_only_default: LoadStrategy = LoadStrategy.ALL_CONFIGS) -> dict:
         """Public class property to get the config dict"""
 
-        if load_only_default:
+        if load_only_default is LoadStrategy.ONLY_DEFAULT_CONFIG:
             return cls._config_dict
         
-        _project_config_file = f"{Gitter.git_root}/{cls._config_file_name}"
+        _project_config_file = Path(Gitter.git_root) / cls._config_file_name
 
-        if os.path.exists(_project_config_file):
+        if Path.exists(_project_config_file):
             cls._config_dict = add_config(_project_config_file, cls._config_dict)
             cls._config_files.append(_project_config_file)
 
@@ -124,6 +129,34 @@ class Config(Lazyload):
         )
 
     @classmethod
+    def __set_required_from_gitconfig(cls, config_path: str, project_owner: str, project_number: str):
+        print("⚠️  DEPRECATED: .gitconfig based configuration is deprecated.")
+        print(f"🔨  Your {config_path} file will be updated with values found in .gitconfig.")
+        print(f"⚠️  Review the updated {config_path} and consider checking it in.")
+
+        data = {}
+        if Path.exists(config_path):
+            with Path.open(config_path, "r") as file:
+                try:
+                    data = json.load(file)
+                except json.JSONDecodeError:
+                    print("🛑 ERROR: Could not parse existing config file.", file=sys.stderr)
+                    sys.exit(1)
+
+        data["project"] = data.get("project", {})
+
+        if project_owner is not None:
+            data["project"]["owner"] = data["project"].get("owner", project_owner)
+
+        if project_number is not None:
+            data["project"]["number"] = data["project"].get("number", int(project_number))
+
+        with Path.open(config_path, "w") as file:
+            json.dump(data, file, indent=4)
+
+        add_config(config_path, cls._config_dict)
+
+    @classmethod
     def __assert_required(cls, config_path: str):
         props_set_from_gitconfig = []
         gitconfig_file = f"{Gitter.git_root}/.gitconfig"
@@ -142,32 +175,8 @@ class Config(Lazyload):
                 props_set_from_gitconfig.append('project_number')
         
         if props_set_from_gitconfig:
-            print(f"⚠️  DEPRECATED: .gitconfig based configuration is deprecated.")
-            print(f"🔨  Your {config_path} file will be updated with values found in .gitconfig.")
-            print(f"⚠️  Review the updated {config_path} and consider checking it in.")
-
-            data = {}
-            if os.path.exists(config_path):
-                with open(config_path, "r") as file:
-                    try:
-                        data = json.load(file)
-                    except json.JSONDecodeError:
-                        print(f"🛑 ERROR: Could not parse existing config file.", file=sys.stderr)
-                        sys.exit(1)
-
-            data["project"] = data.get("project", {})
-
-            if project_owner is not None:
-                data["project"]["owner"] = data["project"].get("owner", project_owner)
-
-            if project_number is not None:
-                data["project"]["number"] = data["project"].get("number", int(project_number))
-
-            with open(config_path, "w") as file:
-                json.dump(data, file, indent=4)
-
-            add_config(config_path, cls._config_dict)
+            cls.__set_required_from_gitconfig(config_path=config_path, project_number=project_number, project_owner=project_owner)
 
         if not all([cls._config_dict['project']['owner'], cls._config_dict['project']['number']]):
-            print(f"🛑 ERROR: Could not load information about project owner or project number from configuration. Missing values are not currently supported. Please specify a 'project' key with 'owner' and 'number' key-value pairs in .tt-config.json.")
+            print("🛑 ERROR: Could not load information about project owner or project number from configuration. Missing values are not currently supported. Please specify a 'project' key with 'owner' and 'number' key-value pairs in .tt-config.json.")
             sys.exit(1)
