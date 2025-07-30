@@ -6,7 +6,7 @@ from gh_tt.classes.config import Config
 from gh_tt.classes.devbranch import Devbranch
 from gh_tt.classes.issue import Issue
 from gh_tt.classes.label import Label
-from gh_tt.classes.semver import Semver
+from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver
 from gh_tt.classes.status import Status
 
 
@@ -65,20 +65,20 @@ def handle_semver(args):
             suffix=args.suffix, 
             prefix=args.prefix, 
             initial=args.initial, 
-            prerelease=args.prerelease, 
-            dry_run=not args.run
+            release_type=ReleaseType.PRERELEASE if args.prerelease else ReleaseType.RELEASE, 
+            execution_mode=ExecutionMode.LIVE if args.run else ExecutionMode.DRY_RUN
         )
     elif args.semver_command == 'list':
-        semver.list(prerelease=args.prerelease)
+        semver.list(release_type=ReleaseType.PRERELEASE if args.prerelease else ReleaseType.RELEASE)
     elif args.semver_command == 'note':
         if args.filename:
-            note = semver.note(prerelease=args.prerelease, filename=args.filename)
+            note = semver.note(prerelease=ReleaseType.PRERELEASE if args.prerelease else ReleaseType.RELEASE, filename=args.filename)
             print(f"{args.filename}")
         else:
-            note = semver.note(prerelease=args.prerelease)
+            note = semver.note(prerelease=ReleaseType.PRERELEASE if args.prerelease else ReleaseType.RELEASE)
             print(note)
     elif args.semver_command is None:
-        current_semver = semver.get_current_semver(prerelease=args.prerelease)
+        current_semver = semver.get_current_semver(release_type=args.prerelease)
         print(f"{current_semver}")
 
 

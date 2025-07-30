@@ -1,17 +1,30 @@
 import asyncio
-import os
 import re
 import sys
+from enum import Enum, auto
+from pathlib import Path
 
 from gh_tt.classes.config import Config
 from gh_tt.classes.gitter import Gitter
 from gh_tt.classes.lazyload import Lazyload
 
 
+class ReloadApproach(Enum):
+    RELOAD = auto()
+    NO_RELOAD = auto()
+
+class ReleaseType(Enum):
+    RELEASE = auto()
+    PRERELEASE = auto()
+
+class ExecutionMode(Enum):
+    LIVE = auto()
+    DRY_RUN = auto()
+
 class Semver(Lazyload):
     """Class used to represent the semver state of git repository"""
 
-    def __init__(self, suffix:str=None, prefix:str=None, initial:str=None):
+    def __init__(self, suffix: str | None = None, prefix: str | None = None, initial: str | None = None):
         super().__init__()
 
         if initial is not None and initial != '':
@@ -33,9 +46,8 @@ class Semver(Lazyload):
             self.set('prefix', prefix)
         else:
             self.set('prefix', Config.config()['semver']['prefix']) 
-        
-
-    def __load_tags(self, reload=False):
+    
+    def __load_tags(self, reload: ReloadApproach = ReloadApproach.NO_RELOAD):
         """This methos does some post-processing of the raw list of tags
         It categorizes the tags into semver categories: release, prerelease and other.
         Release are defined as tags that match the semver pattern without a suffix.
@@ -63,8 +75,7 @@ class Semver(Lazyload):
             None
         """
 
-
-        if reload:
+        if reload is ReloadApproach.RELOAD:
             self.props.pop('tags')
 
         asyncio.run(self._assert_props(['tags']))
@@ -82,16 +93,13 @@ class Semver(Lazyload):
             category = 'other'
             match = semver_pattern.search(tag)
             if match:
-                if match.group(5):
-                    category = 'prerelease'
-                else:
-                    category = 'release'
+                category = 'prerelease' if match.group(5) else 'release'
                 
                 semver_tags[category][tuple(map(int, [match.group(2), match.group(3), match.group(4)]))] = tag
                 continue
-            else:
-                # If it doesn't match the semver pattern, we categorize it as 'other'
-                semver_tags['other'][tag] = tag
+            
+            # If it doesn't match the semver pattern, we categorize it as 'other'
+            semver_tags['other'][tag] = tag
 
 
 
@@ -123,23 +131,32 @@ class Semver(Lazyload):
 
         self.props['semver_tags'] = semver_tags
 
-    def get_current_semver(self, prerelease=False):
+    def get_current_semver(self, release_type: ReleaseType = ReleaseType.RELEASE):
         """Returns the current semver tag"""
 
         self.__load_tags()
 
-        if prerelease:
+        if release_type is ReleaseType.PRERELEASE:
             if 'current_prerelease' not in self.props:
                 return None
             return self.props['current_prerelease'][1]
-        else:
-            if 'current_release' not in self.props:
-                return None
-                sys.exit(0)
-            return self.props['current_release'][1]
+        
+        if 'current_release' not in self.props:
+            return None
+            sys.exit(0)
+        return self.props['current_release'][1]
 
     
-    def bump(self, level=str, message:str=None, suffix:str=None, prefix:str=None, initial:str=None, prerelease=False, dry_run=False):
+    def bump(
+            self, 
+            level: str, 
+            message: str | None,
+            suffix: str | None = None,
+            prefix: str | None = None,
+            initial: str | None = None,
+            release_type: ReleaseType = ReleaseType.RELEASE,
+            execution_mode: ExecutionMode = ExecutionMode.LIVE
+        ):
 
         self.__load_tags()
 
@@ -157,18 +174,15 @@ class Semver(Lazyload):
         if prefix is None:
             prefix = self.get('prefix')
 
-        if prerelease:
+        if release_type is ReleaseType.PRERELEASE:
             if suffix is None:
                 suffix = self.get('suffix')
         else:
             suffix = ''
 
-        if message:
-            message = f"\n{message}"
-        else:
-            message = ""
+        message = f"\n{message}" if message else ""
 
-        pre = 'pre' if prerelease else ''
+        pre = 'pre' if release_type else ''
 
         lookup_next =    f"next_{pre}release_{level}"
         lookup_current = f"current_{pre}release"
@@ -179,7 +193,7 @@ class Semver(Lazyload):
 
         cmd = f"git tag -a -m \"{next_tag}\nBumped {level} from version '{self.get(lookup_current)[1]}' to '{next_tag}'{message}\" {next_tag}"
 
-        if dry_run:
+        if execution_mode is ExecutionMode.DRY_RUN:
             print(f"{cmd}")
             return cmd
         
@@ -189,18 +203,20 @@ class Semver(Lazyload):
         ).run())
         return {next_tag}
     
-    def list(self, prerelease=False):
+
+    
+    def list(self, release_type: ReleaseType = ReleaseType.RELEASE):
         """Lists the semver tags in the repository to stdout sorted by major, minor, patch."""
         self.__load_tags()
 
-        category = 'prerelease' if prerelease else 'release'
+        category = 'prerelease' if release_type is ReleaseType.PRERELEASE else 'release'
         
         temp = {tuple(map(int, k.split(','))): v for k, v in self.props['semver_tags'][category].items()}
         for k in sorted(temp.keys()):
             print(temp[k])
             
     
-    def note(self, prerelease=False, filename:str=None) -> str:
+    def note(self, prerelease: ReleaseType = ReleaseType.RELEASE, filename: str | None = None) -> str:
         """Generates a release note either for a release or a prerelease, based on the set of current semver tags.
 
         Args:
@@ -219,9 +235,9 @@ class Semver(Lazyload):
 
         self.__load_tags()
 
-        if prerelease:
+        if prerelease is ReleaseType.PRERELEASE:
            from_ref = self.get_current_semver()
-           to_ref = self.get_current_semver(prerelease=True)
+           to_ref = self.get_current_semver(release_type=ReleaseType.PRERELEASE)
         else:
               sorted_keys = sorted(self.get('semver_tags')['release'].keys())
               previous_release = self.get('semver_tags')['release'][sorted_keys[-2]]
@@ -233,10 +249,10 @@ class Semver(Lazyload):
 
         if filename is not None:
             # make sure the directory exists
-            directory = os.path.dirname(filename)
-            if not os.path.exists(directory):
-                os.makedirs(directory)
-            with open(filename, 'w') as f:
+            directory = Path.parent(filename)
+            if not Path.exists(directory):
+                Path.mkdir(directory, parents=True)
+            with Path.open(filename, 'w') as f:
                 f.write(note)
         else:
             print(note)
