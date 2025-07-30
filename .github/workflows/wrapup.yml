@@ -17,7 +17,7 @@ permissions:
 jobs:
 
   pytest_with_coverage:
-    name: Testing
+    name: Unit testing
     permissions:
       statuses: write
     uses: lakruzz/workflows/.github/workflows/pytest_with_coverage.yml@experimental

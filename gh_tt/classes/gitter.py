@@ -151,7 +151,6 @@ class Gitter(Lazyload):
 
         stdout = asyncio.run(cls()._run("validate_gh_scope"))
 
-        # Valiadate that we have reaacce to projects
         # The command returns something like this:
         #  github.com
         #    ✓ Logged in to github.com account lakruzz (/home/vscode/.config/gh/hosts.yml)
@@ -159,6 +158,19 @@ class Gitter(Lazyload):
         #    - Git operations protocol: https
         #    - Token: gho_************************************
         #    - Token scopes: 'gist', 'read:org', 'project', 'repo', 'workflow'
+        
+        if "Token: ghs" in stdout:
+            # When authenticated with a ghs (server-to-server) token
+            # (for example, a GitHub App Installation Token),
+            # `gh auth status` does not output token scopes. Thus,
+            # the function always fails. As permissions for GitHub apps
+            # are managed in the App installation or in GitHub Actions,
+            # we want this function to return True for ghs tokens.
+            # See https://github.blog/engineering/platform-security/behind-githubs-new-authentication-token-formats/#identifiable-prefixes
+            # for other token prefixes.
+            return True
+
+
         if f"'{scope}'" not in stdout:
             print(
                 f"gh token does not have the required scope '{scope}'\nfix it by running:\n   gh auth refresh --scopes '{scope}'", file=sys.stderr)

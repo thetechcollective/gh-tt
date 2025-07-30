@@ -53,6 +53,20 @@ class TestGitter(unittest.TestCase):
                
         valid = Gitter.validate_gh_scope(scope="project")
         self.assertTrue(valid)
+
+    @pytest.mark.unittest
+    @patch('gh_tt.classes.gitter.Gitter.run',new_callable=AsyncMock)
+    def test_gitter_validate_gh_scope_ignores_ghs(self, mock_gitter_run):
+        stdout = """github.com
+  ✓ Logged in to github.com account gh-tt-qa-runner[bot] (GH_TOKEN)
+  - Active account: true
+  - Git operations protocol: https
+  - Token: ghs_************************************"""
+        result_mock = Mock(returncode=0, stderr="")
+        mock_gitter_run.return_value = (stdout, result_mock)             
+               
+        valid = Gitter.validate_gh_scope(scope="project")
+        self.assertTrue(valid)
         
     @pytest.mark.unittest
     @patch('gh_tt.classes.gitter.Gitter.run',new_callable=AsyncMock)

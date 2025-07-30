@@ -26,8 +26,15 @@ jobs:
       statuses: write
     uses: thetechcollective/workflows/.github/workflows/ruff_check.yml@main
 
+  pytest_integration:
+    name: Integration testing
+    permissions:
+      statuses: write
+    secrets: inherit
+    uses: ./.github/workflows/integration_test.yml
+
   merge:
-    needs: call_pytest_with_coverage
+    needs: [call_pytest_with_coverage, pytest_integration]
     runs-on: ubuntu-latest
     steps:
 
