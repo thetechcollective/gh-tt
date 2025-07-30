@@ -16,20 +16,34 @@ permissions:
 
 jobs:
 
+  mark-pending:
+    name: Statuses
+    permissions:
+      statuses: write
+    uses: lakruzz/workflows/.github/workflows/mark_pending.yml@experimental
+    with:
+      statuses: |
+        spell-check
+        unittest
+        linting
+
   pytest_with_coverage:
     name: Unit testing
+    needs: mark-pending
     permissions:
       statuses: write
     uses: lakruzz/workflows/.github/workflows/pytest_with_coverage.yml@experimental
 
   ruff_linting:
     name: Linting
+    needs: mark-pending
     permissions:
       statuses: write
     uses: lakruzz/workflows/.github/workflows/ruff_check.yml@experimental
 
   cspel_check:
     name: Spelling
+    needs: mark-pending
     permissions:
       statuses: write
     uses: lakruzz/workflows/.github/workflows/cspell_check.yml@experimental
