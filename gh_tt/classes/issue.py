@@ -1,15 +1,12 @@
 import asyncio
 import json
-import os
 import re
-import subprocess
 import sys
 
 from gh_tt.classes.config import Config
 from gh_tt.classes.gitter import Gitter
 from gh_tt.classes.label import Label
 from gh_tt.classes.lazyload import Lazyload
-from gh_tt.classes.project import Project
 
 
 class Issue(Lazyload):
@@ -27,10 +24,9 @@ class Issue(Lazyload):
 
         try:
             issue_json = json.loads(issue.get('json'))
-        except ValueError as e:
-            pass
+        except ValueError:
             print(
-                f"ERROR: Could not parse the json", file=sys.stderr)
+                "ERROR: Could not parse the json", file=sys.stderr)
             sys.exit(1)
 
         # Iterate through issue_json and add each element to self.props
@@ -84,7 +80,7 @@ class Issue(Lazyload):
 
         [output, result] = asyncio.run(Gitter(
             cmd=f"gh issue edit {issue_number} --add-assignee '{assignee}'",
-            msg=f"Assign @me to the issue").run()
+            msg="Assign @me to the issue").run()
         )
 
         self.set('assignee', assignee)
@@ -97,20 +93,18 @@ class Issue(Lazyload):
         config = Config()._config_dict
         type_labels = [name for name, props in config["labels"].items() if props["category"] == "type"]
 
-        for l in existing_labels:
-            if l["name"] in type_labels:
+        for label in existing_labels:
+            if label["name"] in type_labels:
                 print(f"⚠️  Issue already has a type label. The new label \"{label}\" will not be applied.")
                 return
         
         label = Label(name=label, create=True)
         issue_number = self.get('number')
 
-        [output, _] = asyncio.run(Gitter(
+        asyncio.run(Gitter(
             cmd=f"gh issue edit {issue_number} --add-label '{label.get('name')}'",
             msg=f"Add label '{label}' to the issue").run()
         )
-
-        return output
 
     def comment(self, msg: str):
         """Add a comment to the issue"""
