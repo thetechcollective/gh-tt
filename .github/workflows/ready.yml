@@ -46,6 +46,7 @@ jobs:
     needs: mark-pending
     permissions:
       statuses: write
+    # continue-on-error: true # <- This doesn't work in reusable workflows, so we set it in the integration_test.yml
     secrets: inherit
     uses: ./.github/workflows/integration_test.yml
 

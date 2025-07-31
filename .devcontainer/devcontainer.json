@@ -20,7 +20,9 @@
 				"ms-python.python",
 				"ms-python.vscode-pylance",
 				"streetsidesoftware.code-spell-checker",
-				"charliermarsh.ruff"
+				"charliermarsh.ruff",
+				"github.vscode-github-actions",
+				"tamasfe.even-better-toml"
 			]	
 		}
 	},

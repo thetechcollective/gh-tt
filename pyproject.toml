@@ -157,3 +157,24 @@ log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 log_level = "DEBUG"
 log_format = "%(asctime)s - %(levelname)s - %(name)s - %(funcName)s - %(module)s - Line:%(lineno)d - %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
+
+[tool.coverage.run]
+# Include the main CLI script and the classes directory
+source = [
+    "gh_tt/"
+]
+
+# Exclude test files
+omit = [
+    "*/tests/*",
+    "gh_tt/modules/*",
+    "setup.py",
+    "gh_*.py"
+]
+
+[tool.coverage.report]
+# Fail the build if the coverage is less than threshold
+fail_under = 54
+
+# Skip empty files
+skip_empty = true
