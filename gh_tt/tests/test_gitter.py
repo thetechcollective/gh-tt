@@ -120,19 +120,27 @@ class TestGitter(unittest.TestCase):
         mock_gitter_run.assert_called_once_with()
 
     @pytest.mark.unittest
-    @patch('subprocess.run')
-    def test_run_success(self, mock_subprocess_run):
-        mock_subprocess_run.return_value = Mock(
-            stdout='fa05229e20052cbb1a13d0c6ee9da7115df55b89',
-            stderr='',
-            returncode=0
+    @patch('asyncio.create_subprocess_shell', new_callable=AsyncMock)
+    async def test_run_success(self, mock_create_subprocess_shell):
+        mock_process = AsyncMock()
+        mock_process.communicate.return_value = (
+            b'fa05229e20052cbb1a13d0c6ee9da7115df55b89',
+            b''
         )
-    
+        mock_process.returncode = 0
+        mock_create_subprocess_shell.return_value = mock_process
+
         gitter = Gitter(cmd="git rev-parse HEAD", msg="Get current commit hash")
-        [value,result] = asyncio.run(gitter.run())                              
+        value, result = await gitter.run()
+
         self.assertEqual(value, 'fa05229e20052cbb1a13d0c6ee9da7115df55b89')
-        mock_subprocess_run.assert_called_once()
-        self.assertEqual(result.returncode, 0)
+        mock_create_subprocess_shell.assert_called_once_with(
+            cmd="git rev-parse HEAD",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=gitter.get('workdir')
+        )
+        self.assertEqual(result['returncode'], 0)
         self.assertEqual(gitter.get('msg'), "Get current commit hash")
         self.assertEqual(gitter.get('cmd'), "git rev-parse HEAD")
         

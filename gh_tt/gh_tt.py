@@ -10,7 +10,7 @@ from gh_tt.modules.tt_parser import tt_parse
 def main():
     args = tt_parse(sys.argv[1:])
 
-    Gitter.verbose(verbose=args.verbose)
+    Gitter.set_verbose(value=args.verbose)
     Gitter.validate_gh_version()
 
     if args.version:

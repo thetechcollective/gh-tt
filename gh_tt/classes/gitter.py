@@ -1,9 +1,10 @@
 import asyncio
 import json
-import os
+import shutil
 import subprocess
 import sys
-from pprint import pprint
+from pathlib import Path
+from typing import ClassVar
 
 from gh_tt.classes.lazyload import Lazyload
 
@@ -15,25 +16,29 @@ class Gitter(Lazyload):
     reguired_version = '2.55.0'
     verbose = False
     die_on_error = True
-    workdir = os.getcwd()
+    workdir = Path.cwd()
     use_cache = False
     fetched = False  # Flag to indicate if the repository has been fetched
-    class_cache = {}  # Dictionary to store class cache data
-    result = subprocess.run("git rev-parse --show-toplevel",
-                            capture_output=True, text=True, shell=True)
+    class_cache: ClassVar[dict] = {}  # Dictionary to store class cache data
+
+    git_path = shutil.which('git')
+    assert git_path is not None, "Git not found on PATH. Git is required for gh-tt to work. To proceed, install git."
+
+    result = subprocess.run(
+        [git_path, "rev-parse", "--show-toplevel"], capture_output=True, text=True)
     git_root = result.stdout.strip()
     if not git_root or result.returncode != 0:
-        raise RuntimeError(f"Could not determine the git root directory")
-    class_cache_file = f"{git_root}/.tt_cache"
+        raise RuntimeError("Could not determine the git root directory")
+    class_cache_file = Path(git_root) / ".tt_cache"
 
     def __init__(self, cmd=str, die_on_error=None, msg=None, verbose=None, workdir=None):
         super().__init__()
         # se class defaults if not set
-        if workdir == None:
+        if workdir is None:
             workdir = self.workdir
-        if die_on_error == None:
+        if die_on_error is None:
             die_on_error = self.die_on_error
-        if verbose == None:
+        if verbose is None:
             verbose = self.verbose
         self.set('cmd', cmd)
         self.set('msg', msg)
@@ -51,7 +56,7 @@ class Gitter(Lazyload):
                 print(f"# {self.get('msg')}")
             print(f"$ {self.get('cmd')}")
 
-    async def run(self, cache=False):
+    async def run(self, *, cache=False):
 
         self.__verbose_print()
 
@@ -59,24 +64,42 @@ class Gitter(Lazyload):
             cached_value = self.get_cache(self.get('workdir'), self.get('cmd'))
             if cached_value:
                 if self.get('verbose'):
-                    print(f"# NOTE! Returning cached value from previous run")
+                    print("# NOTE! Returning cached value from previous run")
                     print(f"{cached_value}")
                 return cached_value, None
+            
+        process = await asyncio.create_subprocess_shell(
+            cmd=self.get('cmd'),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=self.get('workdir')
+        )
 
-        result = subprocess.run(
-            self.get('cmd'), capture_output=True, text=True, shell=True, cwd=self.get('workdir'))
+        stdout, stderr = await process.communicate()
+
+        stdout = stdout.decode().rstrip()
+        stderr = stderr.decode().rstrip()
 
         if self.get('verbose'):
-            print(f"{result.stdout.rstrip()}{result.stderr.rstrip()}")
+            print(f"{stdout}{stderr}")
 
-        if self.get('die_on_error') and not result.returncode == 0:
-            raise RuntimeError(f"{result.stderr}")
-            sys.exit(1)
+        if self.get('die_on_error') and process.returncode != 0:
+            raise RuntimeError(f"{stderr}")
 
-        output = result.stdout.rstrip()
         if cache:
-            self.set_cache(self.get('workdir'), self.get('cmd'), output)
-        return output, result
+            self.set_cache(self.get('workdir'), self.get('cmd'), stdout)
+        
+        result = {
+            'stdout': stdout,
+            'stderr': stderr,
+            'returncode': process.returncode
+        }
+
+        return stdout, result
+    
+    @classmethod
+    def set_verbose(cls, *, value: bool):
+        cls.verbose = value
 
     @classmethod
     def get_cache(cls, workdir, cmd):
@@ -102,7 +125,7 @@ class Gitter(Lazyload):
     # and load it into the class_cache
     def read_cache(cls):
         try:
-            with open(cls.class_cache_file, 'r') as f:
+            with Path.open(cls.class_cache_file) as f:
                 cls.class_cache = json.load(f)
         except FileNotFoundError:
             pass
@@ -111,16 +134,11 @@ class Gitter(Lazyload):
     # write the class_cache to a file in the root of the repository `.tt_cache`
     def write_cache(cls):
         try:
-            with open(cls.class_cache_file, 'w') as f:
+            with Path.open(cls.class_cache_file, 'w') as f:
                 json.dump(cls.class_cache, f, indent=4)
         except FileNotFoundError:
             print(
                 f"WARNING: Could not save cache {cls.class_cache_file}", file=sys.stderr)
-            pass
-
-    @classmethod
-    def verbose(cls, verbose=bool):
-        cls.verbose = verbose
 
     @classmethod
     def validate_gh_version(cls):
@@ -188,7 +206,7 @@ class Gitter(Lazyload):
         return asyncio.run(cls()._run("get_commit_sha"))
 
     @classmethod
-    async def fetch(cls, prune=False, again=False):
+    async def fetch(cls, *, prune=False, again=False):
         """Fetch """
 
         if cls.fetched and not again:

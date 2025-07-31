@@ -70,7 +70,6 @@ exclude = [
 extend-exclude = [
     
     "gh_tt/classes/devbranch.py",
-    "gh_tt/classes/gitter.py",
     "gh_tt/classes/label.py",
     "gh_tt/classes/responsibles.py",
     "gh_tt/tests/",  # Exclude all test files for now
@@ -125,7 +124,9 @@ ignore = [
     "E501",
     # pytest vs. standard library unittest usage is for a later discussion.
     # The ruleset is both selected and ignored to signal the need for alignment.
-    "PT", 
+    "PT",
+    # Known for false positives
+    "S603",
 ]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
