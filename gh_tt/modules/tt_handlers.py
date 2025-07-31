@@ -42,10 +42,12 @@ def handle_wrapup(args):
         Status.poll()
 
 
-def handle_deliver(_args):
+def handle_deliver(args):
     """Handle the deliver command"""
     devbranch = Devbranch()
-    devbranch.deliver()
+    squeeze_sha = devbranch.deliver()
+    if args.poll:
+        Status.poll(sha=squeeze_sha)
 
 
 def handle_responsibles(args):

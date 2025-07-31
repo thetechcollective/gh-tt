@@ -11,6 +11,12 @@ def tt_parse(args=None):
 
     prerelease_parser = argparse.ArgumentParser(add_help=False)
     prerelease_parser.add_argument('--prerelease', action='store_true', help='Set or read pre-release tags')
+
+    poll_parser = argparse.ArgumentParser(add_help=False)
+    poll_group = poll_parser.add_mutually_exclusive_group()
+    poll_group.add_argument('--poll', dest='poll', action='store_true', help='Poll the status until it is set to success or failure (default)')
+    poll_group.add_argument('--no-poll', dest='poll', action='store_false', help='Do not continue to poll the status, just fire and forget')
+    poll_parser.set_defaults(poll=True)
     
     # Define command-line arguments
     parser = argparse.ArgumentParser(
@@ -43,20 +49,17 @@ def tt_parse(args=None):
     workon_parser.set_defaults(assignee=True, exclusive_groups=['workon'])
     
     # Add wrapup subcommand
-    wrapup_parser = subparsers.add_parser('wrapup', parents=[parent_parser], help='Commit the status of the current issue branch and push it to the remote',)
+    wrapup_parser = subparsers.add_parser('wrapup', parents=[parent_parser, poll_parser], help='Commit the status of the current issue branch and push it to the remote',)
     wrapup_message_group = wrapup_parser.add_mutually_exclusive_group(required=True)
     wrapup_message_group.add_argument('message', nargs='?', help='Message for the commit (short hand positional option - no flag needed, mutually exclusive with -m|--message)')
     wrapup_message_group.add_argument('-m', '--message', dest='message_by_flag', type=str, help='Message for the commit')
-    wrapup_poll_group = wrapup_parser.add_mutually_exclusive_group()
-    wrapup_poll_group.add_argument('--poll', dest='poll', action='store_true', help='Poll the status until it is set to success or failure (default)')
-    wrapup_poll_group.add_argument('--no-poll', dest='poll', action='store_false', help='Do not continue to poll the status, just fire and forget')
-    wrapup_parser.set_defaults(poll=True)
+
 
 
     # Add deliver subcommand
     subparsers.add_parser(
         'deliver', 
-        parents=[parent_parser], help="Create a collapsed 'ready' branch for the current issue branch and push it to the remote",
+        parents=[parent_parser, poll_parser], help="Create a collapsed 'ready' branch for the current issue branch and push it to the remote",
         description="""
             Squeezes the issue branch into one commit and pushes it to the remote on separate "ready/*" branch.
             A seperate workflow should be defined for ready branches. The command takes no parameters.
