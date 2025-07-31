@@ -103,18 +103,22 @@ class Gitter(Lazyload):
 
     @classmethod
     def get_cache(cls, workdir, cmd):
-        if workdir not in cls.class_cache:
+        workdir_str = str(workdir)
+        
+        if workdir_str not in cls.class_cache:
             return None
-        if cmd not in cls.class_cache[workdir]:
+        if cmd not in cls.class_cache[workdir_str]:
             return None
-        return cls.class_cache[workdir][cmd]
+        return cls.class_cache[workdir_str][cmd]
 
     @classmethod
     def set_cache(cls, workdir, cmd, value):
-        if workdir not in cls.class_cache:
-            cls.class_cache[workdir] = {}
-        cls.class_cache[workdir][cmd] = value
-        return cls.class_cache[workdir][cmd]
+        workdir_str = str(workdir)
+
+        if workdir_str not in cls.class_cache:
+            cls.class_cache[workdir_str] = {}
+        cls.class_cache[workdir_str][cmd] = value
+        return cls.class_cache[workdir_str][cmd]
 
     @classmethod
     def print_cache(cls):
