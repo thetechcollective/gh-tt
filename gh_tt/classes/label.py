@@ -1,20 +1,19 @@
 import asyncio
 import json
-import os
 import sys
+from typing import ClassVar
 
 from gh_tt.classes.config import Config
-from gh_tt.classes.gitter import Gitter
 from gh_tt.classes.lazyload import Lazyload
 
 
 class Label(Lazyload):
     """Class used to represent a GitHub issue label"""
 
-    _all = {}
+    _all: ClassVar[dict] = {}
     _loaded=False
 
-    def __init__(self, name:str, create:bool=False):
+    def __init__(self, name:str, *, create:bool=False):
         super().__init__()
 
         self.set('name', name)
@@ -35,7 +34,7 @@ class Label(Lazyload):
                     config = Config().config()
                     self.set("color", config['labels'][name]['color'])
                     self.set("description", config['labels'][name]['description'])
-                except KeyError as e:
+                except KeyError:
                     print(f"ERROR: Label '{name}' not defined in the config file", file=sys.stderr)
                     sys.exit(1)
 
@@ -63,25 +62,22 @@ class Label(Lazyload):
     def validate(cls, name: str, category: str) -> bool:
         config = Config().config()
         
-        is_valid = False
         for label_name, label_data in config["labels"].items():
             if label_data["category"] == category and label_name == name:
                 return True
 
-        if not is_valid:
-            valid_labels = [label_name for label_name, label_data in Config()._config_dict['labels'].items() if label_data["category"] == category]
-            print(f"🛑  ERROR: \"{name}\" passed in --type is not matching any label with category '{category}' defined in the config. Choose one of the labels defined: {valid_labels}")
-            sys.exit(1)
+        valid_labels = [label_name for label_name, label_data in Config()._config_dict['labels'].items() if label_data["category"] == category]
+        print(f"🛑  ERROR: \"{name}\" passed in --type is not matching any label with category '{category}' defined in the config. Choose one of the labels defined: {valid_labels}")
+        sys.exit(1)
 
-    def _reload(cls):
+    def _reload(self):
         """Reload the labels from the current repository"""
-        list_all =  asyncio.run(cls._run('json_list_all'))
+        list_all =  asyncio.run(self._run('json_list_all'))
         try:
             Label._all = json.loads(list_all)                
-        except ValueError as e:
-            pass
+        except ValueError:
             print(
-                f"ERROR: Could not parse the json", file=sys.stderr)
+                "ERROR: Could not parse the json", file=sys.stderr)
             sys.exit(1)
         
         Label._loaded = True
