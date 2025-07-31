@@ -5,13 +5,13 @@ source =
 
 # Exclude test files
 omit = 
-    tests/*
-    classes/__init__.py
+    */tests/*
+    gh_tt/modules/*
     setup.py
     gh_*.py
 
 [report]
-# Fail the build if the coverage is less than 80%
+# Fail the build if the coverage is less than threshold
 fail_under = 54
 
 # Skip empty files

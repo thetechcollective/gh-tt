@@ -141,3 +141,19 @@ ban-relative-imports = "all"
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
+
+[tool.pytest.ini_options]
+markers = [
+    "smoke: marks tests as smoke tests",
+    "dev: these tests are for development purposes - not necessarily mocked or stable, used by development team in the devcontainer",
+    "unittest: these tests are for unit testing",
+    "integration: test calling external apis",
+]
+log_file = "logs/test.log"
+log_cli = true
+log_cli_level = "WARNING"
+log_cli_format = "%(asctime)s - %(levelname)s - %(name)s - %(funcName)s - %(module)s - Line:%(lineno)d - %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+log_level = "DEBUG"
+log_format = "%(asctime)s - %(levelname)s - %(name)s - %(funcName)s - %(module)s - Line:%(lineno)d - %(message)s"
+log_date_format = "%Y-%m-%d %H:%M:%S"

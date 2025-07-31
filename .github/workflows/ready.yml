@@ -1,4 +1,5 @@
 
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 name: Ready
 # This workflow is triggered by 'ready' branches 
 
@@ -14,83 +15,66 @@ permissions:
 
 jobs:
 
-  call_pytest_with_coverage:
-    name: Run Pytest with Coverage
+  mark-pending:
+    name: Statuses
     permissions:
       statuses: write
-    uses: thetechcollective/workflows/.github/workflows/pytest_with_coverage.yml@main
+    uses: lakruzz/workflows/.github/workflows/mark_pending.yml@experimental
+    with:
+      statuses: |
+        integration-tests
+        unittest
+        linting
 
-  call_ruff_formatting:
-    name: Run Ruff Formatting
+  pytest_with_coverage:
+    name: Unit testing
+    needs: mark-pending
     permissions:
       statuses: write
-    uses: thetechcollective/workflows/.github/workflows/ruff_check.yml@main
+    uses: lakruzz/workflows/.github/workflows/pytest_with_coverage.yml@experimental
+
+  ruff_formatting:
+    name: Linting
+    needs: mark-pending
+    permissions:
+      statuses: write
+    uses: lakruzz/workflows/.github/workflows/ruff_check.yml@experimental
+
 
   pytest_integration:
     name: Integration testing
+    needs: mark-pending
     permissions:
       statuses: write
     secrets: inherit
     uses: ./.github/workflows/integration_test.yml
 
-  merge:
-    needs: [call_pytest_with_coverage, pytest_integration]
-    runs-on: ubuntu-latest
-    steps:
 
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        ref: main
-        token: ${{ secrets.READY_PUSHER }}
-        # This token is used to commit the changes back to the main branch
-
-    - name: Set up git config
-      run: |
-        git config --global user.name "GitHub Action: ready"
-        git config --global user.email "tt-ready@thetechcollective.eu"
-
-    - name: Fast-Forward merge back to main
-      env:
-        GITHUB_TOKEN: ${{ secrets.READY_PUSHER }}
-
-        # checkout the main branch, fast-forward merge the changes from the ready branch and push the changes to origin
-      run: |
-        git checkout main
-        git merge --ff-only ${{ github.sha }}
-        git push origin main
-        echo "Successfully fast-forward merged '${{ github.sha }}' into main"  >> $GITHUB_STEP_SUMMARY
+  fast-forward-merge:
+    name: Merge
+    needs:
+      - ruff_formatting
+      - pytest_with_coverage
+      - pytest_integration
+    permissions:
+      contents: write
+    secrets:
+      READY_PUSHER: ${{ secrets.READY_PUSHER }}
+    uses: lakruzz/workflows/.github/workflows/fast_forward.yml@experimental
+    with:
+      target_branch: main #default is main
+      user_name: "GitHub Action: ready" #required 
+      user_email: "tt-ready@thetechcollective.eu" # required
 
   close_issue:
-    needs: merge
-    runs-on: ubuntu-latest
-    steps:
+    needs: fast-forward-merge
+    permissions:
+      issues: write
+      contents: write
+    uses: lakruzz/workflows/.github/workflows/close_issue.yml@experimental
+    with:
+      user_name: "GitHub Action: ready" #required 
+      user_email: "tt-ready@thetechcollective.eu" # required
+      delete_issue_branch: true # default is true
+      delete_ready_branch: true # default is true
 
-    - uses: actions/checkout@v4
-
-    - name: Set up git config
-      run: |
-        git config --global user.name "GitHub Action: ready"
-        git config --global user.email "tt-ready@thetechcollective.eu"
-
-    - name: Close the issue
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-        # checkout the main branch, fast-forward merge the changes from the ready branch and push the changes to origin
-      run: |
-        # Read the github.ref_name to get the branch name
-        # The branch name is in the format 'ready/123.*'
-        # get the number from the branch name after 'ready/'
-        ISSUE_NUMBER=$(echo "${{ github.ref_name }}" | grep -oP '(?<=ready/)\d+')
-
-        gh issue close "$ISSUE_NUMBER" --repo "${{ github.repository }}" --comment "Merged into main branch with commit ${{ github.sha }}"
-
-        echo "Closed issue [${ISSUE_NUMBER}](https://github.com/${{ github.repository }}/issues/${ISSUE_NUMBER})"  >> $GITHUB_STEP_SUMMARY
-
-        git push origin ":${{ github.ref_name }}"
-        echo "Deleted branch '${{ github.ref_name }}' from remote"  >> $GITHUB_STEP_SUMMARY
-
-        ISSUE_BRANCH=$(echo "${{ github.ref_name }}" | sed 's/ready\///')
-        git push origin ":${ISSUE_BRANCH}"
-        echo "Deleted branch '${ISSUE_BRANCH}' from remote"  >> $GITHUB_STEP_SUMMARY

@@ -10,3 +10,4 @@ logs/
 _temp.token
 dist/
 temp/
+tmp/

@@ -151,75 +151,7 @@ def _handle_no_statuses(*, has_pending_workflows: bool, short_sha: str, interval
 
 class Status(Lazyload):
     """Class used to represent a GitHub commit status"""
-
-
-
-    @classmethod
-    def set_status(cls, state: str, description: str, context: str | None = None, target_url: str | None = None, sha: str | None = None, repository: str | None = None):
-        """Set the status of a commit
-        
-        Args:
-            state: The state of the status (error, failure, pending, success)
-            description: A short description of the status
-            context: A string label to differentiate this status from others (optional)
-            target_url: The target URL to associate with this status (optional)
-            sha: The SHA of the commit to set status for (optional, defaults to current HEAD)
-            
-        Returns:
-            bool: True if status was set successfully, False otherwise
-        """
-
-        
-        # Get repository information
-        if not repository:
-            repository = os.getenv('GITHUB_REPOSITORY')
-            if not repository:
-                raise ValueError("Repository must be provided or set as GITHUB_REPOSITORY environment variable")
-
-
-        # Get commit SHA
-        if not sha:
-            sha = os.getenv('GITHUB_SHA')
-            if not sha:
-                sha = Devbranch().get_sync("sha1")
-        
-        # Set defaults for optional parameters
-        if not context:
-            context = os.getenv('GITHUB_ACTION')
-            if not context:
-                raise ValueError("Context must be provided or set as GITHUB_ACTION environment variable")   
-            
-        if not target_url:
-            if not os.getenv('GITHUB_SERVER_URL') and not os.getenv('GITHUB_RUN_ID') and not os.getenv('GITHUB_REPOSITORY'):
-                raise ValueError("Target URL must be provided or GITHUB_SERVER_URL, GITHUB_RUN_ID and GITHUB_REPOSITORY environment variables must be set")
-            target_url = f"{os.getenv('GITHUB_SERVER_URL')}/{os.getenv('GITHUB_REPOSITORY')}/actions/runs/{os.getenv('GITHUB_RUN_ID')}"
-
-         
-        # Build the gh api command
-        cmd_parts = [
-            "gh api",
-            "--method POST",
-            "-H 'Accept: application/vnd.github+json'",
-            "-H 'X-GitHub-Api-Version: 2022-11-28'",
-            f"/repos/{repository}/statuses/{sha}",
-            f"-f 'state={state}'",
-            f"-f 'description={description}'",
-            f"-f 'context={context}'",
-            f"-f 'target_url={target_url}'"
-        ]
-        
-        cmd = " ".join(cmd_parts)
-           
-        [result, process] = asyncio.run(
-            Gitter(
-                cmd=cmd,
-                msg=f"Setting commit status to '{state}'"
-            ).run()
-        )
-       
-        return 0
-    
-           
+   
     
     @classmethod
     def fetch_status(cls, sha: str | None = None, repository: str | None = None):
