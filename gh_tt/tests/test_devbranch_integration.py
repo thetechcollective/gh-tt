@@ -8,6 +8,7 @@ from typing import NamedTuple
 import pytest
 
 from gh_tt.classes.config import Config
+from gh_tt.classes.gitter import Gitter
 from gh_tt.tests.testbed import Testbed
 
 
@@ -41,6 +42,22 @@ def workon_success_env() -> Generator[FixtureReturn]:
         [owner_data, _] = Testbed.gitter_run(cmd=query_github_org_name_from_id(qa_org_id))
         owner = json.loads(owner_data)['data']['node']['name']
     else:
+        [extension_list, _] = Testbed.gitter_run(cmd='gh extension list')
+        if 'thetechcollective/gh-tt' in extension_list:
+            raise SystemExit(
+                "You have a remote version of the 'gh-tt' extension installed.\n"
+                "Your local changes would not be taken into consideration when running the integration test.\n"
+                "Remove the existing extension with `gh extension remove gh-tt`, then \n"
+                "install the local version with `gh extension install .`"
+            )
+
+        try:
+            Gitter.validate_gh_scope('repo')
+            Gitter.validate_gh_scope('project')
+            Gitter.validate_gh_scope('delete_repo')
+        except SystemExit as e:
+            raise SystemExit("The gh scopes 'repo', 'project' and 'delete_repo' are required to run the integration test outside of GitHub Actions.") from e
+
         [owner, _] = Testbed.gitter_run(cmd='gh api user -H "X-Github-Next-Global-ID: 1" | jq -r .login')
 
     assert owner is not None, "Owner is required for running integration tests"
@@ -57,7 +74,7 @@ def workon_success_env() -> Generator[FixtureReturn]:
         (local_repo_path / ".tt-config.json").write_text(json.dumps({"project": {"owner": owner, "number": project_number}}, indent=4))
         config = Config().config()
         Config().add_config(local_repo_path / ".tt-config.json")
-        Testbed.gitter_run_all([f"git remote add origin {repo_url}", "git add .", 'git commit -m "add config"', "git push -u origin"], cwd=local_repo_path)
+        Testbed.gitter_run_all([f"git remote add origin {repo_url}", "git add .", 'git commit -m "add config"', "git push -u origin main"], cwd=local_repo_path)
 
         yield FixtureReturn(local_repo_path=local_repo_path, github_repo_url=repo_url, owner=owner, issue_number=issue_number, config=config, project_number=project_number)
 
