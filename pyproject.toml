@@ -69,7 +69,6 @@ exclude = [
 # Comment out (or delete). files as you are ready to include them in the linting check
 extend-exclude = [
     
-    "gh_tt/classes/devbranch.py",
     "gh_tt/classes/label.py",
     "gh_tt/classes/responsibles.py",
     "gh_tt/tests/",  # Exclude all test files for now

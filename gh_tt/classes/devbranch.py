@@ -1,12 +1,9 @@
 import asyncio
-import os
 import re
 import subprocess
 import sys
-from datetime import datetime
 
 from gh_tt.classes.config import Config
-from gh_tt.classes.gitter import Gitter
 from gh_tt.classes.issue import Issue
 from gh_tt.classes.lazyload import Lazyload
 from gh_tt.classes.project import Project
@@ -17,7 +14,7 @@ class Devbranch(Lazyload):
     """Class used to represent the Devbranch for a development contribution"""
 
     # Instance methods
-    def __init__(self, workdir=None, verbose=False):
+    def __init__(self):
         super().__init__()
 
         # Init properties that are not defined in props.json
@@ -60,7 +57,7 @@ class Devbranch(Lazyload):
         safe_commit_log = self.get('commit_log').replace(
             '"', '\\"').replace('`', '\\`')
         self.set('squeeze_message',
-                 f"{safe_title} – {close_keyword} #{issue_number}\n\n{safe_commit_log}")
+                 f"{safe_title} - {close_keyword} #{issue_number}\n\n{safe_commit_log}")
         return self.get('squeeze_message')
 
     def __squeeze(self):
@@ -76,19 +73,18 @@ class Devbranch(Lazyload):
             'default_sha1',
             'default_branch'
         ]))
-        if Config.config()['squeeze']['policies']['abort_for_rebase']:
-            if self.get('default_sha1') != self.get('merge_base'):
-                print(f"⛔️ ERROR: The '{self.get('default_branch')}' branch has commits your branch has never seen. A rebase is required.", file=sys.stderr)
-                print(f"💡 Run: git rebase {self.get('remote')}/{self.get('default_branch')}  (you may - or may not - need to stash or commit your changes first)", file=sys.stderr)            
-                if self.get('is_dirty'):
-                    print(f"⚠️  Psst: Your workspace is dirty, so you must stash or commit your changes first)", file=sys.stderr)
-                sys.exit(1)
+        if Config.config()['squeeze']['policies']['abort_for_rebase'] and self.get('default_sha1') != self.get('merge_base'):
+            print(f"⛔️ ERROR: The '{self.get('default_branch')}' branch has commits your branch has never seen. A rebase is required.", file=sys.stderr)
+            print(f"💡 Run: git rebase {self.get('remote')}/{self.get('default_branch')}  (you may - or may not - need to stash or commit your changes first)", file=sys.stderr)            
+            if self.get('is_dirty'):
+                print("⚠️  Psst: Your workspace is dirty, so you must stash or commit your changes first)", file=sys.stderr)
+            sys.exit(1)
 
         # check if the working directory is dirty
         # assert 'status', 'is_dirty', 'unstaged_changes' and 'staged_changes'
         if self.get('is_dirty'):
             # check if dirty is allowed
-            if Config.config()['squeeze']['policies']['allow-dirty'] == False:
+            if not Config.config()['squeeze']['policies']['allow-dirty']:
                 print("⛔️ ERROR: The working directory is not clean:", file=sys.stderr)
                 print('\n'.join(self.get('unstaged_changes')), file=sys.stderr)
                 print('\n'.join(self.get('staged_changes')), file=sys.stderr)
@@ -97,7 +93,7 @@ class Devbranch(Lazyload):
                 sys.exit(1)
             # check if staged changes are allowed
             else:
-                if Config.config()['squeeze']['policies']['allow-staged'] == False and len(self.get('staged_changes')) > 0:
+                if not Config.config()['squeeze']['policies']['allow-staged'] and len(self.get('staged_changes')) > 0:
                     print("⛔️ ERROR: There are staged changes:", file=sys.stderr)
                     print('\n'.join(self.get('unstaged_changes')), file=sys.stderr)
                     print('\n'.join(self.get('staged_changes')), file=sys.stderr)
@@ -105,7 +101,7 @@ class Devbranch(Lazyload):
                     sys.exit(1)
 
                 # check if we should warn about dirty working directory
-                if not Config.config()['squeeze']['policies']['quiet'] == True:
+                if Config.config()['squeeze']['policies']['quiet']:
                     print("⚠️  WARNING: The working directory is not clean:",
                           file=sys.stderr)
                     print('\n'.join(self.get('unstaged_changes')), file=sys.stderr)
@@ -121,7 +117,7 @@ class Devbranch(Lazyload):
 
         return self.get('squeeze_sha1')
 
-    def _push(self, force=False):
+    def _push(self, *, force=False):
         # push the branch to the remote
 
         _ = asyncio.run(self._run("git_push", {
@@ -193,21 +189,21 @@ class Devbranch(Lazyload):
         self._load_status()
         asyncio.run(self._assert_props(['me', 'merge_base', 'remote_sha1', 'default_sha1' ]))
 
-        if Config.config()['wrapup']['policies']['warn_about_rebase'] and not self.get('merge_base') == self.get('default_sha1'):
+        if Config.config()['wrapup']['policies']['warn_about_rebase'] and self.get('merge_base') != self.get('default_sha1'):
             print(
                 f"⚠️  WARNING: The '{self.get('default_branch')}' branch has commits your branch has never seen. A Rebase is required before you can deliver.", file=sys.stderr)
             print(f"💡 Run: git rebase {self.get('remote')}/{self.get('default_branch')}")                  
             if self.get('is_dirty'):
-                print(f"⚠️  Psst: Your workspace is dirty you must stash or commit your changes first)", file=sys.stderr)
+                print("⚠️  Psst: Your workspace is dirty you must stash or commit your changes first)", file=sys.stderr)
 
 
         if not self.get('is_dirty'):
             print("☝️  Nothing to commit. The working directory is clean.")
 
-            if not self.get('sha1') == self.get('remote_sha1'):                
+            if self.get('sha1') != self.get('remote_sha1'):                
                 print("👉 The branch is ahead of its remote; ...pushing")
                 self._push(force=True)
-            return
+            return None
 
         # If nothing is staged, stage all changes
         if not len(self.get('staged_changes')) > 0:
@@ -231,7 +227,7 @@ class Devbranch(Lazyload):
 
 
         print(f"👍 SUCCESS: Branch has got a new commit that mentions issue '#{self.get('issue_number')}' and it's pushed\n{responsibles_alert}")
-        print(f"💡 Run: gh workflow view wrapup")      
+        print("💡 Run: gh workflow view wrapup")      
         print(f"💡 Run: gh browse {self.get('issue_number')}")
         return True
     
@@ -239,12 +235,11 @@ class Devbranch(Lazyload):
         change_list = self._get_pretty_changes()
         changed_past = self._past_responsible_file_paths(issue_comments=issue_comments)
         changed_new = set(change_list) - set(changed_past)
-        responsibles = Responsibles().responsibles_as_markdown(
+
+        return Responsibles().responsibles_as_markdown(
             changeset=changed_new,
             exclude=[f"@{self.get('me')}", *changed_new]
         )
-
-        return responsibles
 
     def _past_responsible_file_paths(self, issue_comments: list[dict]):
         """
@@ -261,17 +256,21 @@ class Devbranch(Lazyload):
                 file_paths = file_paths.union(set(matches))
         return file_paths
 
-    def _load_status(self, reload: bool = False):
+    def _load_status(self, *, reload: bool = False):
         """Load the status of the current branch sets the following properties:
         - 'status': The output of `git status --porcelain`
         - 'is_dirty': True if there are unstaged or staged changes
         - 'unstaged_changes': List of unstaged changes
         - 'staged_changes': List of staged changes"""
 
-        if not reload: # Not in force reload mode
-            if not self.get('is_dirty') == None and self.get('unstaged_changes') and self.get('staged_changes'):
-                # If the status is already loaded, return
-                return
+        # Not in force reload mode
+        if (not reload
+            and self.get('is_dirty') is not None
+            and self.get('unstaged_changes')
+            and self.get('staged_changes')
+        ):
+            # If the status is already loaded, return
+            return
 
         asyncio.run(self._assert_props(['status']))
 
@@ -281,9 +280,9 @@ class Devbranch(Lazyload):
         self.props['unstaged_changes'] = []
         self.props['staged_changes'] = []
         for line in self.get('status').splitlines():
-            if line.startswith('??') or line.startswith(' M') or  line.startswith(' D'):
+            if line.startswith(('??', ' M', ' D')):
                 self.props['unstaged_changes'].append(line)
-            elif line.startswith('M ') or line.startswith('MM') or line.startswith('A ') or line.startswith('D ') :
+            elif line.startswith(('M ', 'MM', 'A ', 'D ')):
                 self.props['staged_changes'].append(line)
             else:
                 # Don't ignore other lines, they might be useful
@@ -291,7 +290,7 @@ class Devbranch(Lazyload):
         self.set('is_dirty',  len(self.props['unstaged_changes']) > 0 or len(
             self.props['staged_changes']) > 0)
         
-    def _get_pretty_changes(self, staged: bool = True, unstaged: bool = False):
+    def _get_pretty_changes(self, *, staged: bool = True, unstaged: bool = False):
         """Get a pretty formatted list of changes
         
         Args:
@@ -311,10 +310,16 @@ class Devbranch(Lazyload):
         ## Go through all items and remove the tailing ' M', 'MM', 'A ' or '??' 
         changes = [re.sub(r'^\s*([?M]+|A\s+)', '', change) for change in changes]
         # Remove leading whitespace
-        changes = [change.lstrip() for change in changes]
-        return changes
+        return [change.lstrip() for change in changes]
 
-    def set_issue(self, issue_number=int, assign=True, msg:str=None, reopen:bool=False, label:str=None):
+    def set_issue(
+            self,
+            issue_number: int,
+            label:str | None = None,
+            msg:str | None = None,
+            *, assign = True,
+            reopen : bool = False
+        ):
         """Set the issue number context to work on"""
 
         asyncio.run(self._assert_props(['remote', 'default_branch']))
@@ -387,11 +392,11 @@ class Devbranch(Lazyload):
 
         print(
             f"👍 SUCCESS: Branch '{self.get('branch_name')}' has been squeezed into one commit; '{self.get('squeeze_sha1')[:7]}' and pushed to {self.get('remote')} as '{ready_prefix}/{self.get('branch_name')}'")
-        print(f"💡 Run: gh workflow view ready")
+        print("💡 Run: gh workflow view ready")
 
         return self.get('squeeze_sha1')
 
-    def responsibles(self, unstaged: bool, staged: bool, exclude:str ):
+    def responsibles(self, exclude:str, *, unstaged: bool, staged: bool, ):
 
         asyncio.run(self._assert_props(['me']))
 
