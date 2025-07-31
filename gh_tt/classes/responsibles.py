@@ -1,12 +1,9 @@
-import asyncio
-import json
-import os
 import re
-import subprocess
 import sys
+from pathlib import Path
+from typing import ClassVar
 
 from gh_tt.classes.gitter import Gitter
-from gh_tt.classes.lazyload import Lazyload
 
 # Module level helper functions
 
@@ -22,7 +19,7 @@ def responsibles_file_to_dict(responsibles_file: str) -> dict:
     # for each file glob, convert it to a regular expression and add it to the dictionary
     # Undet that key add a list of owners
     responsibles_dict = {}
-    with open(responsibles_file, 'r') as f:
+    with Path.open(Path(responsibles_file)) as f:
         lines = f.readlines()
 
     for line in lines:
@@ -70,26 +67,26 @@ def responsibles_file_to_dict(responsibles_file: str) -> dict:
 
 # READ ALL ABOUT IT:
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
-class Responsibles():
+class Responsibles:
     """Class used to represent the RESPONSIBLES file and offers features to match files against ownership.
     """
 
     # Class-level configuration dictionary
-    _responsibles_dict = {}
-    _responsibles_files = []  # List to hold the configuration files in the order they are read
+    _responsibles_dict: ClassVar[dict] = {}
+    _responsibles_files: ClassVar[list] = []  # List to hold the configuration files in the order they are read
     _responsibles_file_name = 'RESPONSIBLES'
 
     _repo_root = Gitter.git_root
 
     # Scan through the three locations for the RESPONSIBLES file
-    _valid_locations = [
-        f"{_repo_root}/.github/{_responsibles_file_name}",
-        f"{_repo_root}/{_responsibles_file_name}",
-        f"{_repo_root}/docs/{_responsibles_file_name}"
-    ]
+    _valid_locations = (
+        Path(_repo_root) / ".github" / _responsibles_file_name,
+        Path(_repo_root) / _responsibles_file_name,
+        Path(_repo_root) / "docs" / _responsibles_file_name
+    )
 
     for _location in _valid_locations:
-        if os.path.exists(_location):
+        if Path.exists(_location):
             _responsibles_files.append(_location)
 
     if len(_responsibles_files) > 0:
@@ -101,12 +98,12 @@ class Responsibles():
         _responsibles_dict = responsibles_file_to_dict(_responsibles_files[0])
 
     @classmethod
-    def file_location(cls, all=False):
+    def file_location(cls, *, return_all=False):
         """Reveals the configuration files used.
         Returns:
             list: List of configuration files in the order they are loaded
         """
-        if all:
+        if return_all:
             return cls._responsibles_files
 
         return cls._responsibles_files[0]
@@ -123,7 +120,7 @@ class Responsibles():
         return cls._responsibles_dict
 
     @classmethod
-    def codeowners_parse(cls, changeset: list[str], exclude: list[str] = None) -> list[str]:
+    def codeowners_parse(cls, changeset: list[str], exclude: list[str] | None = None) -> list[str]:
         """Parse a list of file changes and return a list of owners for each file.
 
         Args:
@@ -154,7 +151,7 @@ class Responsibles():
 
 
     @classmethod
-    def responsibles_parse(cls, changeset: list[str], exclude: list[str] = None) -> list[str]:
+    def responsibles_parse(cls, changeset: list[str], exclude: list[str] | None = None) -> list[str]:
         """Parse a list of file changes and return a list of responsibles for each file.
 
         Args:
@@ -188,7 +185,7 @@ class Responsibles():
         return result
     
     @classmethod
-    def responsibles_as_markdown(cls, changeset: list[str], exclude: list[str] = None) -> str:
+    def responsibles_as_markdown(cls, changeset: list[str], exclude: list[str] | None = None) -> str:
         """Parse a list of file changes and return a markdown formatted list of responsibles for each file.
 
         Args:
@@ -210,8 +207,6 @@ class Responsibles():
             responsibles = responsibles.rstrip(')')
             # Format the item as a markdown list item
             markdown_list.append(f"- `{file_path}` ({responsibles})")
-        # Join the list items with newlines
-#        return "\n".join(markdown_list)
 
         new_line = '\n'
     

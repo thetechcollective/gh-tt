@@ -16,7 +16,7 @@ class TestResponsibles(unittest.TestCase):
         """Test app defaults"""
         codeowners = Responsibles().responsibles_json()
         valid_locations = Responsibles().search_order()
-        codeowner_files = Responsibles().file_location(all=True)
+        codeowner_files = Responsibles().file_location(return_all=True)
         codeowner_file = Responsibles().file_location()
 
         self.assertTrue(True)
