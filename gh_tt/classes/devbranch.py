@@ -363,12 +363,15 @@ class Devbranch(Lazyload):
 
         # add the issue to the project and set the Status
         project = Project()
-        workon_field = "Status"
-        workon_field_value = project.get('workon_action')
+        if project.is_project_enabled():
+            workon_field = "Status"
+            workon_field_value = project.get('workon_action')
 
-        # TODO get the values from the config
-        project.update_field(url=issue.get(
-            'url'), field=workon_field, field_value=workon_field_value)
+            # TODO get the values from the config
+            project.update_field(url=issue.get(
+                'url'), field=workon_field, field_value=workon_field_value)
+        else:
+            print("ℹ️  Project integration is disabled. Skipping project field updates.")
 
     def deliver(self):
         """Mapped to the 'deliver' subcommand."""
@@ -383,10 +386,13 @@ class Devbranch(Lazyload):
         asyncio.run(self._load_issue_number())
         issue = Issue.load(number=self.get('issue_number'))
         project = Project()
-        field = "Status"
-        field_value = project.get('deliver_action')
-        project.update_field(url=issue.get(
-            'url'), field=field, field_value=field_value)
+        if project.is_project_enabled():
+            field = "Status"
+            field_value = project.get('deliver_action')
+            project.update_field(url=issue.get(
+                'url'), field=field, field_value=field_value)
+        else:
+            print("ℹ️  Project integration is disabled. Skipping project field updates.")
 
         asyncio.run(self._run('push_squeeze'))
 

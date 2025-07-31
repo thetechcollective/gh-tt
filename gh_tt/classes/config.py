@@ -68,6 +68,10 @@ class Config(Lazyload):
     _config_dict: ClassVar[dict] = {}
     _config_files: ClassVar[list] = []  # List to hold the configuration files in the order they are read
     _config_file_name = '.tt-config.json'
+    
+    def _caller(self):
+        """Override to return 'gitter' since config properties are under gitter section in props.jsonc"""
+        return "gitter"
 
     _config_dict, _config_files = load_default_configuration(
         config_file_name=_config_file_name,
@@ -164,19 +168,32 @@ class Config(Lazyload):
         project_owner = None
         project_number = None
 
+        # Try to get project owner and number from git config, but don't fail if it's not available
         if not cls._config_dict.get('project', {}).get('owner'):
-            project_owner = asyncio.run(cls()._run('project_owner', args={'gitconfig_file': gitconfig_file}))
-            if project_owner:
-                props_set_from_gitconfig.append('project_owner')
+            try:
+                project_owner = asyncio.run(cls()._run('project_owner', args={'gitconfig_file': gitconfig_file}))
+                if project_owner:
+                    props_set_from_gitconfig.append('project_owner')
+            except Exception as e:
+                # Ignore git config lookup failures - project config is optional
+                print(f"🔍 Debug: Could not load project owner from git config: {e}")
 
         if not cls._config_dict.get('project', {}).get('number'):
-            project_number = asyncio.run(cls()._run('project_number', args={'gitconfig_file': gitconfig_file}))
-            if project_number:
-                props_set_from_gitconfig.append('project_number')
+            try:
+                project_number = asyncio.run(cls()._run('project_number', args={'gitconfig_file': gitconfig_file}))
+                if project_number:
+                    props_set_from_gitconfig.append('project_number')
+            except Exception as e:
+                # Ignore git config lookup failures - project config is optional
+                print(f"🔍 Debug: Could not load project number from git config: {e}")
         
         if props_set_from_gitconfig:
             cls.__set_required_from_gitconfig(config_path=config_path, project_number=project_number, project_owner=project_owner)
 
+        # Project configuration is now optional - if missing, project-related features will be skipped
         if not all([cls._config_dict['project']['owner'], cls._config_dict['project']['number']]):
-            print("🛑 ERROR: Could not load information about project owner or project number from configuration. Missing values are not currently supported. Please specify a 'project' key with 'owner' and 'number' key-value pairs in .tt-config.json.")
-            sys.exit(1)
+            print("⚠️  WARNING: Project owner or project number not configured. GitHub project integration will be disabled.")
+            print("💡 To enable project features, specify 'project' key with 'owner' and 'number' in .tt-config.json.")
+            # Set project values to None to indicate they're not configured
+            cls._config_dict['project']['owner'] = None
+            cls._config_dict['project']['number'] = None
