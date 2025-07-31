@@ -1,17 +1,19 @@
 import asyncio
+import contextlib
 import json
-import os
 import re
 import subprocess
 import sys
+from pathlib import Path
+from typing import ClassVar
 
 
 # Module helper
-def load_jsonc(jsonc_file: str) -> list[bool,dict]:
+def load_jsonc(jsonc_file: Path) -> list[bool,dict]:
     """Load a JSONC file (JSON with comments) and return the parsed data.
     """
-    if os.path.exists(jsonc_file):
-        with open(jsonc_file, 'r') as f:
+    if Path.exists(jsonc_file):
+        with Path.open(jsonc_file) as f:
             try:
                 # Load "JSON with comments"
                 lines = f.readlines()
@@ -31,14 +33,14 @@ def load_jsonc(jsonc_file: str) -> list[bool,dict]:
 class Lazyload:
     """Base class for lazy loading properties"""
 
-    _manifest_file = os.path.dirname(os.path.abspath(__file__)) + "/props.json"
-    _manifest = {}  # Class-level variable to store loaded properties
+    _manifest_file = Path(__file__).resolve().parent / "props.json"
+    _manifest: ClassVar[dict] = {}  # Class-level variable to store loaded properties
     _manifest_loaded = False
 
     for allowed_option in [
-        os.path.dirname(os.path.abspath(__file__)) + "/props.json", 
-        os.path.dirname(os.path.abspath(__file__)) + "/props.jsonc"]:
-    
+        Path(__file__).resolve().parent / "props.json",
+        Path(__file__).resolve().parent / "props.jsonc"
+    ]:
         [loaded, manifest] = load_jsonc(allowed_option)
         if loaded:
             _manifest = manifest
@@ -72,7 +74,7 @@ class Lazyload:
         assert key in self.props, f"Property {key} not found on class"
         return self.props[key]
     
-    def to_json(self, file: str = None) -> bool:
+    def to_json(self, file: str | None = None) -> bool:
         """Prints out the 'props' dict as json
         Args:
             file (str): Optional file to write the output to. If not provided, prints to stdout.
@@ -83,8 +85,8 @@ class Lazyload:
             output = json.dumps(self.props, indent=4)
             if file:
                 # Ensure the directory exists
-                os.makedirs(os.path.dirname(file), exist_ok=True)
-                with open(file, 'w') as f:
+                Path.mkdir(Path(file).parent, exist_ok=True)
+                with Path.open(Path(file), 'w') as f:
                     f.write(output)
             else:
                 print(output)
@@ -93,7 +95,7 @@ class Lazyload:
             print(f"ERROR: Could not write to file {file}: {e}", file=sys.stderr)
             return False
 
-    classmethod
+    @classmethod
     def from_json(cls, file: str):
         """Loads the class properties from a json file
         Args:
@@ -103,14 +105,17 @@ class Lazyload:
         Raises:
             AssertionError: If the file does not exist or is not a valid json file
         """
-        assert os.path.exists(file), f"File {file} does not exist"
-        with open(file, 'r') as f:
+        file_path = Path(file)
+
+        assert Path.exists(file_path), f"File {file} does not exist"
+        with Path.open(file_path) as f:
             try:
                 props = json.load(f)
-                cls.props = props
-                return cls
+                instance = cls()
+                instance.props = props
+                return instance
             except json.JSONDecodeError as e:
-                raise AssertionError(f"File {file} is not a valid JSON file: {e}")
+                raise AssertionError(f"File {file} is not a valid JSON file: {e}") from e
 
 
     async def _load_prop(self, prop: str, cmd: str, msg: str):
@@ -256,7 +261,7 @@ class Lazyload:
             msg
         )
 
-    async def _run(self, prop:str, args: dict[str] = {}, die_on_error: bool = True) -> str:
+    async def _run(self, prop:str, args: dict[str] | None = None, *, die_on_error: bool = True) -> str:
         """Run a property command and return the value.
 
         Given a property command `prop`, `_run`:
@@ -281,20 +286,19 @@ class Lazyload:
         group = self._manifest[self._caller()][prop].get('group', None)
 
         assert cmd is not None, f"ERROR: Command '{prop}' is not defined in the manifest for caller {self._caller()}"
-        assert not group, f"ERROR: _run method should not be used for properties that are a part of a group. Use _assert_props() instead"
+        assert not group, "ERROR: _run method should not be used for properties that are a part of a group. Use _assert_props() instead"
 
         # Find occurrences of {.*} in text (e.g., {someprop} and replace them with values from the caller, or `args`)
         matches = re.findall(r'(?<!{)\{(?!{)(.*?)\}', cmd)
         for match in matches:
             replacement = None
-            try:
-                replacement = str(self.get(match))
-            except AssertionError:
+
+            with contextlib.suppress(AssertionError):
                 # If a prop is not available on the caller, it's ok
                 # We'll get it from args
-                pass
-            
-            if args.get(match, None) is not None:
+                replacement = str(self.get(match))
+
+            if args is not None and args.get(match, None) is not None:
                 replacement = args[match]
             
             assert replacement is not None, f"ERROR: Value for parameter '{match}' found in neither caller '{self._caller()}' props, nor args dictionary '{json.dumps(args)}'"

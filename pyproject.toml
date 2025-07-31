@@ -72,7 +72,6 @@ extend-exclude = [
     "gh_tt/classes/devbranch.py",
     "gh_tt/classes/gitter.py",
     "gh_tt/classes/label.py",
-    "gh_tt/classes/lazyload.py",
     "gh_tt/classes/responsibles.py",
     "gh_tt/tests/",  # Exclude all test files for now
 ]
