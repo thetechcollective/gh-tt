@@ -71,7 +71,6 @@ extend-exclude = [
     "gh_tt/tests/test_config.py",
     "gh_tt/tests/test_devbranch.py",
     "gh_tt/tests/test_gitter.py",
-    "gh_tt/tests/test_issue.py",
     "gh_tt/tests/test_label.py",
     "gh_tt/tests/test_lazyload.py",
     "gh_tt/tests/test_project.py",
