@@ -13,7 +13,7 @@ class Gitter(Lazyload):
     """Class used to run sub process commands (optimized for git and gh commands).
         It supports using cached data from previous runs.
     """
-    reguired_version = '2.55.0'
+    required_version = '2.55.0'
     verbose = False
     die_on_error = True
     workdir = Path.cwd()
@@ -160,9 +160,9 @@ class Gitter(Lazyload):
         #    https://github.com/cli/cli/releases/tag/v2.65.0
 
         version = stdout.split()[2]
-        if version < cls.reguired_version:
+        if version < cls.required_version:
             print(
-                f"gh version {version} is not supported. Please upgrade to version {cls.reguired_version} or higher", file=sys.stderr)
+                f"gh version {version} is not supported. Please upgrade to version {cls.required_version} or higher", file=sys.stderr)
             exit(1)
 
         return True
