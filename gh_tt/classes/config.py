@@ -68,10 +68,6 @@ class Config(Lazyload):
     _config_dict: ClassVar[dict] = {}
     _config_files: ClassVar[list] = []  # List to hold the configuration files in the order they are read
     _config_file_name = '.tt-config.json'
-    
-    def _caller(self):
-        """Override to return 'gitter' since config properties are under gitter section in props.jsonc"""
-        return "gitter"
 
     _config_dict, _config_files = load_default_configuration(
         config_file_name=_config_file_name,
@@ -135,8 +131,9 @@ class Config(Lazyload):
     @classmethod
     def __set_required_from_gitconfig(cls, config_path: str, project_owner: str, project_number: str):
         print("⚠️  DEPRECATED: .gitconfig based configuration is deprecated.")
-        print(f"🔨  Your {config_path} file will be updated with values found in .gitconfig.")
+        print(f"🔨  Your {config_path} is updated with values found in .gitconfig.")
         print(f"⚠️  Review the updated {config_path} and consider checking it in.")
+        print("👉  Consider also removing the settings from your .gitconfig - you don't need them any more")
 
         data = {}
         if Path.exists(config_path):
@@ -168,24 +165,24 @@ class Config(Lazyload):
         project_owner = None
         project_number = None
 
-        # Try to get project owner and number from git config, but don't fail if it's not available
+        # Check for deprecated gitconfig settings (backwards compatibility)
         if not cls._config_dict.get('project', {}).get('owner'):
             try:
                 project_owner = asyncio.run(cls()._run('project_owner', args={'gitconfig_file': gitconfig_file}))
                 if project_owner:
                     props_set_from_gitconfig.append('project_owner')
-            except Exception as e:
-                # Ignore git config lookup failures - project config is optional
-                print(f"🔍 Debug: Could not load project owner from git config: {e}")
+            except Exception:
+                # Expected - gitconfig settings are deprecated and rarely present
+                project_owner = None
 
         if not cls._config_dict.get('project', {}).get('number'):
             try:
                 project_number = asyncio.run(cls()._run('project_number', args={'gitconfig_file': gitconfig_file}))
                 if project_number:
                     props_set_from_gitconfig.append('project_number')
-            except Exception as e:
-                # Ignore git config lookup failures - project config is optional
-                print(f"🔍 Debug: Could not load project number from git config: {e}")
+            except Exception:
+                # Expected - gitconfig settings are deprecated and rarely present
+                project_number = None
         
         if props_set_from_gitconfig:
             cls.__set_required_from_gitconfig(config_path=config_path, project_number=project_number, project_owner=project_owner)
