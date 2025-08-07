@@ -1,13 +1,12 @@
-import os
-from pathlib import Path
 import re
-import sys
+from pathlib import Path
 
 import pytest
+
 from gh_tt.classes.config import Config, LoadStrategy
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def config() -> tuple[dict, list, Config]:
     """
     Loads a config
@@ -22,7 +21,7 @@ def config() -> tuple[dict, list, Config]:
 
     return (config, config_files, Config)
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def default_config() -> tuple[dict, list[Path], Config]:
     """
     Loads a config with default values only
@@ -77,9 +76,9 @@ def test_read_app_defaults_static(default_config):
 @pytest.mark.unittest
 def test_read_project_static(default_config):
     """Test project specifics """
-    _, _, configClass = default_config
+    _, _, config_class = default_config
 
-    config = configClass.add_config('gh_tt/tests/data/.tt-config-project.json')
+    config = config_class.add_config('gh_tt/tests/data/.tt-config-project.json')
     files = Config.config_files()
     assert len(files) == 2
     assert re.search(r'.tt-config-project.json', files[1])
@@ -93,10 +92,10 @@ def test_read_project_static(default_config):
 @pytest.mark.unittest
 def test_read_malformed_static_exit(capsys, default_config):
     """Test malformed config exits with error"""
-    _, _, configClass = default_config
+    _, _, config_class = default_config
     
     with pytest.raises(SystemExit) as cm:
-            configClass.add_config('gh_tt/tests/data/.tt-config-malformed.json')
+            config_class.add_config('gh_tt/tests/data/.tt-config-malformed.json')
 
     # Assertions
     assert cm.value.code == 1
@@ -108,10 +107,10 @@ def test_read_malformed_static_exit(capsys, default_config):
 def test_read_nonexisting_static_exit(default_config):
     """Test nonexisting config exits with error"""
 
-    _, _, configClass = default_config
+    _, _, config_class = default_config
 
     with pytest.raises(FileNotFoundError) as cm:
-        configClass.add_config('gh_tt/tests/data/.tt-config-nonexisting.json')
+        config_class.add_config('gh_tt/tests/data/.tt-config-nonexisting.json')
     
     assert "No such file or directory" in str(cm.value)
 

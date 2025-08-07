@@ -69,7 +69,6 @@ exclude = [
 # Listed files will NOT be linted during 'ruff check .' 
 # Comment out (or delete). files as you are ready to include them in the linting check
 extend-exclude = [
-    "gh_tt/tests/test_config.py",
     "gh_tt/tests/test_devbranch.py",
     "gh_tt/tests/test_lazyload.py",
     "gh_tt/tests/test_status.py",
