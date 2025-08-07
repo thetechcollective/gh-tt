@@ -1,11 +1,11 @@
 import asyncio
 import contextlib
 import json
-from operator import itemgetter
 import os
 import sys
 import time
 from datetime import UTC, datetime
+from operator import itemgetter
 
 from gh_tt.classes.devbranch import Devbranch
 from gh_tt.classes.gitter import Gitter
