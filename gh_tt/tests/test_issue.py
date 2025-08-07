@@ -1,28 +1,10 @@
-from dataclasses import dataclass
-
 import pytest
 
 from gh_tt.classes.issue import Issue
 
 
-@dataclass
-class FakeProcessResult:
-    returncode: int
-    stderr: str = ""
-    stdout: str = ""
-
-@dataclass
-class FakeGitter:
-    returncode: int = 0
-    stdout: str = ""
-    stderr: str = ""
-
-    def run(self):
-        return (self.stdout, FakeProcessResult(returncode=self.returncode, stderr=self.stderr, stdout=self.stdout))
-
-
 @pytest.mark.unittest
-def test_issue_constructor_success(monkeypatch):
+def test_issue_constructor_success(mocker):
     result = """
         {
             "title": "Add a 'deliver' subcommand",
@@ -30,12 +12,13 @@ def test_issue_constructor_success(monkeypatch):
         }
     """
 
-    monkeypatch.setattr("gh_tt.classes.issue.Gitter", FakeGitter(
-        stdout=result,
-    ))
+    mocker.patch(
+        'gh_tt.classes.gitter.Gitter.run',
+        return_value=(result, mocker.Mock())
+    )
 
     issue = Issue.load(number="17")
-
-    assert issue.get("number") == 17
+    
+    assert issue.get("number") == str(17)
     assert issue.get("url") == "https://github.com/thetechcollective/gh-tt/issues/17"
     assert issue.get("title") == "Add a 'deliver' subcommand"
