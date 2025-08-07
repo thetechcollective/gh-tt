@@ -65,13 +65,6 @@ exclude = [
     "temp",
 ]
 
-# Use extend-exclude to temporarily exclude files while working on linting one at a time
-# Listed files will NOT be linted during 'ruff check .' 
-# Comment out (or delete). files as you are ready to include them in the linting check
-extend-exclude = [
-    "gh_tt/tests/test_lazyload.py",
-]
-
 # Generous line length for wide screens
 line-length = 180
 
