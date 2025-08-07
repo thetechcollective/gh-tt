@@ -1,5 +1,7 @@
 import asyncio
+import contextlib
 import json
+from operator import itemgetter
 import os
 import sys
 import time
@@ -66,7 +68,11 @@ def _process_statuses(statuses: list) -> tuple[bool, bool, int]:
     all_complete = True
     all_success = True
     lines_printed = 0
-    
+
+    with contextlib.suppress(KeyError):
+        # When missing the sort key, just skip the sorting
+        statuses = sorted(statuses, key=itemgetter('context'))
+
     for status in statuses:
         context = status.get('context', 'unknown')
         state = status.get('state', 'unknown')
