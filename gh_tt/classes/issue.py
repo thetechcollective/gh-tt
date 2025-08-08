@@ -95,7 +95,7 @@ class Issue(Lazyload):
 
         for label in existing_labels:
             if label["name"] in type_labels:
-                print(f"⚠️  Issue already has a type label. The new label \"{label}\" will not be applied.")
+                print(f"👌  Issue already has a \"{label["name"]}\" label.")
                 return
         
         label = Label(name=label, create=True)
