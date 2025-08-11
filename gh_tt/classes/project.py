@@ -1,7 +1,6 @@
 import asyncio
 import json
 import re
-import sys
 from pathlib import Path
 from types import MappingProxyType
 
@@ -33,7 +32,7 @@ class Project(Lazyload):
         self.set('project_number', config['project']['number'])
         self.set('workon_action', config['workon']['status'])
         self.set('deliver_action', config['deliver']['status'])
-
+    
     def get_project_id(self, owner=None, number=None):
         """Get the project id from the project owner and number
 
@@ -42,13 +41,14 @@ class Project(Lazyload):
             number (int): The project number (optional)
         Returns:
             id (str): The project id
-        Raises:
-            RuntimeError: If the project owner or number is not
         """
         if not owner:
             owner = self.get('project_owner')
         if not number:
             number = self.get('project_number')
+
+        if not owner or not number:
+            return None
 
         [project_id, _] = asyncio.run(Gitter(
             cmd=f"gh project view {number} --owner {owner} --format json --jq '.id'",
@@ -65,14 +65,14 @@ class Project(Lazyload):
             field (str): The field name 
         Returns:
             field_json (dict): The field description in json format
-        Raises:
-            RuntimeError: If the field is not found
         """
-
         if not owner:
             owner = self.get('project_owner')
         if not number:
             number = self.get('project_number')
+
+        if not owner or not number:
+            return {}
 
         [field_json_str, result] = asyncio.run(Gitter(
             cmd=f"gh project field-list {number} --owner {owner} --format json --jq '.fields[] | select(.name == \"{field}\")'",
@@ -82,12 +82,10 @@ class Project(Lazyload):
         field_json = json.loads(field_json_str)
 
         if field_json_str == '{}':
-            raise KeyError(  # TODO should not raise an error, just exit
-                f"Field {field} not found in project {owner}/{number}\n{result.stderr}")
-            sys.exit(1)
+            return {}
         return field_json
 
-    def update_field(self, url: str, field: str, field_value: str, owner: str | None = None, number: int | None = None, field_type=None):
+    def update_field(self, url: str, field: str, field_value: str, owner: str | None = None, number: int | None = None):
         """Update the field with the value
 
         Args:
@@ -97,59 +95,76 @@ class Project(Lazyload):
             field (str): The field name
             field_value (str): The field value
         Returns:
-            result (str): The result of the update
+            result (str): The result of the update, or None if project integration is disabled
         """
         if not owner:
             owner = self.get('project_owner')
         if not number:
             number = self.get('project_number')
 
-        project_id = self.get_project_id()
-        item_id = self.add_issue(url=url)
-        field_desc = self.get_field_description(field=field)
+        if not owner or not number:
+            return None
 
+        project_id = self.get_project_id()
+        if not project_id:
+            return None
+            
+        item_id = self.add_issue(url=url)
+        if not item_id:
+            return None
+            
+        field_desc = self.get_field_description(field=field)
+        if not field_desc:
+            return None
+
+        return self._process_field_update(project_id, item_id, field_desc, field_value)
+
+    def _process_field_update(self, project_id, item_id, field_desc, field_value):
+        """Process the field update with the given parameters"""
         # read the field description
         try:
             field_id = field_desc['id']
-        except KeyError as e:
-            raise KeyError(
-                f"Field {field} in project {owner}/{number} doesn't have an id\n{e}") from e
+        except KeyError:
+            return None
 
         try:
             field_type = field_desc['type']
-        except KeyError as e:
-            raise KeyError(
-                f"Field {field} in project {owner}/{number} doesn't have a type\n{e}") from e
+        except KeyError:
+            return None
         
-        match field_type:
-            case "ProjectV2SingleSelectField":
-                field_option = next((option for option in field_desc['options'] if option['name'] == field_value), None)
-                if field_option is None:
-                    raise KeyError(
-                        f"Field option value {field_value} not found in field {field}")
-
-                # convert the field type used internally in project definition to map the corresponting switch used in the gh project edit-item cli
-                try:
-                    self.type_to_switch_conversion[field_type]
-                except KeyError as e:
-                    raise KeyError(
-                        f"Field type {field_type} not supported. It may be that the field type is just not supported in this extension yet. - Please open an issue or discussion on the repository\n{e}") from e
-
-                value_switch = f"--single-select-option-id {field_option['id']}"
-
-            case "ProjectV2Field":
-                if field_type == "ProjectV2Field":
-                    value_switch = f"--date '{field_value}'" if re.match(r'\d{4}-\d{2}-\d{2}', field_value) else f"--text '{field_value}'"
-
-            case _:
-                raise KeyError(
-                    f"Field type {field_type} not supported. It may be that the field type is just not supported in this extension yet. - Please open an issue or discussion on the repository\n")
+        value_switch = self._get_value_switch(field_type, field_desc, field_value)
+        if not value_switch:
+            return None
 
         [output, _] = asyncio.run(Gitter(
             cmd=f"gh project item-edit --project-id {project_id} --field-id {field_id} --id {item_id} {value_switch}",
             msg="Update the field with the option").run()
         )
         return output
+
+    def _get_value_switch(self, field_type, field_desc, field_value):
+        """Get the appropriate value switch for the field type"""
+        match field_type:
+            case "ProjectV2SingleSelectField":
+                field_option = next((option for option in field_desc['options'] if option['name'] == field_value), None)
+                if field_option is None:
+                    return None
+
+                # convert the field type used internally in project definition to map the corresponting switch used in the gh project edit-item cli
+                try:
+                    self.type_to_switch_conversion[field_type]
+                except KeyError:
+                    return None
+
+                return f"--single-select-option-id {field_option['id']}"
+
+            case "ProjectV2Field":
+                if field_type == "ProjectV2Field":
+                    return f"--date '{field_value}'" if re.match(r'\d{4}-\d{2}-\d{2}', field_value) else f"--text '{field_value}'"
+
+            case _:
+                return None
+        return None
 
     def add_issue(self, owner=None, number=None, url=str):
         """Add an issue to the project. This function is idempotent, It doesn't affect the
@@ -160,12 +175,15 @@ class Project(Lazyload):
             number (int): The project number (optional)
             url (str): The url of the issue
         Returns:
-            result (str): item-id of the issue in the project
+            result (str): item-id of the issue in the project, or None if project integration is disabled
         """
         if not owner:
             owner = self.get('project_owner')
         if not number:
             number = self.get('project_number')
+
+        if not owner or not number:
+            return None
 
         [item_id, _] = asyncio.run(Gitter(
             cmd=f"gh project item-add {number} --owner {owner} --url {url} --format json --jq '.id'",

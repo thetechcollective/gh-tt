@@ -131,8 +131,9 @@ class Config(Lazyload):
     @classmethod
     def __set_required_from_gitconfig(cls, config_path: str, project_owner: str, project_number: str):
         print("⚠️  DEPRECATED: .gitconfig based configuration is deprecated.")
-        print(f"🔨  Your {config_path} file will be updated with values found in .gitconfig.")
+        print(f"🔨  Your {config_path} is updated with values found in .gitconfig.")
         print(f"⚠️  Review the updated {config_path} and consider checking it in.")
+        print("👉  Consider also removing the settings from your .gitconfig - you don't need them any more")
 
         data = {}
         if Path.exists(config_path):
@@ -164,19 +165,30 @@ class Config(Lazyload):
         project_owner = None
         project_number = None
 
+        # Check for deprecated gitconfig settings (backwards compatibility)
         if not cls._config_dict.get('project', {}).get('owner'):
-            project_owner = asyncio.run(cls()._run('project_owner', args={'gitconfig_file': gitconfig_file}))
-            if project_owner:
-                props_set_from_gitconfig.append('project_owner')
+            try:
+                project_owner = asyncio.run(cls()._run('project_owner', args={'gitconfig_file': gitconfig_file}))
+                if project_owner:
+                    props_set_from_gitconfig.append('project_owner')
+            except Exception:
+                # Expected - gitconfig settings are deprecated and rarely present
+                project_owner = None
 
         if not cls._config_dict.get('project', {}).get('number'):
-            project_number = asyncio.run(cls()._run('project_number', args={'gitconfig_file': gitconfig_file}))
-            if project_number:
-                props_set_from_gitconfig.append('project_number')
+            try:
+                project_number = asyncio.run(cls()._run('project_number', args={'gitconfig_file': gitconfig_file}))
+                if project_number:
+                    props_set_from_gitconfig.append('project_number')
+            except Exception:
+                # Expected - gitconfig settings are deprecated and rarely present
+                project_number = None
         
         if props_set_from_gitconfig:
             cls.__set_required_from_gitconfig(config_path=config_path, project_number=project_number, project_owner=project_owner)
 
+        # Project configuration is now optional - if missing, project-related features will be skipped
         if not all([cls._config_dict['project']['owner'], cls._config_dict['project']['number']]):
-            print("🛑 ERROR: Could not load information about project owner or project number from configuration. Missing values are not currently supported. Please specify a 'project' key with 'owner' and 'number' key-value pairs in .tt-config.json.")
-            sys.exit(1)
+            # Set project values to None to indicate they're not configured
+            cls._config_dict['project']['owner'] = None
+            cls._config_dict['project']['number'] = None

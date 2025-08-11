@@ -1,5 +1,6 @@
 {
     "recommendations": [
-        "mk12.better-git-line-blame"
+        "mk12.better-git-line-blame",
+        "mhutchie.git-graph"
     ]
 }

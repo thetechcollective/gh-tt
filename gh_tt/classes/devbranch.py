@@ -163,9 +163,14 @@ class Devbranch(Lazyload):
             if re.match(f"^{issue_number}.+", branch):
                 self.set('branch_name', branch)
                 try:
-                    await self._run(prop='checkout_local_branch', die_on_error=False)
+                    out = await self._run(prop='checkout_local_branch')
+                    # At this point I need access to the result.retuncode, but _run() only retunrs the stdout
+                    # The issue is that the checkout may fail du to either a dirty repository or a merge conflict
+                    # error: Your local changes to the following files would be overwritten by checkout:
+                    # For now I will just change die_on_error to True.
+     
                 except subprocess.CalledProcessError as e:
-                    print(f"⛔️ ERROR:Failed to checkout local branch: {e}", file=sys.stderr)
+                    print(f"⛔️ ERROR:Failed to checkout local branch: {e} {out}", file=sys.stderr)
                     sys.exit(1)
                 match = True
                 break
@@ -363,12 +368,13 @@ class Devbranch(Lazyload):
 
         # add the issue to the project and set the Status
         project = Project()
-        workon_field = "Status"
-        workon_field_value = project.get('workon_action')
+        if project.get('project_owner') and project.get('project_number'): # empty stings are 'falsy' too in python
+            workon_field = "Status"
+            workon_field_value = project.get('workon_action')
 
-        # TODO get the values from the config
-        project.update_field(url=issue.get(
-            'url'), field=workon_field, field_value=workon_field_value)
+            # TODO get the values from the config
+            project.update_field(url=issue.get(
+                'url'), field=workon_field, field_value=workon_field_value)
 
     def deliver(self):
         """Mapped to the 'deliver' subcommand."""
@@ -383,10 +389,11 @@ class Devbranch(Lazyload):
         asyncio.run(self._load_issue_number())
         issue = Issue.load(number=self.get('issue_number'))
         project = Project()
-        field = "Status"
-        field_value = project.get('deliver_action')
-        project.update_field(url=issue.get(
-            'url'), field=field, field_value=field_value)
+        if project.get('project_owner') and project.get('project_number'): # empty stings are 'falsy' too in python
+            field = "Status"
+            field_value = project.get('deliver_action')
+            project.update_field(url=issue.get(
+                'url'), field=field, field_value=field_value)
 
         asyncio.run(self._run('push_squeeze'))
 

@@ -22,9 +22,10 @@ jobs:
     uses: lakruzz/workflows/.github/workflows/mark_pending.yml@experimental
     with:
       statuses: |
-        integration-tests
-        unittest
-        linting
+        Pytest + cov
+        Ruff
+        Cspell
+        E2E in testbed
 
   pytest_with_coverage:
     name: Unit testing
@@ -32,6 +33,8 @@ jobs:
     permissions:
       statuses: write
     uses: lakruzz/workflows/.github/workflows/pytest_with_coverage.yml@experimental
+    with:
+      context: Pytest + cov
 
   ruff_formatting:
     name: Linting
@@ -39,6 +42,18 @@ jobs:
     permissions:
       statuses: write
     uses: lakruzz/workflows/.github/workflows/ruff_check.yml@experimental
+    with:
+      context: Ruff
+
+  cspel_check:
+    name: Spelling
+    needs: mark-pending
+    permissions:
+      statuses: write
+    uses: lakruzz/workflows/.github/workflows/cspell_check.yml@experimental
+    with:
+      context: Cspell
+
 
 
   pytest_integration:
@@ -49,6 +64,8 @@ jobs:
     # continue-on-error: true # <- This doesn't work in reusable workflows, so we set it in the integration_test.yml
     secrets: inherit
     uses: ./.github/workflows/integration_test.yml
+    with:
+      context: E2E in testbed
 
 
   fast-forward-merge:

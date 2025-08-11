@@ -137,6 +137,16 @@ markers = [
     "unittest: these tests are for unit testing",
     "integration: test calling external apis",
 ]
+# Ignore the temp directory during test collection
+testpaths = [
+    "gh_tt/tests"
+]
+norecursedirs = [
+    "temp",
+    ".git",
+    ".venv",
+    "__pycache__"
+]
 log_file = "logs/test.log"
 log_cli = true
 log_cli_level = "WARNING"
@@ -157,7 +167,8 @@ omit = [
     "*/tests/*",
     "gh_tt/modules/*",
     "setup.py",
-    "gh_*.py"
+    "gh_*.py",
+    "temp/*"
 ]
 
 [tool.coverage.report]

@@ -6,6 +6,12 @@ name: Integration Testing
 
 on:
   workflow_call:
+    inputs:
+      context:
+        description: 'Context for the status check'
+        required: false
+        type: string
+        default: 'Integration tests'
 
 permissions:
   statuses: write
@@ -76,8 +82,8 @@ jobs:
         if: always()
         run: |
           if [ ${{ steps.tests.outcome }} == 'success' ]; then
-            gh set-status success "All integration tests passed"
+            gh set-status success "All integration tests passed" "${{ inputs.context }}"
           else
-            gh set-status failure "Some integration tests failed"
+            gh set-status failure "Some integration tests failed" "${{ inputs.context }}"
             exit 1
           fi

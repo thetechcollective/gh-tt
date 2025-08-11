@@ -201,16 +201,16 @@
     "version_context": {
       "cmd": "pwd && python3 --version && git --version && gh --version && gh extension list",
       "msg": "Get information on the context the tool is running in"
+    }
+  },
+  "config": {
+    "project_owner": {
+      "cmd": "git config --get --default '' -f {gitconfig_file} project.owner",
+      "msg": "Get the project owner from .gitconfig"
     },
-    "config": {
-      "project_owner": {
-        "cmd": "git config --get --default '' -f {gitconfig_file} project.owner",
-        "msg": "Get the project owner from .gitconfig"
-      },
-      "project_number": {
-        "cmd": "git config --get --default '' -f {gitconfig_file} project.number",
-        "msg": "Get the project number from .gitconfig"
-      }
+    "project_number": {
+      "cmd": "git config --get --default '' -f {gitconfig_file} project.number",
+      "msg": "Get the project number from .gitconfig"
     }
   }
 }

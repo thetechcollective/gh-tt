@@ -316,9 +316,9 @@ class Lazyload:
             msg=f"{msg}",
             die_on_error=die_on_error).run()
         
-        if die_on_error is not True and result.returncode != 0:
+        if die_on_error is not True and result['returncode'] != 0:
              raise subprocess.CalledProcessError(
-                result.returncode, cmd, output=result.stdout, stderr=result.stderr)
+                result['returncode'], cmd, output=result['stdout'], stderr=result['stderr'])
         return value
 
 
