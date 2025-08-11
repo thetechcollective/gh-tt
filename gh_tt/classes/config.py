@@ -189,8 +189,6 @@ class Config(Lazyload):
 
         # Project configuration is now optional - if missing, project-related features will be skipped
         if not all([cls._config_dict['project']['owner'], cls._config_dict['project']['number']]):
-            # print("⚠️  WARNING: Project owner or project number not configured. GitHub project integration will be disabled.")
-            # print("💡 To enable project features, specify 'project' key with 'owner' and 'number' in .tt-config.json.")
             # Set project values to None to indicate they're not configured
             cls._config_dict['project']['owner'] = None
             cls._config_dict['project']['number'] = None

@@ -61,7 +61,7 @@ def test__reuse_issue_branch(mocker):
     loop = asyncio.new_event_loop()
     reuse_local = loop.run_until_complete(devbranch._Devbranch__reuse_issue_branch(7))
     assert reuse_local
-    mock_run.assert_called_once_with(prop="checkout_local_branch", die_on_error=False)
+    mock_run.assert_called_once_with(prop="checkout_local_branch")
     mock_run.reset_mock()
 
     devbranch.props["local_branches"] = ""

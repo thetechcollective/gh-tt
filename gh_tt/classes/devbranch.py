@@ -163,9 +163,14 @@ class Devbranch(Lazyload):
             if re.match(f"^{issue_number}.+", branch):
                 self.set('branch_name', branch)
                 try:
-                    await self._run(prop='checkout_local_branch', die_on_error=False)
+                    out = await self._run(prop='checkout_local_branch')
+                    # At this point I need access to the result.retuncode, but _run() only retunrs the stdout
+                    # The issue is that the checkout may fail du to either a dirty repository or a merge conflict
+                    # error: Your local changes to the following files would be overwritten by checkout:
+                    # For now I will just change die_on_error to True.
+     
                 except subprocess.CalledProcessError as e:
-                    print(f"⛔️ ERROR:Failed to checkout local branch: {e}", file=sys.stderr)
+                    print(f"⛔️ ERROR:Failed to checkout local branch: {e} {out}", file=sys.stderr)
                     sys.exit(1)
                 match = True
                 break
