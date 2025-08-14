@@ -74,7 +74,7 @@ def workon_success_env() -> Generator[FixtureReturn]:
         (local_repo_path / ".tt-config.json").write_text(json.dumps({"project": {"owner": owner, "number": project_number}}, indent=4))
         config = Config().config()
         Config().add_config(local_repo_path / ".tt-config.json")
-        Testbed.gitter_run_all([f"git remote add origin {repo_url}", "git add .", 'git commit -m "add config"', "git push -u origin main"], cwd=local_repo_path)
+        Testbed.gitter_run_all([f"git remote add origin {repo_url}", "git add .", 'git commit -m "add config"', "git push -u origin HEAD"], cwd=local_repo_path)
 
         yield FixtureReturn(local_repo_path=local_repo_path, github_repo_url=repo_url, owner=owner, issue_number=issue_number, config=config, project_number=project_number)
 

@@ -27,8 +27,6 @@ class Testbed:
             project_number (int): number of the project to clean up
         """
 
-        # TODO: change to run in CI
-
         asyncio.run(Gitter(
             cmd=f'gh project delete {project_number} --owner {project_owner}',
             msg='Delete GH project'
@@ -83,10 +81,11 @@ class Testbed:
             repo = Path(td)
             Testbed.gitter_run_all(cmds=[
                 'git init',
-                f'git branch -m {default_branch}',
+                f'git checkout -b {default_branch}',
                 'git config user.email "me@example.com"',
-                'git config user.name "Manual E2E"',
-                'git config push.autoSetupRemote true'
+                'git config user.name "E2E Tester"',
+                'git config push.autoSetupRemote true',
+                'git commit --allow-empty -m "Initial repo setup"'
             ], cwd=repo)
             
             yield repo
