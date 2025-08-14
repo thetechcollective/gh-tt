@@ -19,6 +19,7 @@ jobs:
     name: Statuses
     permissions:
       statuses: write
+      contents: read
     uses: lakruzz/workflows/.github/workflows/mark_pending.yml@experimental
     with:
       statuses: |
@@ -32,6 +33,7 @@ jobs:
     needs: mark-pending
     permissions:
       statuses: write
+      contents: read
     uses: lakruzz/workflows/.github/workflows/pytest_with_coverage.yml@experimental
     with:
       context: Pytest + cov

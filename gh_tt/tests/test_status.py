@@ -253,6 +253,26 @@ def test_process_statuses_with_failure():
     assert lines_printed == 2
 
 @pytest.mark.unittest
+def test_process_statuses_prints_sorted(capsys):
+    """Test processing statuses with failures"""
+    statuses = [
+        {'context': 'ci/b_test', 'state': 'failure'},
+        {'context': 'ci/0_test', 'state': 'success'},
+        {'context': 'ci/a_test', 'state': 'success'},
+        {'context': 'ci/1_test', 'state': 'success'},
+    ]
+    
+    _process_statuses(statuses)
+    
+    output = capsys.readouterr().out
+    lines = output.strip().split('\n')
+
+    assert 'ci/0_test' in lines[0]
+    assert 'ci/1_test' in lines[1]
+    assert 'ci/a_test' in lines[2]
+    assert 'ci/b_test' in lines[3]
+
+@pytest.mark.unittest
 def test_process_statuses_empty_list():
     """Test processing empty status list"""
     statuses = []
