@@ -191,6 +191,11 @@ class Devbranch(Lazyload):
         """Mapped to the 'wrapup' subcommand in the main program"""
 
         asyncio.run(self._load_issue_number())
+
+        if self.get('issue_number') is None:
+            print('⛔️ Wrapup is supported only on branches named <issue number>-<branch_name>', file=sys.stderr)
+            sys.exit(1)
+
         self._load_status()
         asyncio.run(self._assert_props(['me', 'merge_base', 'remote_sha1', 'default_sha1' ]))
 

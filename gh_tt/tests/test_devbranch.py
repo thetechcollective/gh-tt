@@ -2,6 +2,7 @@ import asyncio
 import re
 
 import pytest
+from pytest_mock import MockerFixture
 
 from gh_tt.classes.config import Config
 from gh_tt.classes.devbranch import Devbranch
@@ -207,3 +208,22 @@ def test_load_status(mocker):
 
     devbranch._load_status(reload=True)
     mock_force_prop_reload.assert_called_once_with("status")
+
+@pytest.mark.unittest
+def test_wrapup_only_on_issue_branch(mocker: MockerFixture, capsys):
+    devbranch = Devbranch()
+
+    mocker.patch('gh_tt.classes.devbranch.Devbranch._assert_props')
+    mocker.patch('gh_tt.classes.devbranch.Devbranch._run')
+    mocker.patch('gh_tt.classes.devbranch.Devbranch._push')
+    mocker.patch('gh_tt.classes.devbranch.Devbranch._load_status')
+    mocker.patch('gh_tt.classes.issue.Issue')
+
+    devbranch.set('issue_number', None)
+    devbranch.set('branch_name', 'not-an-issue-branch')
+
+    with pytest.raises(SystemExit) as cm:
+        devbranch.wrapup('msg')
+
+    assert cm.value.code == 1
+    assert 'Wrapup is supported only on branches named <issue number>-<branch_name>' in capsys.readouterr().err
