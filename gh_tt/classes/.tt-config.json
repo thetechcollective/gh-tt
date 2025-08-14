@@ -31,14 +31,18 @@
   },
   "wrapup": {
     "policies":{
-        "warn_about_rebase": true
+        "warn_about_rebase": true,
+        // "poll": false will skip polling for commit statuses after running `wrapup`
+        "poll": false
     }
   },
   "deliver": {
     // the status to set in the project when the wrapup subcommand is used
     "status": "Delivery Initiated",
     "policies": {
-        "branch_prefix": "ready"
+        "branch_prefix": "ready",
+        // "poll": false will skip polling for commit statuses after running `deliver`
+        "poll": false
     }
   },
   "semver":{

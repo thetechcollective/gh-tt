@@ -2,5 +2,15 @@
     "project": {
         "owner": "thetechcollective",
         "number": 12
+    },
+    "wrapup": {
+        "policies": {
+            "poll": true
+        }
+    },
+    "deliver": {
+        "policies": {
+            "poll": true
+        }
     }
 }

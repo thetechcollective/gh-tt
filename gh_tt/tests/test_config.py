@@ -57,9 +57,11 @@ def test_read_app_defaults_static(default_config):
     assert config['squeeze']['policies']['close-keyword'] == 'resolves', "Policy 'close-keyword' should be 'resolves'"
     
     assert config['wrapup']['policies']['warn_about_rebase'] is True, "Policy 'warn_about_rebase' should be True"
+    assert config['wrapup']['policies']['poll'] is False
     
     assert config['deliver']['status'] == 'Delivery Initiated', "Deliver status should be 'Delivery Initiated'"
     assert config['deliver']['policies']['branch_prefix'] == 'ready', "Policy 'branch_prefix' should be 'ready'"
+    assert config['deliver']['policies']['poll'] is False
     
     assert re.match(r'[0-9a-fA-F]{6}', config['labels']['ad hoc']['color']), "Color code for 'ad hoc' label does not match the expected hexadecimal pattern"
     assert re.match(r'.*', config['labels']['ad hoc']['description']), "Description for 'ad hoc' label should not be empty"

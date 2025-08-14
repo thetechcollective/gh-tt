@@ -38,7 +38,19 @@ def handle_wrapup(args):
     devbranch = Devbranch()
     message = args.message_by_flag or args.message  
     devbranch.wrapup(message)
-    if args.poll:
+    
+    if args.poll is not None:
+        if args.poll:
+            Status.poll()
+
+        return
+    
+    config_poll = False
+    # If the config value is not set, proceed with False
+    with contextlib.suppress(KeyError):
+        config_poll = Config.config()['wrapup']['policies']['poll']
+
+    if config_poll:
         Status.poll()
 
 
@@ -46,9 +58,20 @@ def handle_deliver(args):
     """Handle the deliver command"""
     devbranch = Devbranch()
     squeeze_sha = devbranch.deliver()
-    if args.poll:
-        Status.poll(sha=squeeze_sha)
+    
+    if args.poll is not None:
+        if args.poll:
+            Status.poll(sha=squeeze_sha)
 
+        return
+
+    config_poll = False
+    # If the config value is not set, proceed with False
+    with contextlib.suppress(KeyError):
+        config_poll = Config.config()['deliver']['policies']['poll']
+
+    if config_poll:
+        Status.poll(sha=squeeze_sha)
 
 def handle_responsibles(args):
     """Handle the responsibles command"""

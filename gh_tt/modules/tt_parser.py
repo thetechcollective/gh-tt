@@ -16,7 +16,7 @@ def tt_parse(args=None):
     poll_group = poll_parser.add_mutually_exclusive_group()
     poll_group.add_argument('--poll', dest='poll', action='store_true', help='Poll the status until it is set to success or failure (default)')
     poll_group.add_argument('--no-poll', dest='poll', action='store_false', help='Do not continue to poll the status, just fire and forget')
-    poll_parser.set_defaults(poll=True)
+    poll_parser.set_defaults(poll=None)
     
     # Define command-line arguments
     parser = argparse.ArgumentParser(
