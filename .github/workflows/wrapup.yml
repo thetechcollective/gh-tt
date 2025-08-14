@@ -43,6 +43,7 @@ jobs:
     needs: mark-pending
     permissions:
       statuses: write
+      contents: read
     uses: lakruzz/workflows/.github/workflows/ruff_check.yml@experimental
     with:
       context: Ruff
@@ -52,6 +53,7 @@ jobs:
     needs: mark-pending
     permissions:
       statuses: write
+      contents: read
     uses: lakruzz/workflows/.github/workflows/cspell_check.yml@experimental
     with:
       context: Cspell
