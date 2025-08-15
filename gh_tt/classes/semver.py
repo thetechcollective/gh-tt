@@ -249,7 +249,7 @@ class Semver(Lazyload):
 
         if filename is not None:
             # make sure the directory exists
-            directory = Path.parent(filename)
+            directory = Path(filename).parent
             if not Path.exists(directory):
                 Path.mkdir(directory, parents=True)
             with Path.open(filename, 'w') as f:
