@@ -67,5 +67,11 @@
           "description": "Rework of existing code; may or may not be part of a strict prioritized upstream kanban cycle",
           "category": "type"
         }
+    },
+    "sync": {
+        // Repositories to consider for syncing
+        "sibling_repos": [],
+        // All items from this repo will be included in sibling_repos
+        "template_repo": ""
     }
 }
