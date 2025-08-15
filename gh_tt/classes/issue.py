@@ -93,9 +93,9 @@ class Issue(Lazyload):
         config = Config()._config_dict
         type_labels = [name for name, props in config["labels"].items() if props["category"] == "type"]
 
-        for label in existing_labels:
-            if label["name"] in type_labels:
-                print(f"👌  Issue already has a \"{label["name"]}\" label.")
+        for existing_label in existing_labels:
+            if existing_label["name"] in type_labels:
+                print(f"👌  Issue already has a \"{existing_label["name"]}\" label.")
                 return
         
         label = Label(name=label, create=True)

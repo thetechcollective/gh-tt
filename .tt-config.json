@@ -3,6 +3,12 @@
         "owner": "thetechcollective",
         "number": 12
     },
+    "workon": {
+        "default_type_labels": {
+            "title": "type: adhoc",
+            "issue": "type: development"
+        }
+    },
     "wrapup": {
         "policies": {
             "poll": true
@@ -11,6 +17,23 @@
     "deliver": {
         "policies": {
             "poll": true
+        }
+    },
+    "labels": {
+        "type: ad hoc": {
+          "color": "0E8A16",
+          "description": "Ad hoc work, not part of a strict planned upstream kanban cycle",
+          "category": "type"
+        },
+        "type: development": {
+          "color": "0E8A16",
+          "description": "Regular planned development work, part of a strict prioritized upstream kanban cycle",
+            "category": "type"
+        },
+        "type: rework": {
+          "color": "0E8A16",
+          "description": "Rework of existing code; may or may not be part of a strict prioritized upstream kanban cycle",
+          "category": "type"
         }
     }
 }
