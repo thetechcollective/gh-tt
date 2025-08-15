@@ -7,7 +7,7 @@ from typing import NamedTuple
 
 import pytest
 
-from gh_tt.classes.config import Config
+from gh_tt.classes.config import Config, LoadStrategy
 from gh_tt.classes.gitter import Gitter
 from gh_tt.tests.testbed import Testbed
 
@@ -72,7 +72,7 @@ def workon_success_env() -> Generator[FixtureReturn]:
 
     with Testbed.create_local_repo() as local_repo_path:
         (local_repo_path / ".tt-config.json").write_text(json.dumps({"project": {"owner": owner, "number": project_number}}, indent=4))
-        config = Config().config()
+        config = Config().config(load_only_default=LoadStrategy.ONLY_DEFAULT_CONFIG)
         Config().add_config(local_repo_path / ".tt-config.json")
         Testbed.gitter_run_all([f"git remote add origin {repo_url}", "git add .", 'git commit -m "add config"', "git push -u origin HEAD"], cwd=local_repo_path)
 
