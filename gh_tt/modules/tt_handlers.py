@@ -82,6 +82,7 @@ def handle_responsibles(args):
 def handle_semver(args):
     """Handle the semver command"""
     semver = Semver()
+    release_type = ReleaseType.PRERELEASE if args.prerelease else ReleaseType.RELEASE
     
     if args.semver_command == 'bump':
         semver.bump(
@@ -90,20 +91,20 @@ def handle_semver(args):
             suffix=args.suffix, 
             prefix=args.prefix, 
             initial=args.initial, 
-            release_type=ReleaseType.PRERELEASE if args.prerelease else ReleaseType.RELEASE, 
+            release_type=release_type,
             execution_mode=ExecutionMode.LIVE if args.run else ExecutionMode.DRY_RUN
         )
     elif args.semver_command == 'list':
-        semver.list(release_type=ReleaseType.PRERELEASE if args.prerelease else ReleaseType.RELEASE)
+        semver.list(release_type=release_type)
     elif args.semver_command == 'note':
         if args.filename:
-            note = semver.note(prerelease=ReleaseType.PRERELEASE if args.prerelease else ReleaseType.RELEASE, filename=args.filename)
+            note = semver.note(release_type=release_type, filename=args.filename)
             print(f"{args.filename}")
         else:
-            note = semver.note(prerelease=ReleaseType.PRERELEASE if args.prerelease else ReleaseType.RELEASE)
+            note = semver.note(release_type=release_type)
             print(note)
     elif args.semver_command is None:
-        current_semver = semver.get_current_semver(release_type=args.prerelease)
+        current_semver = semver.get_current_semver(release_type=release_type)
         print(f"{current_semver}")
 
 

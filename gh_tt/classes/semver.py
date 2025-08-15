@@ -182,7 +182,7 @@ class Semver(Lazyload):
 
         message = f"\n{message}" if message else ""
 
-        pre = 'pre' if release_type else ''
+        pre = 'pre' if release_type is ReleaseType.PRERELEASE else ''
 
         lookup_next =    f"next_{pre}release_{level}"
         lookup_current = f"current_{pre}release"
@@ -216,7 +216,7 @@ class Semver(Lazyload):
             print(temp[k])
             
     
-    def note(self, prerelease: ReleaseType = ReleaseType.RELEASE, filename: str | None = None) -> str:
+    def note(self, release_type: ReleaseType = ReleaseType.RELEASE, filename: str | None = None) -> str:
         """Generates a release note either for a release or a prerelease, based on the set of current semver tags.
 
         Args:
@@ -235,7 +235,7 @@ class Semver(Lazyload):
 
         self.__load_tags()
 
-        if prerelease is ReleaseType.PRERELEASE:
+        if release_type is ReleaseType.PRERELEASE:
            from_ref = self.get_current_semver()
            to_ref = self.get_current_semver(release_type=ReleaseType.PRERELEASE)
         else:
