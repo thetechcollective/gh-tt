@@ -2,6 +2,7 @@ import pytest
 
 from gh_tt.classes.gitter import Gitter
 from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver
+from gh_tt.tests.testbed import Testbed
 
 
 @pytest.mark.unittest
@@ -77,3 +78,22 @@ def test_semver_first_prerelease(capsys):
 
     semver.bump("patch", message="Test patch bump", release_type=ReleaseType.PRERELEASE, execution_mode=ExecutionMode.DRY_RUN)
     assert "git tag -a -m \"0.0.1rc\nBumped patch from version 'None' to '0.0.1rc'\nTest patch bump\" 0.0.1rc\n" in capsys.readouterr().out
+
+@pytest.mark.integration
+def test_note_with_one_release():
+    [extension_list, _] = Testbed.gitter_run(cmd='gh extension list')
+    if 'thetechcollective/gh-tt' in extension_list:
+        raise SystemExit(
+            "You have a remote version of the 'gh-tt' extension installed.\n"
+            "Your local changes would not be taken into consideration when running the integration test.\n"
+            "Remove the existing extension with `gh extension remove gh-tt`, then \n"
+            "install the local version with `gh extension install .`"
+        )
+
+    with Testbed.create_local_repo() as repo:
+        (repo / 'file1.txt').write_text('text')
+        Testbed.gitter_run_all(['git add .', 'git commit -m "file1"'], cwd=repo)
+        (repo / 'file2.txt').write_text('text')
+        Testbed.gitter_run_all(['git add .', 'git commit -m "file2"', 'git tag 1.0.0', 'gh tt semver note --filename note.md'], cwd=repo)
+
+        assert (repo / 'note.md').read_text().find('Release Notes') != -1

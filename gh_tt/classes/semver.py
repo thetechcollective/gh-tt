@@ -239,11 +239,25 @@ class Semver(Lazyload):
            from_ref = self.get_current_semver()
            to_ref = self.get_current_semver(release_type=ReleaseType.PRERELEASE)
         else:
-              sorted_keys = sorted(self.get('semver_tags')['release'].keys())
-              previous_release = self.get('semver_tags')['release'][sorted_keys[-2]]
+            sorted_keys = sorted(self.get('semver_tags')['release'].keys())
 
-              from_ref = previous_release
-              to_ref = self.get_current_semver()
+            from_ref = None
+            if len(sorted_keys) > 1:
+                from_ref = self.get('semver_tags')['release'][sorted_keys[-2]]
+            else:
+                print("Could not find previous release tag when assembling changes for the note. Attempting to find a root commit instead.")
+                [from_ref, _] = asyncio.run(Gitter(
+                    cmd='git rev-list --max-parents=0 HEAD',
+                    msg='Find root commits'
+                ).run())
+
+                if from_ref.find('\n') != -1:
+                    print("Found multiple root commits. To create a note without any previous releases and multiple root commits, please create an explicit initial tag (e.g. 0.0.0). All changes from this ref will be included in the release note.", file=sys.stderr)
+                    sys.exit(1)
+
+                print("Found root commit. The release note will include all changes since the root commit, excluding the root commit.")
+                  
+            to_ref = self.get_current_semver()
 
         note = self.note_md(from_ref=from_ref, to_ref=to_ref)
 
