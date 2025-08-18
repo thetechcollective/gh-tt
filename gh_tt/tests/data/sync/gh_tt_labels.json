@@ -1,0 +1,92 @@
+[
+  {
+    "color": "cfd3d7",
+    "description": "This issue or pull request already exists",
+    "name": "duplicate"
+  },
+  {
+    "color": "FB518B",
+    "description": "Template item",
+    "name": "template"
+  },
+  {
+    "color": "B60205",
+    "description": "Required for the deliverable to be a success",
+    "name": "prio 1: must have"
+  },
+  {
+    "color": "B60205",
+    "description": "Desired in the delivery",
+    "name": "prio 2: should have"
+  },
+  {
+    "color": "B60205",
+    "description": "Optional in the delivery - not expected",
+    "name": "prio 3: could have"
+  },
+  {
+    "color": "B60205",
+    "description": "Discarded - should not be part of the delivery",
+    "name": "prio 4: wont have"
+  },
+  {
+    "color": "0E8A16",
+    "description": "Unplanned work - task made up on-the-go",
+    "name": "type: ad hoc"
+  },
+  {
+    "color": "0E8A16",
+    "description": "A customer facing bug - a patch bump",
+    "name": "type: bug fix"
+  },
+  {
+    "color": "0E8A16",
+    "description": "The type of choice for smaller chunks of work distilled from bigger chunks - essentially a back-stop",
+    "name": "type: dev task"
+  },
+  {
+    "color": "0E8A16",
+    "description": "Refactoring tasks, aiming for status quo, only prettier",
+    "name": "type: refactoring"
+  },
+  {
+    "color": "0E8A16",
+    "description": "Improvements or additions to documentation",
+    "name": "type: documentation"
+  },
+  {
+    "color": "0E8A16",
+    "description": "A feature is added to the system - a minor bump",
+    "name": "type: feature"
+  },
+  {
+    "color": "0E8A16",
+    "description": "Defined broadly as a task dealing with IaC, flow tech, pipelines, tools, utilities, containers(etc)",
+    "name": "type: infrastructure"
+  },
+  {
+    "color": "00aa66",
+    "description": "Regular planned development work, part of a strict prioritized upstream kanban cycle",
+    "name": "development"
+  },
+  {
+    "color": "00aa00",
+    "description": "Ad hoc work, not part of a strict planned updstream kanban cycle",
+    "name": "ad hoc"
+  },
+  {
+    "color": "00aaaa",
+    "description": "Rework of existing code; may or may not be part of a strict prioritized upstream kanban cycle",
+    "name": "rework"
+  },
+  {
+    "color": "f8b008",
+    "description": "Synchronizing metadata across repos",
+    "name": "feat: sync"
+  },
+  {
+    "color": "0E8A16",
+    "description": "Regular planned development work, part of a strict prioritized upstream kanban cycle",
+    "name": "type: development"
+  }
+]

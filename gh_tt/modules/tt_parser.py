@@ -138,6 +138,14 @@ def tt_parse(args=None):
     status_set_parser.add_argument('--context', type=str, help='Context (name) of the commit status. Can be omitted in context of a GitHub Action in which case it will default to the Action ID', default=None)
     status_set_parser.add_argument('--target-url', type=str, help='Target URL for the commit status. Can be omitted in context of a GitHub Action in which case it will default to the URL to the action run', default=None)
 
+    # Sync subcommand
+    sync_parser = subparsers.add_parser(
+        'sync', 
+        parents=[parent_parser],
+        help="Sync GitHub items from a template repository to all sibling repositories"
+    )
+
+    sync_parser.add_argument('--labels', action='store_true', help='Read labels from the template repo and create them in all sibling repos')
 
     args = parser.parse_args(args)
 
@@ -150,5 +158,8 @@ def tt_parse(args=None):
 
     if args.command == 'responsibles' and not (args.unstaged or args.staged):
         parser.error("You must specify either --unstaged or --staged  or both for the responsibles command")
+
+    if args.command == 'sync' and not (args.labels):
+        sync_parser.error("🛑 You must specify at least one entity (e.g. labels) to sync")
 
     return args

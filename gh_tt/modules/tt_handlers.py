@@ -2,6 +2,7 @@
 
 import contextlib
 
+from gh_tt.classes import sync
 from gh_tt.classes.config import Config
 from gh_tt.classes.devbranch import Devbranch
 from gh_tt.classes.issue import Issue
@@ -121,7 +122,10 @@ def handle_status(args):
             sha=args.sha
         )
 
-
+def handle_sync(args):
+    assert args.labels
+    
+    sync.sync(labels=args.labels)
 
 # Command handler mapping - exported for use by main
 COMMAND_HANDLERS = {
@@ -131,4 +135,5 @@ COMMAND_HANDLERS = {
     'responsibles': handle_responsibles,
     'semver': handle_semver,
     'status': handle_status,
+    'sync': handle_sync,
 }
