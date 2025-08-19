@@ -26,13 +26,16 @@ class SyncPlan:
     sibling_repos: list[str]
 
 
-def build_label_commands(labels: list[dict], sibling_repos: list[str]) -> list[tuple[str, dict]]:
+def build_label_commands(
+    labels: list[dict], sibling_repos: list[str], *, override_labels: bool
+) -> list[tuple[str, dict]]:
     """Returns commands with context that should be executed to sync labels"""
+    force_flag = " --force" if override_labels else ""
 
     commands = []
     for label in labels:
         for repo in sibling_repos:
-            cmd = f"gh label create '{label['name']}' -R '{repo}' --color '{label['color']}' --description '{label['description']}' --force"
+            cmd = f"gh label create '{label['name']}' -R '{repo}' --color '{label['color']}' --description '{label['description']}'{force_flag}"
             metadata = {
                 "operation_type": "label",
                 "target_repo": repo,
@@ -80,12 +83,16 @@ def build_sync_plan(
     sibling_repos: list[str],
     labels_data: list[dict] | None = None,
     milestones_data: list[dict] | None = None,
+    *,
+    override_labels: bool,
 ) -> SyncPlan:
     """Pure function: builds complete sync plan from inputs"""
     commands = []
 
     if labels_data:
-        commands.extend(build_label_commands(labels_data, sibling_repos))
+        commands.extend(
+            build_label_commands(labels_data, sibling_repos, override_labels=override_labels)
+        )
 
     if milestones_data:
         commands.extend(build_milestone_commands(milestones_data, sibling_repos))
@@ -128,6 +135,9 @@ async def execute_with_metadata(cmd: str, metadata: dict) -> SyncResult:
             resource_name=metadata["resource_name"],
         )
     except Exception as e:
+        if metadata["operation_type"] == "label" and "already exists" in str(e):
+            e = "label already exists"
+
         return SyncResult(
             command=cmd,
             success=False,
@@ -207,7 +217,10 @@ def sync(*, labels: bool = False, milestones: bool = False):
         fetch_template_data(template_repo, labels=labels, milestones=milestones)
     )
 
-    plan = build_sync_plan(template_repo, sibling_repos, labels_data, milestones_data)
+    override_labels = config["sync"]["policies"]["override_labels"]
+    plan = build_sync_plan(
+        template_repo, sibling_repos, labels_data, milestones_data, override_labels=override_labels
+    )
     if not plan.commands_with_metadata:
         return
 

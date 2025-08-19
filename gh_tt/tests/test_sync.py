@@ -54,7 +54,8 @@ def test_sync_exits_when_no_template_repo(mocker: MockerFixture, capsys):
 
 
 @pytest.mark.unittest
-def test_build_label_commands_generates_correct_commands():
+@pytest.mark.parametrize('override_labels', [True, False])
+def test_build_label_commands_generates_correct_commands(override_labels):
     """Test that build_label_commands generates correct command structure"""
     
     labels = [
@@ -63,7 +64,7 @@ def test_build_label_commands_generates_correct_commands():
     ]
     sibling_repos = ["owner/repo1", "owner/repo2"]
 
-    commands = build_label_commands(labels, sibling_repos)
+    commands = build_label_commands(labels, sibling_repos, override_labels=override_labels)
 
     assert len(commands) == 4  # 2 labels x 2 repos
 
@@ -73,7 +74,7 @@ def test_build_label_commands_generates_correct_commands():
     assert "'owner/repo1'" in cmd
     assert "--color 'ff0000'" in cmd
     assert "--description 'Bug report'" in cmd
-    assert "--force" in cmd
+    assert "--force" in cmd if override_labels else "--force" not in cmd
 
     assert metadata["operation_type"] == "label"
     assert metadata["target_repo"] == "owner/repo1"
@@ -134,7 +135,7 @@ def test_build_sync_plan_combines_commands_correctly():
     sibling_repos = ["owner/repo1", "owner/repo2"]
 
     # Act
-    plan = build_sync_plan(template_repo, sibling_repos, labels, milestones)
+    plan = build_sync_plan(template_repo, sibling_repos, labels, milestones, override_labels=False)
 
     # Assert
     assert isinstance(plan, SyncPlan)

@@ -65,6 +65,7 @@ def test_read_app_defaults_static(default_config):
 
     assert config['sync']['sibling_repos'] == []
     assert config['sync']['template_repo'] == ""
+    assert config['sync']['policies']['override_labels'] is False
     
     assert re.match(r'[0-9a-fA-F]{6}', config['labels']['ad hoc']['color']), "Color code for 'ad hoc' label does not match the expected hexadecimal pattern"
     assert re.match(r'.*', config['labels']['ad hoc']['description']), "Description for 'ad hoc' label should not be empty"

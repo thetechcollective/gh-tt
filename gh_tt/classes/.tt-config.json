@@ -72,6 +72,12 @@
         // Repositories to consider for syncing
         "sibling_repos": [],
         // All items from this repo will be included in sibling_repos
-        "template_repo": ""
+        "template_repo": "",
+        "policies": {
+            // What to do in case the template repo and (one of) sibling repos have a label with the same name
+            // "override_labels": true will update the description and color of conflicting labels
+            // with values from the template repo
+            "override_labels": false
+        }
     }
 }
