@@ -146,6 +146,7 @@ def tt_parse(args=None):
     )
 
     sync_parser.add_argument('--labels', action='store_true', help='Read labels from the template repo and create them in all sibling repos')
+    sync_parser.add_argument('--milestones', action='store_true', help='Read milestones from the template repo and create them in all sibling repos')
 
     args = parser.parse_args(args)
 
@@ -159,7 +160,7 @@ def tt_parse(args=None):
     if args.command == 'responsibles' and not (args.unstaged or args.staged):
         parser.error("You must specify either --unstaged or --staged  or both for the responsibles command")
 
-    if args.command == 'sync' and not (args.labels):
+    if args.command == 'sync' and not (args.labels or args.milestones):
         sync_parser.error("🛑 You must specify at least one entity (e.g. labels) to sync")
 
     return args

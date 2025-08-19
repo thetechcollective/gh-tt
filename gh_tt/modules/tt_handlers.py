@@ -123,9 +123,9 @@ def handle_status(args):
         )
 
 def handle_sync(args):
-    assert args.labels
+    assert args.labels or args.milestones
     
-    sync.sync(labels=args.labels)
+    sync.sync(labels=args.labels, milestones=args.milestones)
 
 # Command handler mapping - exported for use by main
 COMMAND_HANDLERS = {
