@@ -11,3 +11,4 @@ _temp.token
 dist/
 temp/
 tmp/
+.hypothesis
