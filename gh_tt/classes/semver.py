@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import dataclass
 import re
 import sys
 from enum import Enum, auto
@@ -21,6 +22,55 @@ class ExecutionMode(Enum):
     LIVE = auto()
     DRY_RUN = auto()
 
+@dataclass(order=True, frozen=True)
+class SemverVersion:
+    major: int
+    minor: int
+    patch: int
+    prerelease: int | None = None
+    prerelease_identifier: str | None = None
+
+    def __post_init__(self):
+        pass
+
+    def __str__(self) -> str:
+        version = f"{self.major}.{self.minor}.{self.patch}"
+        if self.prerelease:
+            version += f"-{self.prerelease_identifier}{self.prerelease}"
+
+        return version
+
+    def bump_major(self) -> 'SemverVersion':
+        return SemverVersion(self.major + 1, 0, 0)
+    
+    def bump_minor(self) -> 'SemverVersion':
+        return SemverVersion(self.major, self.minor + 1, 0)
+    
+    def bump_patch(self) -> 'SemverVersion':
+        return SemverVersion(self.major, self.minor, self.patch + 1)
+    
+    def bump_prerelease(self) -> 'SemverVersion':
+        return SemverVersion(self.major, self.minor, self.patch, self.prerelease + 1, self.prerelease_identifier)
+    
+    def to_release(self):
+        return SemverVersion(self.major, self.minor, self.patch)
+    
+    @classmethod
+    def parse(cls, version_str: str) -> 'SemverVersion':
+        pattern = r'^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease_identifier>[a-z]+)(?P<prerelease>[1-9]\d*))?$'
+        match = re.match(pattern, version_str)
+        
+        if not match:
+            raise ValueError(f"Invalid semver format: {version_str}")
+        
+        return cls(
+            major=int(match.group('major')),
+            minor=int(match.group('minor')),
+            patch=int(match.group('patch')),
+            prerelease=int(match.group('prerelease')) if match.group('prerelease') is not None else None,
+            prerelease_identifier=match.group('prerelease_identifier')
+        )
+    
 class Semver(Lazyload):
     """Class used to represent the semver state of git repository"""
 
