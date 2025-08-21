@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import asyncio
-from dataclasses import dataclass
 import re
 import sys
+from dataclasses import dataclass
 from enum import Enum, auto
 from pathlib import Path
 
@@ -39,24 +41,27 @@ class SemverVersion:
             version += f"-{self.prerelease_identifier}{self.prerelease}"
 
         return version
-
-    def bump_major(self) -> 'SemverVersion':
+    
+    def bump_major(self) -> SemverVersion:
         return SemverVersion(self.major + 1, 0, 0)
     
-    def bump_minor(self) -> 'SemverVersion':
+    def bump_minor(self) -> SemverVersion:
         return SemverVersion(self.major, self.minor + 1, 0)
     
-    def bump_patch(self) -> 'SemverVersion':
+    def bump_patch(self) -> SemverVersion:
         return SemverVersion(self.major, self.minor, self.patch + 1)
     
-    def bump_prerelease(self) -> 'SemverVersion':
+    def bump_prerelease(self) -> SemverVersion:
         return SemverVersion(self.major, self.minor, self.patch, self.prerelease + 1, self.prerelease_identifier)
     
     def to_release(self):
         return SemverVersion(self.major, self.minor, self.patch)
     
+    def is_prerelease(self):
+        return self.prerelease is not None
+    
     @classmethod
-    def parse(cls, version_str: str) -> 'SemverVersion':
+    def from_string(cls, version_str: str) -> SemverVersion:
         pattern = r'^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease_identifier>[a-z]+)(?P<prerelease>[1-9]\d*))?$'
         match = re.match(pattern, version_str)
         
@@ -71,6 +76,32 @@ class SemverVersion:
             prerelease_identifier=match.group('prerelease_identifier')
         )
     
+@dataclass(frozen=True)
+class SemverTag:
+    version: SemverVersion
+    prefix: str | None = None
+
+    def __str__(self) -> str:
+        return f'{self.prefix}{self.version}'
+    
+    def __lt__(self, other) -> bool:
+        if not isinstance(other, SemverTag):
+            return NotImplemented
+        return self.version < other.version
+    
+    @classmethod
+    def from_string(cls, tag: str, prefix: str | None) -> SemverTag | None:
+        version_str = tag
+        if prefix is not None and prefix:
+            version_str = tag.split(prefix)[1]
+
+        try:
+            version = SemverVersion.from_string(version_str)
+        except ValueError:
+            return None
+
+        return cls(version, prefix)
+
 class Semver(Lazyload):
     """Class used to represent the semver state of git repository"""
 
@@ -96,6 +127,28 @@ class Semver(Lazyload):
             self.set('prefix', prefix)
         else:
             self.set('prefix', Config.config()['semver']['prefix']) 
+    
+    def _parse_tags(self, tag_string: str, prefix: str | None) -> dict:
+        tags = tag_string.split('\n') if tag_string else []
+
+        semver_tags = {
+            'release': [],
+            'prerelease': [],
+            'other': [],
+        }
+
+        for tag_str in tags:
+            if not tag_str.strip(): # skip empty
+                continue
+
+            semver_tag = SemverTag.from_string(tag_str, prefix)
+            if semver_tag:
+                category = 'prerelease' if semver_tag.version.is_prerelease() else 'release'
+                semver_tags[category].append(semver_tag)
+            else:
+                semver_tags['other'].append(tag_str)
+
+        return semver_tags
     
     def __load_tags(self, reload: ReloadApproach = ReloadApproach.NO_RELOAD):
         """This methos does some post-processing of the raw list of tags
@@ -130,71 +183,119 @@ class Semver(Lazyload):
 
         asyncio.run(self._assert_props(['tags']))
 
-        tags = self.get('tags').split('\n')
-        semver_pattern = re.compile(r'^(.*?)(\d+)\.(\d+)\.(\d+)(.*)$')
+        semver_tags = self._parse_tags(self.get('tags'), prefix=self.get('prefix'))
 
-        semver_tags = {}
-        semver_tags['release'] = {}
-        semver_tags['prerelease'] = {}
-        semver_tags['other'] = {}
-        
+        # ----------------------------------
+        # Continue with setting all of these
+        # ----------------------------------
 
-        for tag in tags:
-            category = 'other'
-            match = semver_pattern.search(tag)
-            if match:
-                category = 'prerelease' if match.group(5) else 'release'
-                
-                semver_tags[category][tuple(map(int, [match.group(2), match.group(3), match.group(4)]))] = tag
-                continue
-            
-            # If it doesn't match the semver pattern, we categorize it as 'other'
-            semver_tags['other'][tag] = tag
+        # - current_release: An array containing a three level interger array as key, and the current release semver tag.
+        # - next_release_major: The next major release semver tag.
+        # - next_release_minor: The next minor release semver tag.
+        # - next_release_patch: The next patch release semver tag.
+        # - current_prerelease: An array containing a three level interger array as key, and the current prerelease semver tag.
+        # - next_prerelease_major: The next major prerelease semver tag.
+        # - next_prerelease_minor: The next minor prerelease semver tag.
+        # - next_prerelease_patch: The next patch prerelease semver tag.
 
-
-
-        for category in ['release', 'prerelease']:
-
-            sorted_keys = sorted(semver_tags[category].keys())
-            curcatkey = f"current_{category}"
-
-            if len(sorted_keys) == 0:
-                initial = self.get('initial')
-                self.set(curcatkey, [tuple(map(int, initial.split('.'))), None])
-            else:
-                self.set(f"current_{category}", [sorted_keys[-1], semver_tags[category][sorted_keys[-1]]])
-
-            curcatkey = f"current_{category}"
-            major = f"{self.props[curcatkey][0][0]+1}.0.0"
-            minor = f"{self.props[curcatkey][0][0]}.{self.props[curcatkey][0][1]+1}.0"
-            patch = f"{self.props[curcatkey][0][0]}.{self.props[curcatkey][0][1]}.{self.props[curcatkey][0][2]+1}"
-            
-            self.set(f"next_{category}_major", major)
-            self.set(f"next_{category}_minor", minor)
-            self.set(f"next_{category}_patch", patch)
-
-        # convert the tuple keys to string for JSON serialization
-        for category in ['release', 'prerelease']:
-            if category in semver_tags:
-                # Convert tuple keys to comma-separated string without spaces or parentheses
-                semver_tags[category] = {",".join(map(str, k)): v for k, v in semver_tags[category].items()}
 
         self.props['semver_tags'] = semver_tags
 
-    def get_current_semver(self, release_type: ReleaseType = ReleaseType.RELEASE):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        # major = f"{self.props[curcatkey][0][0]+1}.0.0"
+        #     minor = f"{self.props[curcatkey][0][0]}.{self.props[curcatkey][0][1]+1}.0"
+        #     patch = f"{self.props[curcatkey][0][0]}.{self.props[curcatkey][0][1]}.{self.props[curcatkey][0][2]+1}"
+            
+        #     self.set(f"next_{category}_major", major)
+        #     self.set(f"next_{category}_minor", minor)
+        #     self.set(f"next_{category}_patch", patch)
+
+        # tags = self.get('tags').split('\n')
+        # semver_pattern = re.compile(r'^(.*?)(\d+)\.(\d+)\.(\d+)(.*)$')
+
+        # semver_tags = {}
+        # semver_tags['release'] = {}
+        # semver_tags['prerelease'] = {}
+        # semver_tags['other'] = {}
+        
+
+        # for tag in tags:
+        #     category = 'other'
+        #     match = semver_pattern.search(tag)
+        #     if match:
+        #         category = 'prerelease' if match.group(5) else 'release'
+                
+        #         semver_tags[category][tuple(map(int, [match.group(2), match.group(3), match.group(4)]))] = tag
+        #         continue
+            
+        #     # If it doesn't match the semver pattern, we categorize it as 'other'
+        #     semver_tags['other'][tag] = tag
+
+
+
+        # for category in ['release', 'prerelease']:
+
+        #     sorted_keys = sorted(semver_tags[category].keys())
+        #     curcatkey = f"current_{category}"
+
+        #     if len(sorted_keys) == 0:
+        #         initial = self.get('initial')
+        #         self.set(curcatkey, [tuple(map(int, initial.split('.'))), None])
+        #     else:
+        #         self.set(f"current_{category}", [sorted_keys[-1], semver_tags[category][sorted_keys[-1]]])
+
+        #     curcatkey = f"current_{category}"
+        #     major = f"{self.props[curcatkey][0][0]+1}.0.0"
+        #     minor = f"{self.props[curcatkey][0][0]}.{self.props[curcatkey][0][1]+1}.0"
+        #     patch = f"{self.props[curcatkey][0][0]}.{self.props[curcatkey][0][1]}.{self.props[curcatkey][0][2]+1}"
+            
+        #     self.set(f"next_{category}_major", major)
+        #     self.set(f"next_{category}_minor", minor)
+        #     self.set(f"next_{category}_patch", patch)
+
+        # # convert the tuple keys to string for JSON serialization
+        # for category in ['release', 'prerelease']:
+        #     if category in semver_tags:
+        #         # Convert tuple keys to comma-separated string without spaces or parentheses
+        #         semver_tags[category] = {",".join(map(str, k)): v for k, v in semver_tags[category].items()}
+
+        # self.props['semver_tags'] = semver_tags
+
+    def get_current_semver(self, release_type: ReleaseType = ReleaseType.RELEASE) -> SemverTag | None:
         """Returns the current semver tag"""
 
         self.__load_tags()
 
-        if release_type is ReleaseType.PRERELEASE:
-            if 'current_prerelease' not in self.props:
-                return None
-            return self.props['current_prerelease'][1]
+        if release_type is ReleaseType.RELEASE:
+            return max(self.props['semver_tags']['release'], None)
         
-        if 'current_release' not in self.props:
-            return None
-            sys.exit(0)
-        return self.props['current_release'][1]
+        return max(self.props['semver_tags']['prerelease'], None)
+
+        # if release_type is ReleaseType.PRERELEASE:
+        #     if 'current_prerelease' not in self.props:
+        #         return None
+        #     return self.props['current_prerelease'][1]
+        
+        # if 'current_release' not in self.props:
+        #     return None
+        #     sys.exit(0)
+        # return self.props['current_release'][1]
 
     
     def bump(
@@ -261,9 +362,14 @@ class Semver(Lazyload):
 
         category = 'prerelease' if release_type is ReleaseType.PRERELEASE else 'release'
         
-        temp = {tuple(map(int, k.split(','))): v for k, v in self.props['semver_tags'][category].items()}
-        for k in sorted(temp.keys()):
-            print(temp[k])
+        # temp = {tuple(map(int, k.split(','))): v for k, v in self.props['semver_tags'][category].items()}
+        # for k in sorted(temp.keys()):
+        #     print(temp[k])
+
+        tags = self.props['semver_tags'][category]
+
+        for tag in tags:
+            print(tag)
             
     
     def note(self, release_type: ReleaseType = ReleaseType.RELEASE, filename: str | None = None) -> str:
