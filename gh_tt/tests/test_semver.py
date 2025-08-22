@@ -1,12 +1,12 @@
-from enum import Enum, auto
 import string
+from enum import Enum, auto
 
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
 from gh_tt.classes.gitter import Gitter
-from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver, SemverTag, SemverVersion
+from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver, SemverVersion
 from gh_tt.tests.testbed import Testbed
 
 
@@ -38,6 +38,8 @@ def test_semver_init(capsys):
 def test_semver_list(capsys):
     # Setup
     semver = Semver().from_json("gh_tt/tests/data/semver/semver_loaded_release_and_prerelease.json")
+    semver.set('semver_tags', semver._parse_tags(semver.get('tags'), prefix=None))
+
     assert isinstance(semver, Semver)
 
     semver.list(release_type=ReleaseType.PRERELEASE)
@@ -54,6 +56,7 @@ def test_semver_list(capsys):
 @pytest.mark.unittest
 def test_semver_get_current():
     semver = Semver().from_json('gh_tt/tests/data/semver/semver_loaded_release_and_prerelease.json')
+    semver.set('semver_tags', semver._parse_tags(semver.get('tags'), prefix=None))
 
     release = semver.get_current_semver()
     assert str(release) == "0.7.3"
@@ -64,15 +67,18 @@ def test_semver_get_current():
 @pytest.mark.unittest
 def test_semver_bump(capsys):
     semver = Semver().from_json('gh_tt/tests/data/semver/semver_loaded_release_and_prerelease.json')
+    semver.set('semver_tags', semver._parse_tags(semver.get('tags'), prefix=semver.get('prefix')))
 
     semver.bump("patch", message="Test patch bump", release_type=ReleaseType.PRERELEASE, execution_mode=ExecutionMode.DRY_RUN)
-    assert "git tag -a -m \"1.0.12rc\nBumped patch from version '1.0.11rc' to '1.0.12rc'\nTest patch bump\" 1.0.12rc\n" in capsys.readouterr().out
+    assert "git tag -a -m \"1.0.12-rc1\nBumped patch from version '1.0.11-rc1' to '1.0.12-rc1'\nTest patch bump\" 1.0.12-rc1\n" in capsys.readouterr().out
 
 
 @pytest.mark.unittest
 def test_semver_first_prerelease(capsys):
     # Setup
     semver = Semver().from_json("gh_tt/tests/data/semver/semver_loaded_release.json")
+    semver.set('semver_tags', semver._parse_tags(semver.get('tags'), prefix=semver.get('prefix')))
+
     assert isinstance(semver, Semver)
 
     semver.list(release_type=ReleaseType.PRERELEASE)
@@ -84,13 +90,13 @@ def test_semver_first_prerelease(capsys):
     assert "0.6.1\n" in output
 
     release = semver.get_current_semver()
-    assert release == "0.7.3"
+    assert str(release) == "0.7.3"
 
     prerelease = semver.get_current_semver(release_type=ReleaseType.PRERELEASE)
     assert prerelease is None
 
     semver.bump("patch", message="Test patch bump", release_type=ReleaseType.PRERELEASE, execution_mode=ExecutionMode.DRY_RUN)
-    assert "git tag -a -m \"0.0.1rc\nBumped patch from version 'None' to '0.0.1rc'\nTest patch bump\" 0.0.1rc\n" in capsys.readouterr().out
+    assert "git tag -a -m \"0.7.4-rc1\nBumped patch from version '0.7.3' to '0.7.4-rc1'\nTest patch bump\" 0.7.4-rc1\n" in capsys.readouterr().out
 
 @pytest.mark.integration
 def test_note_with_one_release():
@@ -132,7 +138,7 @@ def semver_versions(draw, *, with_prerelease: bool = False, prerelease_id: str |
 class PrereleaseStrategy(Enum):
     MIXED = auto()
     CONSISTENT = auto()
-    
+
 
 @st.composite
 def tag_strings(draw, *, prerelease_strategy: PrereleaseStrategy = PrereleaseStrategy.MIXED) -> str:
@@ -216,7 +222,7 @@ def test_semver_prerelease_bump(version):
 
 @pytest.mark.pbt
 @given(version=semver_versions())
-def test_semver_parse_roundtrip(version):
+def test_semver_version_parse_roundtrip(version):
     version_str = str(version)
     assert version == SemverVersion.from_string(version_str)
 
@@ -230,16 +236,22 @@ def test_semver_parse_roundtrip(version):
     '0.0.0-rc0', # zero after prerelease identifier
     '0.0.0+rc1', # plus instead of hyphen before prerelease identifier
 ])
-def test_parsing_raises_on_invalid_semver(invalid_version):
+def test_semver_version_parsing_raises_on_invalid_semver(invalid_version):
     with pytest.raises(ValueError, match='Invalid semver format:'):
         SemverVersion.from_string(invalid_version)
 
 @pytest.mark.pbt
 @given(tag_string=tag_strings().filter(lambda x: x.strip() != ''))
-def test_parse_tags(tag_string: str):
+def test_semver_parse_tags(tag_string: str):
     new_lines = len(tag_string.split('\n'))
 
     parsed = Semver()._parse_tags(tag_string=tag_string, prefix = None)
 
+    current_tags = parsed['current']
     # No tags disappear when parsing
-    assert len(parsed['release']) + len(parsed['prerelease']) + len(parsed['other']) == new_lines
+    assert len(current_tags['release']) + len(current_tags['prerelease']) + len(current_tags['other']) == new_lines
+
+@pytest.mark.pbt
+@given(current_release=semver_versions(), current_prerelease=semver_versions(with_prerelease=True))
+def test_semver_get_next_semvers(current_release, current_prerelease):
+    Semver()._get_next_semvers(current_release, current_prerelease)

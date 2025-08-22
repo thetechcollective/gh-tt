@@ -99,7 +99,7 @@ def tt_parse(args=None):
     semver_bump_parser.add_argument('-m', '--message', type=str, help='Additional message for the annotated tag', required=False, default=None)
     semver_bump_parser.add_argument('--suffix', type=str, help='Suffix to use for prerelease tags', required=False, default=None)
     semver_bump_parser.add_argument('--prefix', type=str, help='Prefix to prepend the tag valid for both releases and prereleases', required=False, default=None)
-    semver_bump_parser.add_argument('--initial', type=str, help='Initial off-set, only relevant if there are not tags defined. Bust be a three-level-interger seperated by dots.', required=False, default=None)
+    semver_bump_parser.add_argument('--initial', type=str, help='Initial off-set, only relevant if there are not tags defined. Must be a three-level-interger seperated by dots.', required=False, default=None)
     run_group = semver_bump_parser.add_mutually_exclusive_group()
     run_group.add_argument('--run', dest='run', action='store_true', help='Execute the command')
     run_group.add_argument('--no-run', dest='run', action='store_false', help='Print the command without executing it')
