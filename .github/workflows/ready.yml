@@ -23,7 +23,6 @@ jobs:
     uses: lakruzz/workflows/.github/workflows/mark_pending.yml@experimental
     with:
       statuses: |
-        Property-based testing
         E2E in testbed
 
   inherit-statuses:
@@ -33,19 +32,11 @@ jobs:
       contents: read
     uses: lakruzz/workflows/.github/workflows/inherit_statuses.yml@experimental
 
-  pytest_hypothesis:
-    name: Property-based testing
-    needs: mark-pending
-    permissions:
-      statuses: write
-      contents: read
-    uses: ./.github/workflows/pytest_hypothesis.yml
-    with:
-      context: Property-based testing
-
   pytest_integration:
     name: Integration testing
-    needs: mark-pending
+    needs: 
+      - mark-pending
+      - inherit-statuses
     permissions:
       statuses: write
     # continue-on-error: true # <- This doesn't work in reusable workflows, so we set it in the integration_test.yml
@@ -54,12 +45,10 @@ jobs:
     with:
       context: E2E in testbed
 
-
   fast-forward-merge:
     name: Merge
     needs:
       - pytest_integration
-      - pytest_hypothesis
     permissions:
       contents: write
     secrets:

@@ -223,7 +223,13 @@ class Devbranch(Lazyload):
 
         self.set('commit_msg',f"\"{message} - #{self.get('issue_number')}\"")
 
-        asyncio.run(self._run('commit_changes') )
+        # the commit may fire pre-commit hook that may fail - wrap this in a try catch and print a nice error instead of a stack dump
+        try:
+            asyncio.run(self._run('commit_changes') )
+        except Exception as e:
+            print(f"⛔️ Aaaargh!:\n {e}", file=sys.stderr)
+            sys.exit(1)
+
         self._push(force=True)
 
         issue_comments = Issue().load(number=self.get('issue_number')).get("comments")
