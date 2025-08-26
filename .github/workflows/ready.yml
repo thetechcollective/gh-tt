@@ -23,41 +23,15 @@ jobs:
     uses: lakruzz/workflows/.github/workflows/mark_pending.yml@experimental
     with:
       statuses: |
-        Pytest + cov
-        Ruff
-        Cspell
-        E2E in testbed
         Property-based testing
+        E2E in testbed
 
-  pytest_with_coverage:
-    name: Unit testing
-    needs: mark-pending
+  inherit-statuses:
+    name: Inherit statuses
     permissions:
       statuses: write
       contents: read
-    uses: lakruzz/workflows/.github/workflows/pytest_with_coverage.yml@experimental
-    with:
-      context: Pytest + cov
-
-  ruff_formatting:
-    name: Linting
-    needs: mark-pending
-    permissions:
-      statuses: write
-      contents: read
-    uses: lakruzz/workflows/.github/workflows/ruff_check.yml@experimental
-    with:
-      context: Ruff
-
-  cspel_check:
-    name: Spelling
-    needs: mark-pending
-    permissions:
-      statuses: write
-      contents: read
-    uses: lakruzz/workflows/.github/workflows/cspell_check.yml@experimental
-    with:
-      context: Cspell
+    uses: lakruzz/workflows/.github/workflows/inherit_statuses.yml@experimental
 
   pytest_hypothesis:
     name: Property-based testing
@@ -84,8 +58,6 @@ jobs:
   fast-forward-merge:
     name: Merge
     needs:
-      - ruff_formatting
-      - pytest_with_coverage
       - pytest_integration
       - pytest_hypothesis
     permissions:
