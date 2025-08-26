@@ -279,9 +279,9 @@ class Semver(Lazyload):
         """Generates a release note either for a release or a prerelease, based on the set of current semver tags.
 
         Args:
-            prerelease (bool): If True, it will generate a note based on (current_release..current_prerelease). 
-                               If False it will generate a note based on (previous_release..current_release)
-                               Defaults to False.
+            release_type (enum): If PRERELEASE, it will generate a note based on (current_release..current_prerelease). 
+                               If RELEASE it will generate a note based on (previous_release..current_release)
+                               Defaults to RELEASE.
             filename (str): If provided, the note will be written to this file. If None, it will be printed to stdout.
         
         Returns:
@@ -292,17 +292,15 @@ class Semver(Lazyload):
 
         """
 
-        self.__load_tags()
-
         if release_type is ReleaseType.PRERELEASE:
            from_ref = self.get_current_semver()
            to_ref = self.get_current_semver(release_type=ReleaseType.PRERELEASE)
         else:
-            sorted_keys = sorted(self.get('semver_tags')['release'].keys())
+            releases = sorted(self.get('semver_tags')['current']['release'])
 
             from_ref = None
-            if len(sorted_keys) > 1:
-                from_ref = self.get('semver_tags')['release'][sorted_keys[-2]]
+            if len(releases) > 1:
+                from_ref = self.get('semver_tags')['release'][releases[-2]]
             else:
                 print("Could not find previous release tag when assembling changes for the note. Attempting to find a root commit instead.")
                 [from_ref, _] = asyncio.run(Gitter(
@@ -349,8 +347,6 @@ class Semver(Lazyload):
             SystemExit(1): If from_ref or to_ref are not valid tags in the git repo.
         """
 
-        self.__load_tags()
-
         assert from_ref is not None, "from_ref must be provided"
         assert to_ref is not None, "to_ref must be provided"
 
@@ -368,10 +364,3 @@ This release includes the following [changes since {from_ref}](../../compare/{fr
         note += value
 
         return note
-
-
-        
-
-        # Add tests for generating prereleases from different bases (should always be based on latest release, or prerelease if there is one)
-        # Add tests for generating prereleases from different bases - if most recent is a prerelease, increment the prerelease, if most recent is a release, increment the release
-        # Add test for generating prereleases when bumping to a new version, like 1.1.0 -> 2.0.
