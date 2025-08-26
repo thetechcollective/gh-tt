@@ -27,6 +27,7 @@ jobs:
         Pytest + cov
         Ruff
         Cspell
+        Property-based testing
 
   pytest_with_coverage:
     name: Unit testing
@@ -37,6 +38,16 @@ jobs:
     uses: lakruzz/workflows/.github/workflows/pytest_with_coverage.yml@experimental
     with:
       context: Pytest + cov
+
+  pytest_hypothesis:
+    name: Property-based testing
+    needs: mark-pending
+    permissions:
+      statuses: write
+      contents: read
+    uses: ./.github/workflows/pytest_hypothesis.yml
+    with:
+      context: Property-based testing
 
   ruff_linting:
     name: Linting

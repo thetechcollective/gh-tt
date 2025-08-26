@@ -82,10 +82,12 @@ def handle_responsibles(args):
 
 def handle_semver(args):
     """Handle the semver command"""
-    semver = Semver()
+    semver = Semver.with_tags_loaded()
     release_type = ReleaseType.PRERELEASE if args.prerelease else ReleaseType.RELEASE
     
     if args.semver_command == 'bump':
+        assert args.level in ['major', 'minor', 'patch']
+
         semver.bump(
             level=args.level, 
             message=args.message, 

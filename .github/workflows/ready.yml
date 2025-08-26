@@ -27,6 +27,7 @@ jobs:
         Ruff
         Cspell
         E2E in testbed
+        Property-based testing
 
   pytest_with_coverage:
     name: Unit testing
@@ -58,7 +59,15 @@ jobs:
     with:
       context: Cspell
 
-
+  pytest_hypothesis:
+    name: Property-based testing
+    needs: mark-pending
+    permissions:
+      statuses: write
+      contents: read
+    uses: ./.github/workflows/pytest_hypothesis.yml
+    with:
+      context: Property-based testing
 
   pytest_integration:
     name: Integration testing
@@ -78,6 +87,7 @@ jobs:
       - ruff_formatting
       - pytest_with_coverage
       - pytest_integration
+      - pytest_hypothesis
     permissions:
       contents: write
     secrets:

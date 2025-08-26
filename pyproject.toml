@@ -147,7 +147,8 @@ norecursedirs = [
     "temp",
     ".git",
     ".venv",
-    "__pycache__"
+    "__pycache__",
+    ".hypothesis"
 ]
 log_file = "logs/test.log"
 log_cli = true
