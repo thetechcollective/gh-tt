@@ -13,7 +13,7 @@ git config --local --get include.path | grep -e ../.gitconfig >/dev/null 2>&1 ||
 
 echo "$PREFIX Setting up the uv environment"
 curl -LsSf https://astral.sh/uv/install.sh | sh
-uv venv
+uv venv --python 3.11
 . .venv/bin/activate
 uv sync --extra dev
 

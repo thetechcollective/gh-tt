@@ -2,7 +2,7 @@
 name = "gh-tt"
 version = "0.0.1"
 description = "GitHub extension automating trunk-based development"
-requires-python = ">=3.13"
+requires-python = ">=3.11"
 authors = [
     {name = "Lars Kruse", email = "lars@lakruzz.com"}
 ]
@@ -14,7 +14,7 @@ classifiers = [
     "Intended Audience :: Developers",
     "Natural Language :: English",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.11",
     "Operating System :: OS Independent",
 ]
 
