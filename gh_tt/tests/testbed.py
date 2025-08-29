@@ -39,7 +39,7 @@ class Testbed:
         
     @staticmethod
     def create_github_repository(owner: str) -> str:
-        repo_name = f'{owner}/{Testbed.generate_name(infix='repo')}'
+        repo_name = f"{owner}/{Testbed.generate_name(infix='repo')}"
         [repo_html_url, _] = asyncio.run(Gitter(
             cmd=f'gh repo create "{repo_name}" --private',
             msg='Create a testing repository'
