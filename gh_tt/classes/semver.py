@@ -80,7 +80,8 @@ class SemverTag:
     prefix: str | None = None
 
     def __str__(self) -> str:
-        return f'{self.prefix if self.prefix is not None else ''}{self.version}'
+        prefix_str = self.prefix if self.prefix is not None else ''
+        return f'{prefix_str}{self.version}'
     
     def __lt__(self, other) -> bool:
         assert isinstance(other, SemverTag)
@@ -237,7 +238,8 @@ class Semver(Lazyload):
         current_prerelease_version = self.get_current_semver(ReleaseType.PRERELEASE).version if self.get_current_semver(ReleaseType.PRERELEASE) is not None else None
 
         self._get_next_semvers(current_version, current_prerelease_version, prerelease_identifier=prerelease_identifier)
-        next_tag = f'{prefix}{self.get(f'next_{release_type}_{level}')}'
+        key = f'next_{release_type}_{level}'
+        next_tag = f'{prefix}{self.get(key)}'
 
 
         from_version = self.get_current_semver(release_type)
