@@ -117,6 +117,8 @@ def tt_parse(args=None):
     semver_list_parser.set_defaults(filter_type='all')
     semver_note_parser = semver_sub_parser.add_parser('note', parents=[parent_parser], help="Generates a release note based on the set of current semver tags")
     semver_note_parser.add_argument('--filename', type=str, help='If provided, the note will be written to this file. If None, it will be printed to stdout.', required=False, default=None)
+    semver_note_parser.add_argument('--from', dest='from_ref', type=str, help='Starting reference for the release note. Defaults to the previous release tag.', required=False, default=None)
+    semver_note_parser.add_argument('--to', dest='to_ref', type=str, help='Ending reference for the release note. Defaults to the current release tag or HEAD.', required=False, default=None)
 
     # Add a status subcommand
     status_parser = subparsers.add_parser(

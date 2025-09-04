@@ -139,10 +139,10 @@ def handle_semver(args):
         semver.list(release_type=release_type, filter_type=filter_type)
     elif args.semver_command == 'note':
         if args.filename:
-            note = semver.note(release_type=release_type, filename=args.filename)
+            note = semver.note(release_type=release_type, filename=args.filename, from_ref=args.from_ref, to_ref=args.to_ref)
             print(f"{args.filename}")
         else:
-            note = semver.note(release_type=release_type)
+            note = semver.note(release_type=release_type, from_ref=args.from_ref, to_ref=args.to_ref)
             print(note)
     elif args.semver_command is None:
         # Use the --prerelease flag directly from args when no subcommand is specified

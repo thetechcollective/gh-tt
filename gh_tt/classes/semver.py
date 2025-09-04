@@ -370,7 +370,7 @@ class Semver(Lazyload):
                 for tag in tags:
                     print(tag)
             
-    def note(self, release_type: ReleaseType = ReleaseType.RELEASE, filename: str | None = None) -> str:
+    def note(self, release_type: ReleaseType = ReleaseType.RELEASE, filename: str | None = None, from_ref: str | None = None, to_ref: str | None = None) -> str:
         """Generates a release note either for a release or a prerelease, based on the set of current semver tags.
 
         Args:
@@ -378,6 +378,8 @@ class Semver(Lazyload):
                                If RELEASE it will generate a note based on (previous_release..current_release)
                                Defaults to RELEASE.
             filename (str): If provided, the note will be written to this file. If None, it will be printed to stdout.
+            from_ref (str): Optional starting reference for the release note. If None, defaults based on release_type.
+            to_ref (str): Optional ending reference for the release note. If None, defaults based on release_type.
         
         Returns:
             str: The markdown note of changes between the two references.
@@ -386,30 +388,15 @@ class Semver(Lazyload):
             SystemExit(1): If the logical references are not valid tags in the git repo
 
         """
-
-        if release_type is ReleaseType.PRERELEASE:
-           from_ref = self.get_current_semver()
-           to_ref = self.get_current_semver(release_type=ReleaseType.PRERELEASE)
-        else:
-            releases = sorted(self.get('semver_tags')['current']['release'])
-
-            from_ref = None
-            if len(releases) > 1:
-                from_ref = releases[-2]  # Get the second-to-last release
+        # Determine from_ref if not explicitly provided
+        from_ref = self._determine_from_ref(from_ref, release_type)
+        
+        # Determine to_ref if not explicitly provided  
+        if to_ref is None:
+            if release_type is ReleaseType.PRERELEASE:
+                to_ref = self.get_current_semver(release_type=ReleaseType.PRERELEASE)
             else:
-                print("Could not find previous release tag when assembling changes for the note. Attempting to find a root commit instead.")
-                [from_ref, _] = asyncio.run(Gitter(
-                    cmd='git rev-list --max-parents=0 HEAD',
-                    msg='Find root commits'
-                ).run())
-
-                if from_ref.find('\n') != -1:
-                    print("Found multiple root commits. To create a note without any previous releases and multiple root commits, please create an explicit initial tag (e.g. 0.0.0). All changes from this ref will be included in the release note.", file=sys.stderr)
-                    sys.exit(1)
-
-                print("Found root commit. The release note will include all changes since the root commit, excluding the root commit.")
-                  
-            to_ref = self.get_current_semver()
+                to_ref = self.get_current_semver()
 
         note = self.note_md(from_ref=from_ref, to_ref=to_ref)
 
@@ -423,6 +410,45 @@ class Semver(Lazyload):
         else:
             print(note)
         return note
+                
+    def _determine_from_ref(self, from_ref: str | None, release_type: ReleaseType) -> str:
+        """Helper method to determine the from_ref based on release type if not explicitly provided
+
+        Args:
+            from_ref (str | None): Explicitly provided from_ref or None
+            release_type (ReleaseType): The type of release (RELEASE or PRERELEASE)
+
+        Returns:
+            str: The determined from_ref
+
+        Raises:
+            SystemExit(1): If no valid from_ref can be determined
+        """
+        if from_ref is not None:
+            return from_ref
+            
+        if release_type is ReleaseType.PRERELEASE:
+            return self.get_current_semver()
+            
+        # Handle RELEASE type
+        releases = sorted(self.get('semver_tags')['current']['release'])
+        
+        if len(releases) > 1:
+            return releases[-2]  # Get the second-to-last release
+        
+        # No previous release found, try to find root commit
+        print("Could not find previous release tag when assembling changes for the note. Attempting to find a root commit instead.")
+        [root_commit, _] = asyncio.run(Gitter(
+            cmd='git rev-list --max-parents=0 HEAD',
+            msg='Find root commits'
+        ).run())
+
+        if root_commit.find('\n') != -1:
+            print("Found multiple root commits. To create a note without any previous releases and multiple root commits, please create an explicit initial tag (e.g. 0.0.0). All changes from this ref will be included in the release note.", file=sys.stderr)
+            sys.exit(1)
+
+        print("Found root commit. The release note will include all changes since the root commit, excluding the root commit.")
+        return root_commit.strip()
     
 
     
