@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
 import contextlib
+import sys
 
 from gh_tt.classes import sync
 from gh_tt.classes.config import Config
 from gh_tt.classes.devbranch import Devbranch
+from gh_tt.classes.gitter import Gitter
 from gh_tt.classes.issue import Issue
 from gh_tt.classes.label import Label
 from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver
@@ -80,25 +82,61 @@ def handle_responsibles(args):
     devbranch.responsibles(unstaged=args.unstaged, staged=args.staged, exclude=args.exclude)
 
 
-def handle_semver(args):
-    """Handle the semver command"""
-    semver = Semver.with_tags_loaded()
-    release_type = ReleaseType.PRERELEASE if args.prerelease else ReleaseType.RELEASE
+def _handle_semver_bump_build(args, semver):
+    """Handle the semver bump build subcommand"""
+    # First try to get a prerelease version, if not available fall back to release
+    current_version = semver.get_current_semver(release_type=ReleaseType.PRERELEASE)
+    if not current_version:
+        current_version = semver.get_current_semver(release_type=ReleaseType.RELEASE)
     
-    if args.semver_command == 'bump':
-        assert args.level in ['major', 'minor', 'patch']
+    if not current_version:
+        print("No version found to bump build number.", file=sys.stderr)
+        sys.exit(1)
+        
+    new_version = current_version.version.bump_build(include_sha=args.include_sha)
+    # Handle the prefix if specified
+    tag_str = f"{args.prefix or ''}{new_version}"
+    message = f"Bumped build from version '{current_version}' to '{tag_str}'"
+    if args.message:
+        message += f"\n{args.message}"
+    
+    cmd = f"git tag -a -m \"{tag_str}\n{message}\" {tag_str}"
+    
+    if args.run:
+        import asyncio
+        asyncio.run(Gitter(cmd=cmd, msg=message).run())
+    else:
+        print(cmd)
 
+
+def _handle_semver_bump(args, semver, release_type):
+    """Handle the semver bump subcommand"""
+    assert args.level in ['major', 'minor', 'patch', 'prerelease', 'build']
+
+    # For build level, we need to use the bump_build method directly
+    if args.level == 'build':
+        _handle_semver_bump_build(args, semver)
+    else:
         semver.bump(
             level=args.level, 
             message=args.message, 
-            suffix=args.suffix, 
             prefix=args.prefix, 
-            initial=args.initial, 
             release_type=release_type,
             execution_mode=ExecutionMode.LIVE if args.run else ExecutionMode.DRY_RUN
         )
+
+
+def handle_semver(args):
+    """Handle the semver command"""
+    semver = Semver.with_tags_loaded()
+    # Use the level to determine if this is a prerelease operation
+    release_type = ReleaseType.PRERELEASE if args.semver_command == 'bump' and args.level == 'prerelease' else ReleaseType.RELEASE
+    
+    if args.semver_command == 'bump':
+        _handle_semver_bump(args, semver, release_type)
     elif args.semver_command == 'list':
-        semver.list(release_type=release_type)
+        filter_type = getattr(args, 'filter_type', 'release')
+        semver.list(release_type=release_type, filter_type=filter_type)
     elif args.semver_command == 'note':
         if args.filename:
             note = semver.note(release_type=release_type, filename=args.filename)
@@ -107,7 +145,9 @@ def handle_semver(args):
             note = semver.note(release_type=release_type)
             print(note)
     elif args.semver_command is None:
-        current_semver = semver.get_current_semver(release_type=release_type)
+        # Use the --prerelease flag directly from args when no subcommand is specified
+        display_release_type = ReleaseType.PRERELEASE if args.prerelease else ReleaseType.RELEASE
+        current_semver = semver.get_current_semver(release_type=display_release_type)
         print(f"{current_semver}")
 
 

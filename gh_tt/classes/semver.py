@@ -20,22 +20,46 @@ class ExecutionMode(Enum):
     LIVE = auto()
     DRY_RUN = auto()
 
-@dataclass(order=True, frozen=True)
+@dataclass(frozen=True)
 class SemverVersion:
     major: int
     minor: int
     patch: int
-    prerelease: int | None = None
-    prerelease_identifier: str | None = None
-
+    prerelease: str | None = None  # In SemVer, this is the entire string after the hyphen
+    build: str | None = None       # In SemVer, this is the entire string after the plus
+    
     def __post_init__(self):
         pass
+            
+
+        
+    def __lt__(self, other):
+        if not isinstance(other, SemverVersion):
+            return NotImplemented
+            
+        # First compare major.minor.patch
+        if self.major != other.major:
+            return self.major < other.major
+        if self.minor != other.minor:
+            return self.minor < other.minor
+        if self.patch != other.patch:
+            return self.patch < other.patch
+            
+        # Handle prerelease special case: a version WITH prerelease is LOWER than one WITHOUT
+        if self.prerelease is None and other.prerelease is not None:
+            return False  # self is higher
+        if self.prerelease is not None and other.prerelease is None:
+            return True   # self is lower
+            
+        # If both have prerelease or both don't, compare lexically
+        return (self.prerelease or "") < (other.prerelease or "")
 
     def __str__(self) -> str:
         version = f"{self.major}.{self.minor}.{self.patch}"
-        if self.prerelease:
-            version += f"-{self.prerelease_identifier}{self.prerelease}"
-
+        if self.prerelease is not None:
+            version += f"-{self.prerelease}"
+        if self.build is not None:
+            version += f"+{self.build}"
         return version
     
     def bump_major(self) -> SemverVersion:
@@ -47,31 +71,101 @@ class SemverVersion:
     def bump_patch(self) -> SemverVersion:
         return SemverVersion(self.major, self.minor, self.patch + 1, None, None)
     
-    def bump_prerelease(self, prefix: str | None) -> SemverVersion:
-        if prefix is None:
-            prefix = ''
+    def bump_prerelease(self) -> SemverVersion:
+        """Bump prerelease version according to SemVer.
         
-        prerelease = self.prerelease + 1 if self.prerelease is not None else 1
-
-        return SemverVersion(self.major, self.minor, self.patch, prerelease, prefix)
+        Returns:
+            A new SemverVersion with bumped prerelease
+        """
+            
+        # Parse existing prerelease if any
+        if self.prerelease is not None:
+            # Check if the prerelease contains digits at the end (like "rc1")
+            import re
+            match = re.search(r'([a-zA-Z-]+)(\d+)$', self.prerelease)
+            if match:
+                # Format is like "rc1", increment the number
+                prefix, number = match.groups()
+                new_prerelease = f"{prefix}{int(number) + 1}"
+            elif self.prerelease[-1].isdigit():
+                # Try to find a numeric part at the end to increment
+                parts = self.prerelease.split('.')
+                if parts[-1].isdigit():
+                    # Increment the last numeric part
+                    parts[-1] = str(int(parts[-1]) + 1)
+                    new_prerelease = '.'.join(parts)
+                else:
+                    # This shouldn't happen with proper semver, but just in case
+                    new_prerelease = f"{self.prerelease}1"
+            else:
+                # Add a 1 if no numeric part exists
+                new_prerelease = f"{self.prerelease}1"
+                
+            return SemverVersion(self.major, self.minor, self.patch, new_prerelease, None)
+            
+        # Create a new prerelease with a hardcoded "alpha1" identifier
+        # We no longer support configurable suffixes
+        return SemverVersion(self.major, self.minor, self.patch, "alpha1", None)
+    
+    def bump_build(self, *, include_sha: bool = True) -> SemverVersion:
+        """Bump build version according to SemVer.
+        
+        Args:
+            include_sha: Whether to include short SHA in build number (default=True)
+            
+        Returns:
+            A new SemverVersion with bumped build
+        """
+        # Get the short SHA if needed
+        short_sha = None
+        if include_sha:
+            import contextlib
+            with contextlib.suppress(Exception):
+                # Get the current commit SHA and take first 7 characters
+                full_sha = Gitter.get_commit_sha()
+                if full_sha:
+                    short_sha = full_sha[:7]  # Use first 7 chars for short SHA
+                
+        # Parse existing build if any
+        sequence = 1
+        if self.build is not None:
+            parts = self.build.split('.')
+            # Try to extract the sequence number
+            if parts[0].isdigit():
+                sequence = int(parts[0]) + 1
+        
+        # Create the new build string - always include SHA if available
+        new_build = f"{sequence}.{short_sha}" if short_sha and include_sha else f"{sequence}"
+        
+        # Return a new SemverVersion with the updated build
+        return SemverVersion(self.major, self.minor, self.patch, self.prerelease, new_build)
     
     def is_prerelease(self):
+        """Check if this version is a prerelease version."""
         return self.prerelease is not None
     
     @classmethod
     def from_string(cls, version_str: str) -> SemverVersion:
-        pattern = r'^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease_identifier>[a-z]+)(?P<prerelease>[1-9]\d*))?$'
-        match = re.match(pattern, version_str)
+        """Parse a version string according to SemVer specification.
+        
+        Format: <major>.<minor>.<patch>[-<prerelease>][+<build>]
+        where <major>, <minor>, and <patch> are non-negative integers without leading zeros.
+        """
+        # Exact regex for matching the SemVer format
+        semver_pattern = r'^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)(?:-(?P<prerelease>[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+(?P<build>[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$'
+        
+        match = re.match(semver_pattern, version_str)
         
         if not match:
             raise ValueError(f"Invalid semver format: {version_str}")
         
+        # Simply use the values directly from the match groups
         return cls(
             major=int(match.group('major')),
             minor=int(match.group('minor')),
             patch=int(match.group('patch')),
-            prerelease=int(match.group('prerelease')) if match.group('prerelease') is not None else None,
-            prerelease_identifier=match.group('prerelease_identifier')
+            prerelease=match.group('prerelease'),
+            build=match.group('build')
         )
     
 @dataclass(frozen=True)
@@ -104,7 +198,7 @@ class SemverTag:
 class Semver(Lazyload):
     """Class used to represent the semver state of git repository"""
 
-    def __init__(self, suffix: str | None = None, prefix: str | None = None, initial: str | None = None, tag_string: str | None = None):
+    def __init__(self, prefix: str | None = None, initial: str | None = None, tag_string: str | None = None):
         super().__init__()
 
         if initial is not None and initial != '':
@@ -116,11 +210,6 @@ class Semver(Lazyload):
             self.set('initial', initial)
         else:
             self.set('initial', Config.config()['semver']['initial'])
-
-        if suffix is not None and suffix != '':
-            self.set('suffix', suffix)
-        else:
-            self.set('suffix', Config.config()['semver']['prerelease_suffix'])
 
         if prefix is not None and prefix != '':
             self.set('prefix', prefix)
@@ -169,14 +258,15 @@ class Semver(Lazyload):
         return semver_tags
     
 
-    def _get_next_semvers(self, current_release: SemverVersion | None, current_prerelease: SemverVersion | None, prerelease_identifier: str | None) -> dict:
+    def _get_next_semvers(self, current_release: SemverVersion | None, current_prerelease: SemverVersion | None) -> dict:
         result = {
             'next_release_major': current_release.bump_major() if current_release is not None else None,
             'next_release_minor': current_release.bump_minor() if current_release is not None else None,
             'next_release_patch': current_release.bump_patch() if current_release is not None else None,
-            'next_prerelease_major': current_prerelease.bump_major().bump_prerelease(prerelease_identifier) if current_prerelease is not None else current_release.bump_major().bump_prerelease(prerelease_identifier),
-            'next_prerelease_minor': current_prerelease.bump_minor().bump_prerelease(prerelease_identifier) if current_prerelease is not None else current_release.bump_minor().bump_prerelease(prerelease_identifier),
-            'next_prerelease_patch': current_prerelease.bump_patch().bump_prerelease(prerelease_identifier) if current_prerelease is not None else current_release.bump_patch().bump_prerelease(prerelease_identifier),
+            'next_prerelease_major': current_prerelease.bump_major().bump_prerelease() if current_prerelease is not None else current_release.bump_major().bump_prerelease(),
+            'next_prerelease_minor': current_prerelease.bump_minor().bump_prerelease() if current_prerelease is not None else current_release.bump_minor().bump_prerelease(),
+            'next_prerelease_patch': current_prerelease.bump_patch().bump_prerelease() if current_prerelease is not None else current_release.bump_patch().bump_prerelease(),
+            'next_prerelease_prerelease': current_prerelease.bump_prerelease() if current_prerelease is not None else current_release.bump_prerelease(),
         }
 
         assert all(
@@ -205,39 +295,22 @@ class Semver(Lazyload):
             self, 
             level: str, 
             message: str | None,
-            suffix: str | None = None,
             prefix: str | None = None,
-            initial: str | None = None,
             release_type: ReleaseType = ReleaseType.RELEASE,
             execution_mode: ExecutionMode = ExecutionMode.LIVE
         ):
 
-        assert level in ['major', 'minor', 'patch']
-
-        if initial is not None:
-            if not re.match(r'^\d+\.\d+\.\d+$', initial):
-                print(f"⛔️ ERROR: Invalid initial version format '{initial}'. Must be in the format 'X.Y.Z' where X, Y, Z are integers.", file=sys.stderr)
-                sys.exit(1)
-        else:
-            initial = self.get('initial')
+        assert level in ['major', 'minor', 'patch', 'prerelease']
 
         if prefix is None:
             prefix = self.get('prefix')
-
-        if suffix is not None and suffix.strip() == '':
-            print('⛔️ ERROR: Suffix must not contain only whitespace', file=sys.stderr)
-            sys.exit(1)
-
-        prerelease_identifier = suffix
-        if prerelease_identifier is None:
-            prerelease_identifier = self.get('suffix')
 
         message = f"\n{message}" if message else ""
 
         current_version = self.get_current_semver().version if self.get_current_semver() is not None else None
         current_prerelease_version = self.get_current_semver(ReleaseType.PRERELEASE).version if self.get_current_semver(ReleaseType.PRERELEASE) is not None else None
 
-        self._get_next_semvers(current_version, current_prerelease_version, prerelease_identifier=prerelease_identifier)
+        self._get_next_semvers(current_version, current_prerelease_version)
         key = f'next_{release_type}_{level}'
         next_tag = f'{prefix}{self.get(key)}'
 
@@ -249,9 +322,6 @@ class Semver(Lazyload):
         cmd = f"git tag -a -m \"{next_tag}\nBumped {level} from version '{from_version}' to '{next_tag}'{message}\" {next_tag}"
 
         assert prefix is None or (prefix is not None and prefix in next_tag)
-        assert release_type is ReleaseType.RELEASE or (
-            (suffix is not None and suffix in next_tag) or (suffix is None)
-        )
 
         if execution_mode is ExecutionMode.DRY_RUN:
             print(f"{cmd}")
@@ -267,15 +337,38 @@ class Semver(Lazyload):
     
 
     
-    def list(self, release_type: ReleaseType = ReleaseType.RELEASE):
-        """Lists the semver tags in the repository to stdout sorted by major, minor, patch."""
-
+    def list(self, release_type: ReleaseType = ReleaseType.RELEASE, filter_type: str = 'release'):
+        """Lists the semver tags in the repository to stdout sorted by major, minor, patch.
+        
+        Args:
+            release_type: Deprecated. Use filter_type instead.
+            filter_type: Which types of tags to display:
+                - 'release': Only show release versions
+                - 'prerelease': Only show prerelease versions
+                - 'other': Only show non-semver version tags
+                - 'all': Show all tags
+        """
         current_tags = self.get('semver_tags')['current']
-        category = 'prerelease' if release_type is ReleaseType.PRERELEASE else 'release'
-        tags = sorted(current_tags[category])
-
-        for tag in tags:
-            print(tag)
+        
+        # For backwards compatibility
+        if release_type is ReleaseType.PRERELEASE and filter_type == 'release':
+            filter_type = 'prerelease'
+            
+        # Determine which categories to display
+        categories_to_show = []
+        if filter_type == 'all':
+            categories_to_show = ['release', 'prerelease', 'other']
+        else:
+            categories_to_show = [filter_type]
+            
+        # Display tags for each selected category
+        for category in categories_to_show:
+            if current_tags.get(category):
+                if len(categories_to_show) > 1:
+                    print(f"\n--- {category.capitalize()} tags ---")
+                tags = sorted(current_tags[category])
+                for tag in tags:
+                    print(tag)
             
     def note(self, release_type: ReleaseType = ReleaseType.RELEASE, filename: str | None = None) -> str:
         """Generates a release note either for a release or a prerelease, based on the set of current semver tags.
@@ -302,7 +395,7 @@ class Semver(Lazyload):
 
             from_ref = None
             if len(releases) > 1:
-                from_ref = self.get('semver_tags')['release'][releases[-2]]
+                from_ref = releases[-2]  # Get the second-to-last release
             else:
                 print("Could not find previous release tag when assembling changes for the note. Attempting to find a root commit instead.")
                 [from_ref, _] = asyncio.run(Gitter(

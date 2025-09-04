@@ -1,16 +1,17 @@
 # How to create a new (pre)release using the `semver` command
 ## Release
 ### Bump
-The first step is to create the release tag locally, in your repository. You can use the `gh tt semver bump` subcommand.
 
-Let's use the `--no-run` switch to preview the command.
+`gh tt semver bump ...` will create a tag that is compliant with the semver v2.0 spec. It will be created locally in your repository. Once it's created you should push it to your origin using 'git push --tags`
+
+You can apply the  `--no-run` switch to preview the git command that command.
 ```sh
 $ gh tt semver bump --minor --no-run
 git tag -a -m "1.2.0
 Bumped minor from version '1.1.0' to '1.2.0'" 1.2.0
 ```
 
-To create the tag "for real", execute the command without the `--no-run` flag.
+If you run the same command but without the `--no-run` flag it will generate the same command - and execute it.
 ```sh
 $ gh tt semver bump --minor
 ```
@@ -43,9 +44,61 @@ The backtick execution of `gh tt semver` lists the current latest release - in t
 > ```
 
 ## Prerelease
-For doing a prerelease, add the `--prerelease` flag to `semver bump`.
+For doing a prerelease, use the `--pre` flag in the `semver bump` command:
 
 ```sh
-$ gh tt semver bump --minor --prerelease
+$ gh tt semver bump --pre
 $ git prerelease `gh tt semver note temp/release_note.md`
 ```
+
+## Syntax
+
+You can use the `-h` or `--help` flag to any subcommand to learn it's syntax.
+You can use the `-v` or `--verbose` flag to any subcommand to force it to print out a trace (for debugging or learning).
+
+The semver command supports three subcommands; `bump`, `list` and `note`
+
+```shell
+$ usage: gh tt semver [-h] [-v] {bump,list,note} ...
+
+usage: gh tt semver [-h] [-v] {bump,list,note} ...
+
+Supports reading and setting the current version of the repository in semantic versioning format. Versions are stored as tags in the repository.
+
+positional arguments:
+  {bump,list,note}
+    bump            Bumps the current version of the repository in semantic versioning format
+    list            Lists the version tags in the repository in semantic versioning format and sort order
+    note            Generates a release note based on the set of current semver tags
+
+options:
+  -h, --help        show this help message and exit
+  -v, --verbose     Enable verbose output
+```
+
+### `bump`
+
+```shell
+usage: gh tt semver bump [-h] [-v] (--major | --minor | --patch | --prerelease | --build) [-m MESSAGE] [--prefix PREFIX] [--no-sha]
+                         [--run | --no-run]
+
+options:
+  -h, --help            show this help message and exit
+  -v, --verbose         Enable verbose output
+  --major               Bump the major version, breaking change
+  --minor               Bump the minor version, new feature, non-breaking change
+  --patch               Bump the patch version, bug fix or rework, non-breaking change
+  --prerelease, --pre   Bump the prerelease version
+  --build               Bump the build version
+  -m MESSAGE, --message MESSAGE
+                        Additional message for the annotated tag
+  --prefix PREFIX       Prefix to prepend the tag valid for both releases and prereleases
+  --no-sha              Do not include git SHA in build number when using --build
+  --run                 Execute the command
+  --no-run              Print the command without executing it
+```
+
+
+### `list`
+
+### `note`

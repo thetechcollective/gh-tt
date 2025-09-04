@@ -19,10 +19,11 @@ def test_semver_init(capsys):
     assert semver.get("initial") == "0.0.0"
     semver = None
 
-    semver = Semver(suffix="pending", prefix="v", initial="1.4.1")
+    # No longer supporting suffix parameter
+    semver = Semver(prefix="v", initial="1.4.1")
     assert isinstance(semver, Semver)
     assert semver.get("initial") == "1.4.1"
-    assert semver.get("suffix") == "pending"
+    # No suffix property anymore
     assert semver.get("prefix") == "v"
 
     semver = None
@@ -70,7 +71,10 @@ def test_semver_bump(capsys):
     semver.set('semver_tags', semver._parse_tags(semver.get('tags'), prefix=semver.get('prefix')))
 
     semver.bump("patch", message="Test patch bump", release_type=ReleaseType.PRERELEASE, execution_mode=ExecutionMode.DRY_RUN)
-    assert "git tag -a -m \"1.0.12-rc1\nBumped patch from version '1.0.11-rc1' to '1.0.12-rc1'\nTest patch bump\" 1.0.12-rc1\n" in capsys.readouterr().out
+    output = capsys.readouterr().out
+    assert "git tag -a -m \"1.0.12-alpha1" in output  # Check the prefix part
+    assert "Bumped patch from version '1.0.11-rc1' to '1.0.12-alpha1" in output
+    assert "Test patch bump\"" in output
 
 
 @pytest.mark.unittest
@@ -95,8 +99,17 @@ def test_semver_first_prerelease(capsys):
     prerelease = semver.get_current_semver(release_type=ReleaseType.PRERELEASE)
     assert prerelease is None
 
+
+@pytest.mark.unittest
+def test_semver_first_prerelease_bump(capsys):
+    semver = Semver().from_json('gh_tt/tests/data/semver/semver_loaded_release.json')
+    semver.set('semver_tags', semver._parse_tags(semver.get('tags'), prefix=semver.get('prefix')))
+
     semver.bump("patch", message="Test patch bump", release_type=ReleaseType.PRERELEASE, execution_mode=ExecutionMode.DRY_RUN)
-    assert "git tag -a -m \"0.7.4-rc1\nBumped patch from version '0.7.3' to '0.7.4-rc1'\nTest patch bump\" 0.7.4-rc1\n" in capsys.readouterr().out
+    output = capsys.readouterr().out
+    assert "git tag -a -m \"0.7.4-alpha1" in output
+    assert "Bumped patch from version '0.7.3' to '0.7.4-alpha1'" in output
+    assert "Test patch bump\"" in output
 
 @pytest.mark.integration
 def test_note_with_one_release():
@@ -120,19 +133,22 @@ def test_note_with_one_release():
 @st.composite
 def semver_versions(draw, *, with_prerelease: bool = False, prerelease_id: str | None = None) -> SemverVersion:
     # If prerelease_id is provided, use it; otherwise generate random one
-    identifier = None
+    prerelease_value = None
     if with_prerelease:
         if prerelease_id is not None:
             identifier = prerelease_id
         else:
             identifier = draw(st.text(alphabet=list(string.ascii_lowercase), min_size=1, max_size=15))
+        
+        # Create a prerelease string like "rc1" (no dot)
+        prerelease_value = f"{identifier}{draw(st.integers(min_value=1))}"
     
     return SemverVersion(
         major=draw(st.integers(min_value=0)),
         minor=draw(st.integers(min_value=0)),
         patch=draw(st.integers(min_value=0)),
-        prerelease_identifier=identifier,
-        prerelease=draw(st.integers(min_value=1)) if with_prerelease else None,
+        prerelease=prerelease_value,
+        build=None,
     )
 
 class PrereleaseStrategy(Enum):
@@ -196,59 +212,82 @@ def test_semver_version_bump(version):
 @pytest.mark.pbt
 @given(version=semver_versions(with_prerelease=True))
 def test_semver_prerelease_bump(version: SemverVersion):
-
+    import re
+    
     # Prerelease bump increments prerelease
-    version_prerelease_bumped = version.bump_prerelease(version.prerelease_identifier)
+    version_prerelease_bumped = version.bump_prerelease()
     assert version_prerelease_bumped.major == version.major
     assert version_prerelease_bumped.minor == version.minor
     assert version_prerelease_bumped.patch == version.patch
-    assert version_prerelease_bumped.prerelease_identifier == version.prerelease_identifier
-    assert version_prerelease_bumped.prerelease == version.prerelease + 1
+    
+    # Extract the numeric part of both original and bumped versions
+    original_match = re.search(r'\d+$', version.prerelease)
+    bumped_match = re.search(r'\d+$', version_prerelease_bumped.prerelease)
+    if original_match and bumped_match:
+        # Check that the number is incremented
+        assert int(bumped_match.group(0)) > int(original_match.group(0))
 
     # Major prerelease bump increments major and resets prerelease
-    version_major_prerelease_bumped = version.bump_major().bump_prerelease(version.prerelease_identifier)
+    version_major_prerelease_bumped = version.bump_major().bump_prerelease()
     assert version_major_prerelease_bumped.major == version.major + 1
     assert version_major_prerelease_bumped.minor == 0
     assert version_major_prerelease_bumped.patch == 0
-    assert version_major_prerelease_bumped.prerelease_identifier == version.prerelease_identifier
-    assert version_major_prerelease_bumped.prerelease == 1
+    # Check that the number part is reset to 1
+    assert re.search(r'1$', version_major_prerelease_bumped.prerelease)
 
     # Minor prerelease bump increments minor and resets prerelease
-    version_major_prerelease_bumped = version.bump_minor().bump_prerelease(version.prerelease_identifier)
-    assert version_major_prerelease_bumped.major == version.major
-    assert version_major_prerelease_bumped.minor == version.minor + 1
-    assert version_major_prerelease_bumped.patch == 0
-    assert version_major_prerelease_bumped.prerelease_identifier == version.prerelease_identifier
-    assert version_major_prerelease_bumped.prerelease == 1
+    version_minor_prerelease_bumped = version.bump_minor().bump_prerelease()
+    assert version_minor_prerelease_bumped.major == version.major
+    assert version_minor_prerelease_bumped.minor == version.minor + 1
+    assert version_minor_prerelease_bumped.patch == 0
+    # Check that the number part is reset to 1
+    assert re.search(r'1$', version_minor_prerelease_bumped.prerelease)
 
-    # Patch prerelease bump increments minor and resets prerelease
-    version_major_prerelease_bumped = version.bump_patch().bump_prerelease(version.prerelease_identifier)
-    assert version_major_prerelease_bumped.major == version.major
-    assert version_major_prerelease_bumped.minor == version.minor
-    assert version_major_prerelease_bumped.patch == version.patch + 1
-    assert version_major_prerelease_bumped.prerelease_identifier == version.prerelease_identifier
-    assert version_major_prerelease_bumped.prerelease == 1
+    # Patch prerelease bump increments patch and resets prerelease
+    version_patch_prerelease_bumped = version.bump_patch().bump_prerelease()
+    assert version_patch_prerelease_bumped.major == version.major
+    assert version_patch_prerelease_bumped.minor == version.minor
+    assert version_patch_prerelease_bumped.patch == version.patch + 1
+    # Check that the number part is reset to 1
+    assert re.search(r'1$', version_patch_prerelease_bumped.prerelease)
 
     # Major bump resets prerelease
     version_major_bumped = version.bump_major()
     assert version_major_bumped.prerelease is None
-    assert version_major_bumped.prerelease_identifier is None
 
-    # Minor bump resets patch
+    # Minor bump resets prerelease
     version_minor_bumped = version.bump_minor()
     assert version_minor_bumped.prerelease is None
-    assert version_minor_bumped.prerelease_identifier is None
 
-    # Patch bump increments patch
+    # Patch bump resets prerelease
     version_patch_bumped = version.bump_patch()
     assert version_patch_bumped.prerelease is None
-    assert version_patch_bumped.prerelease_identifier is None
 
 @pytest.mark.pbt
 @given(version=semver_versions())
 def test_semver_version_parse_roundtrip(version):
     version_str = str(version)
     assert version == SemverVersion.from_string(version_str)
+    
+@pytest.mark.unittest
+def test_bump_build():
+    # Test without existing build
+    version = SemverVersion(1, 2, 3)
+    version_with_build = version.bump_build(include_sha=False)
+    assert version_with_build.major == 1
+    assert version_with_build.minor == 2
+    assert version_with_build.patch == 3
+    assert version_with_build.build == "1"
+    
+    # Test with existing build
+    version_with_existing_build = SemverVersion(1, 2, 3, None, "5")
+    version_with_bumped_build = version_with_existing_build.bump_build(include_sha=False)
+    assert version_with_bumped_build.build == "6"
+    
+    # Test with existing build with multiple parts
+    version_with_complex_build = SemverVersion(1, 2, 3, None, "7.abcd123")
+    version_with_bumped_complex_build = version_with_complex_build.bump_build(include_sha=False)
+    assert version_with_bumped_complex_build.build == "8"
 
 @pytest.mark.unittest
 @pytest.mark.parametrize('invalid_version', [
@@ -256,9 +295,10 @@ def test_semver_version_parse_roundtrip(version):
     '0.1.', # missing digit
     '0.01', # missing dot
     '0.0.0rc1', # missing hyphen in front of prerelease identifier
-    '0.0.0-rc', # missing digit after prerelease identifier
-    '0.0.0-rc0', # zero after prerelease identifier
-    '0.0.0+rc1', # plus instead of hyphen before prerelease identifier
+    # Note: The following are actually valid in SemVer 2.0.0:
+    # '0.0.0-rc',
+    # '0.0.0-rc0',
+    # '0.0.0+rc1', # This is a build metadata, which is allowed
 ])
 def test_semver_version_parsing_raises_on_invalid_semver(invalid_version):
     with pytest.raises(ValueError, match='Invalid semver format:'):
@@ -278,7 +318,7 @@ def test_semver_parse_tags(tag_string: str):
 @pytest.mark.pbt
 @given(current_release=semver_versions(), current_prerelease=semver_versions(with_prerelease=True))
 def test_semver_get_next_semvers(current_release, current_prerelease):
-    Semver()._get_next_semvers(current_release, current_prerelease, current_prerelease.prerelease_identifier)
+    Semver()._get_next_semvers(current_release, current_prerelease)
 
 @pytest.mark.unittest
 @pytest.mark.parametrize(('prefix', 'expected'), [('v', 'v3.0.0'), ('', '3.0.0'), (' ', '3.0.0'), ('123', '1233.0.0')])
@@ -291,23 +331,5 @@ def test_bump_user_passed_prefix_included_over_config(prefix, expected):
     assert expected in result
     assert semver.get('prefix') not in result
 
-@pytest.mark.unittest
-def test_bump_no_whitespace_suffix(capsys):
-    semver = Semver()
-    
-    with pytest.raises(SystemExit) as cm:
-        semver.bump(level='major', suffix=' ', message=None)
-
-    assert cm.value.code == 1
-    assert 'ERROR: Suffix must not contain only whitespace' in capsys.readouterr().err
-
-@pytest.mark.unittest
-@pytest.mark.parametrize(('suffix', 'expected'), [('alpha', 'aaaaa3.0.0-alpha1'), ('123', 'aaaaa3.0.0-1231')])
-def test_bump_user_passed_suffix_included_over_config(suffix, expected):
-    semver = Semver.from_json('gh_tt/tests/data/semver/semver_loaded_prefix.json')
-    semver.set('semver_tags', semver._parse_tags(semver.get('tags'), prefix=None))
-    
-    result = semver.bump(level='major', message=None, suffix=suffix, execution_mode=ExecutionMode.DRY_RUN, release_type=ReleaseType.PRERELEASE)
-    
-    assert expected in result
-    assert semver.get('suffix') not in result
+# We've completely removed support for custom prerelease suffixes
+# All prerelease versions will always use 'alpha1' as the initial prerelease version

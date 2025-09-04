@@ -9,9 +9,6 @@ def tt_parse(args=None):
     version_parser = argparse.ArgumentParser(add_help=False)
     version_parser.add_argument('--version', action='store_true', help='Print version information and exit')
 
-    prerelease_parser = argparse.ArgumentParser(add_help=False)
-    prerelease_parser.add_argument('--prerelease', action='store_true', help='Set or read pre-release tags')
-
     poll_parser = argparse.ArgumentParser(add_help=False)
     poll_group = poll_parser.add_mutually_exclusive_group()
     poll_group.add_argument('--poll', dest='poll', action='store_true', help='Poll the status until it is set to success or failure (default)')
@@ -82,30 +79,43 @@ def tt_parse(args=None):
     # Add the semver subcommand
     semver_parser = subparsers.add_parser(
         'semver', 
-        parents=[parent_parser, prerelease_parser], 
+        parents=[parent_parser], 
         help="Reads and sets the current version of the repo in semantic versioning format",
         description="""
             Supports reading and setting the current version of the repository in semantic 
-            versioning format in both 'release' and 'prerelease' context.  Versions are stored as 
-            tags in the repository.
+            versioning format.  Versions are stored as tags in the repository.
             """)
     
+    # Add option to show prerelease version when no subcommand is used
+    semver_parser.add_argument('--prerelease', '--pre', action='store_true',
+                              help='Show the highest prerelease version instead of the highest release version', 
+                              default=False)
+    
     semver_sub_parser = semver_parser.add_subparsers(dest='semver_command')
-    semver_bump_parser = semver_sub_parser.add_parser('bump', parents=[parent_parser, prerelease_parser], help="Bumps the current version of the repository in semantic versioning format")
+    semver_bump_parser = semver_sub_parser.add_parser('bump', parents=[parent_parser], help="Bumps the current version of the repository in semantic versioning format")
     semver_bump_level_group = semver_bump_parser.add_mutually_exclusive_group(required=True)
     semver_bump_level_group.add_argument('--major', dest='level',  help='Bump the major version, breaking change', action='store_const', const='major')
     semver_bump_level_group.add_argument('--minor', dest='level',  help='Bump the minor version, new feature, non-breaking change', action='store_const', const='minor')
     semver_bump_level_group.add_argument('--patch', dest='level',  help='Bump the patch version, bug fix or rework, non-breaking change', action='store_const', const='patch')
+    semver_bump_level_group.add_argument('--prerelease', '--pre', dest='level',  help='Bump the prerelease version', action='store_const', const='prerelease')
+    semver_bump_level_group.add_argument('--build', dest='level',  help='Bump the build version', action='store_const', const='build')
     semver_bump_parser.add_argument('-m', '--message', type=str, help='Additional message for the annotated tag', required=False, default=None)
-    semver_bump_parser.add_argument('--suffix', type=str, help='Suffix to use for prerelease tags', required=False, default=None)
     semver_bump_parser.add_argument('--prefix', type=str, help='Prefix to prepend the tag valid for both releases and prereleases', required=False, default=None)
-    semver_bump_parser.add_argument('--initial', type=str, help='Initial off-set, only relevant if there are not tags defined. Must be a three-level-interger seperated by dots.', required=False, default=None)
+    semver_bump_parser.add_argument('--no-sha', dest='include_sha', action='store_false', help='Do not include git SHA in build number (only valid with --build)', required=False, default=True)
     run_group = semver_bump_parser.add_mutually_exclusive_group()
     run_group.add_argument('--run', dest='run', action='store_true', help='Execute the command')
     run_group.add_argument('--no-run', dest='run', action='store_false', help='Print the command without executing it')
     semver_bump_parser.set_defaults(run=True, exclusive_groups=['bump'])
-    semver_sub_parser.add_parser('list', parents=[parent_parser, prerelease_parser], help="Lists the version tags in the repository in semantic versioning format and sort order in either prerelease or release context")
-    semver_note_parser = semver_sub_parser.add_parser('note', parents=[parent_parser, prerelease_parser], help="Generates a release note either for a release or a prerelease, based on the set of current semver tags")
+    
+    # List command with filter options
+    semver_list_parser = semver_sub_parser.add_parser('list', parents=[parent_parser], help="Lists the version tags in the repository in semantic versioning format and sort order")
+    list_filter_group = semver_list_parser.add_mutually_exclusive_group()
+    list_filter_group.add_argument('--release', dest='filter_type', action='store_const', const='release', help='Show only release versions')
+    list_filter_group.add_argument('--prerelease', '--pre', dest='filter_type', action='store_const', const='prerelease', help='Show only prerelease versions')
+    list_filter_group.add_argument('--other', dest='filter_type', action='store_const', const='other', help='Show only non-semantic version tags')
+    list_filter_group.add_argument('--all', dest='filter_type', action='store_const', const='all', help='Show all version tags (default)')
+    semver_list_parser.set_defaults(filter_type='all')
+    semver_note_parser = semver_sub_parser.add_parser('note', parents=[parent_parser], help="Generates a release note based on the set of current semver tags")
     semver_note_parser.add_argument('--filename', type=str, help='If provided, the note will be written to this file. If None, it will be printed to stdout.', required=False, default=None)
 
     # Add a status subcommand
@@ -162,5 +172,9 @@ def tt_parse(args=None):
 
     if args.command == 'sync' and not (args.labels or args.milestones):
         sync_parser.error("🛑 You must specify at least one entity (e.g. labels) to sync")
+        
+    # Validate that --no-sha is only used with --build
+    if hasattr(args, 'include_sha') and args.include_sha is False and (not hasattr(args, 'level') or args.level != 'build'):
+        semver_bump_parser.error("🛑 The --no-sha flag can only be used with the --build level")
 
     return args
