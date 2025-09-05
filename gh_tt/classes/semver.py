@@ -172,6 +172,7 @@ class SemverVersion:
 class SemverTag:
     version: SemverVersion
     prefix: str | None = None
+    sha: str | None = None
 
     def __str__(self) -> str:
         prefix_str = self.prefix if self.prefix is not None else ''
@@ -183,7 +184,7 @@ class SemverTag:
         return self.version < other.version
     
     @classmethod
-    def from_string(cls, tag: str, prefix: str | None) -> SemverTag | None:
+    def from_string(cls, tag: str, prefix: str | None, sha: str | None = None) -> SemverTag | None:
         version_str = tag
         if prefix is not None and prefix:
             version_str = tag.split(prefix)[1]
@@ -193,7 +194,7 @@ class SemverTag:
         except ValueError:
             return None
 
-        return cls(version, prefix)
+        return cls(version, prefix, sha)
 
 class Semver(Lazyload):
     """Class used to represent the semver state of git repository"""
@@ -223,13 +224,27 @@ class Semver(Lazyload):
     @classmethod
     def with_tags_loaded(cls) -> Semver:
         semver = cls()
-        asyncio.run(semver._assert_props(['tags']))
-        semver.set('semver_tags', semver._parse_tags(semver.get('tags'), semver.get('prefix')))
+        asyncio.run(semver._assert_props(['tags', 'tag_shas']))
+        semver.set('semver_tags', semver._parse_tags(
+            semver.get('tags'), 
+            semver.get('prefix'),
+            semver.get('tag_shas')
+        ))
 
         return semver
     
-    def _parse_tags(self, tag_string: str, prefix: str | None) -> dict:
+    def _parse_tags(self, tag_string: str, prefix: str | None, tag_shas_string: str | None = None) -> dict:
         tags = tag_string.split('\n') if tag_string else []
+        
+        # Parse tag SHAs if available
+        tag_sha_map = {}
+        if tag_shas_string:
+            for line in tag_shas_string.split('\n'):
+                if line.strip():
+                    parts = line.strip().split(' ', 1)
+                    if len(parts) == 2:
+                        sha, tag_name = parts
+                        tag_sha_map[tag_name] = sha
 
         semver_tags = {
             'current': {
@@ -243,7 +258,9 @@ class Semver(Lazyload):
             if not tag_str.strip(): # skip empty
                 continue
 
-            semver_tag = SemverTag.from_string(tag_str, prefix)
+            # Create tag with SHA information upfront
+            sha = tag_sha_map.get(tag_str)
+            semver_tag = SemverTag.from_string(tag_str, prefix, sha)
             if semver_tag:
                 category = 'prerelease' if semver_tag.version.is_prerelease() else 'release'
                 semver_tags['current'][category].append(semver_tag)
@@ -337,7 +354,7 @@ class Semver(Lazyload):
     
 
     
-    def list(self, release_type: ReleaseType = ReleaseType.RELEASE, filter_type: str = 'release'):
+    def list(self, release_type: ReleaseType = ReleaseType.RELEASE, filter_type: str = 'release', *, show_sha: bool = False):
         """Lists the semver tags in the repository to stdout sorted by major, minor, patch.
         
         Args:
@@ -347,6 +364,7 @@ class Semver(Lazyload):
                 - 'prerelease': Only show prerelease versions
                 - 'other': Only show non-semver version tags
                 - 'all': Show all tags
+            show_sha: If True, also display the SHA for each tag
         """
         current_tags = self.get('semver_tags')['current']
         
@@ -368,7 +386,10 @@ class Semver(Lazyload):
                     print(f"\n--- {category.capitalize()} tags ---")
                 tags = sorted(current_tags[category])
                 for tag in tags:
-                    print(tag)
+                    if show_sha and hasattr(tag, 'sha') and tag.sha:
+                        print(f"{tag} {tag.sha}")
+                    else:
+                        print(tag)
             
     def note(self, release_type: ReleaseType = ReleaseType.RELEASE, filename: str | None = None, from_ref: str | None = None, to_ref: str | None = None) -> str:
         """Generates a release note either for a release or a prerelease, based on the set of current semver tags.

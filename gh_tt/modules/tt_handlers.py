@@ -136,7 +136,7 @@ def handle_semver(args):
         _handle_semver_bump(args, semver, release_type)
     elif args.semver_command == 'list':
         filter_type = getattr(args, 'filter_type', 'release')
-        semver.list(release_type=release_type, filter_type=filter_type)
+        semver.list(release_type=release_type, filter_type=filter_type, show_sha=args.sha)
     elif args.semver_command == 'note':
         if args.filename:
             note = semver.note(release_type=release_type, filename=args.filename, from_ref=args.from_ref, to_ref=args.to_ref)

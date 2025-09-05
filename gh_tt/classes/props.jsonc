@@ -167,6 +167,11 @@
       "cmd": "git tag --list --format='%(refname:short)'",
       "msg": "List all tags in the repository",
       "group": "init"
+    },
+    "tag_shas": {
+      "cmd": "git for-each-ref --format='%(objectname) %(refname:short)' refs/tags/",
+      "msg": "List all tags with their SHA in the repository",
+      "group": "init"
     }
   },
   "label": {

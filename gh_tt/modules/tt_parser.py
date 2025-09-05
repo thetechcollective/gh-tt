@@ -114,6 +114,7 @@ def tt_parse(args=None):
     list_filter_group.add_argument('--prerelease', '--pre', dest='filter_type', action='store_const', const='prerelease', help='Show only prerelease versions')
     list_filter_group.add_argument('--other', dest='filter_type', action='store_const', const='other', help='Show only non-semantic version tags')
     list_filter_group.add_argument('--all', dest='filter_type', action='store_const', const='all', help='Show all version tags (default)')
+    semver_list_parser.add_argument('--sha', action='store_true', help='Show commit SHAs for each version tag', default=False)
     semver_list_parser.set_defaults(filter_type='all')
     semver_note_parser = semver_sub_parser.add_parser('note', parents=[parent_parser], help="Generates a release note based on the set of current semver tags")
     semver_note_parser.add_argument('--filename', type=str, help='If provided, the note will be written to this file. If None, it will be printed to stdout.', required=False, default=None)
