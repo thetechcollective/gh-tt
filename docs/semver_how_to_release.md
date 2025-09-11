@@ -1,10 +1,14 @@
-# How to create a new (pre)release using the `semver` command
-## Release
-### Bump
+# How to create a new release – or prerelease – using the `semver` command
 
-`gh tt semver bump ...` will create a tag that is compliant with the semver v2.0 spec. It will be created locally in your repository. Once it's created you should push it to your origin using 'git push --tags`
+# Quick guide:
 
-You can apply the  `--no-run` switch to preview the git command that command.
+`gh tt semver` will print the highest preceding semver compliant release tag
+
+`gh tt semver --prerelease` will print the highest preceding semver compliant prerelease tag
+
+`gh tt semver bump ...` will create a tag that is compliant with the semver [v2.0 spec.](https://semver.org/) It will be created locally in your repository. Once it's created you should push it to your origin using 'git push --tags`
+
+You can apply the  `--no-run` switch to `bump` to preview the git command that command.
 ```sh
 $ gh tt semver bump --minor --no-run
 git tag -a -m "1.2.0
@@ -16,20 +20,28 @@ If you run the same command but without the `--no-run` flag it will generate the
 $ gh tt semver bump --minor
 ```
 
-### Note
-If you are using GitHub's releases then you probably want a nice release note to add when you create the release.
-To create a release note, run:
+You can use `gh tt semver note` to generate release notes. The will be printed to `STDOUT` or a file if you choose
+
+The following commands will bump the build sequence number, taking offset in the highest preceding. Generate a note, push tha tag and generate a prerelease on GitHub using that note
 ```sh
+$ gh tt semver bump --build
 $ gh tt semver note --filename temp/release_note.md
 ```
 
-### Release
-To create the GitHub release, run:
-```sh
-$ gh release create `gh tt semver` --latest --verify-tag --notes-file temp/release_note.md
-```
-The backtick execution of `gh tt semver` lists the current latest release - in the example it would be `1.1.0`
+### backtick command substitution
 
+`gh tt semver` prints the current latest release
+`gh tt semver` prints the current latest prerelease
+`gh tt semver note` with the file outputs the name of the file created
+`gh tt semver bump ...` outputs that tag created
+
+To advance the build number on the current prerelease and populate it to github , with a note containing all changes since the last official release:
+
+```sh
+$ gh tt semver note --from `gh tt semver` --to `gh tt semver bump --build` --file temp/release_note.md
+$ git push tags
+$ gh release create `gh tt semver --prerelease` --verify-tag --notes-file temp/release_note.md
+````
 
 > [!TIP]
 > For our own convenience we have added two git aliases
@@ -40,7 +52,7 @@ The backtick execution of `gh tt semver` lists the current latest release - in t
 > Which allows us to run:
 > ```sh
 > $ gh tt semver bump --minor
-> $ git release `gh tt semver note temp/release_note.md`
+> $ git release `gh tt semver note --notes-file temp/release_note.md`
 > ```
 
 ## Prerelease
