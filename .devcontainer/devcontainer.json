@@ -33,6 +33,9 @@
 	// Mount the workspace folder one level higher than the git repo
 	"workspaceMount": "source=${localWorkspaceFolder}/../,target=/workspaces,type=bind",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+	"mounts": [
+		"source=${localEnv:HOME},target=/localhome,type=bind,consistency=cached"
+	],	
 
     "remoteEnv": {
         "UV_LINK_MODE": "copy",

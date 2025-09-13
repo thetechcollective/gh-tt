@@ -52,7 +52,20 @@ class SemverVersion:
             return True   # self is lower
             
         # If both have prerelease or both don't, compare lexically
-        return (self.prerelease or "") < (other.prerelease or "")
+        prerelease_compare = (self.prerelease or "") < (other.prerelease or "")
+        if self.prerelease != other.prerelease:
+            return prerelease_compare
+            
+        # If prerelease versions are identical, consider build metadata
+        # For versions that are otherwise identical, a version with build metadata
+        # should sort higher than one without
+        if self.build is None and other.build is not None:
+            return True  # self is lower (no build < has build)
+        if self.build is not None and other.build is None:
+            return False  # self is higher (has build > no build)
+            
+        # If both have build metadata, compare lexically
+        return (self.build or "") < (other.build or "")
 
     def __str__(self) -> str:
         version = f"{self.major}.{self.minor}.{self.patch}"
@@ -384,7 +397,8 @@ class Semver(Lazyload):
             if current_tags.get(category):
                 if len(categories_to_show) > 1:
                     print(f"\n--- {category.capitalize()} tags ---")
-                tags = sorted(current_tags[category])
+                # Reverse the sorted list to show highest versions first (most recent on top)
+                tags = sorted(current_tags[category], reverse=True)
                 for tag in tags:
                     if show_sha and hasattr(tag, 'sha') and tag.sha:
                         print(f"{tag} {tag.sha}")

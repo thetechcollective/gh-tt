@@ -105,6 +105,8 @@ def _handle_semver_bump_build(args, semver):
     if args.run:
         import asyncio
         asyncio.run(Gitter(cmd=cmd, msg=message).run())
+        # Print the new tag when in --run mode
+        print(f"{tag_str}")
     else:
         print(cmd)
 
@@ -117,13 +119,19 @@ def _handle_semver_bump(args, semver, release_type):
     if args.level == 'build':
         _handle_semver_bump_build(args, semver)
     else:
-        semver.bump(
+        result = semver.bump(
             level=args.level, 
             message=args.message, 
             prefix=args.prefix, 
             release_type=release_type,
             execution_mode=ExecutionMode.LIVE if args.run else ExecutionMode.DRY_RUN
         )
+        
+        # Print the new tag in --run mode (which is the default)
+        if args.run and result:
+            # The result from bump() is a set with a single item - the new tag
+            new_tag = next(iter(result))
+            print(f"{new_tag}")
 
 
 def handle_semver(args):

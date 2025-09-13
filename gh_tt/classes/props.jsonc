@@ -169,8 +169,8 @@
       "group": "init"
     },
     "tag_shas": {
-      "cmd": "git for-each-ref --format='%(objectname) %(refname:short)' refs/tags/",
-      "msg": "List all tags with their SHA in the repository",
+      "cmd": "git for-each-ref --format='%(if:equals=tag)%(objecttype)%(then)%(object)%(else)%(objectname)%(end) %(refname:short)' refs/tags/",
+      "msg": "List all tags with their commit SHA in the repository (resolving through annotated tags)",
       "group": "init"
     }
   },
