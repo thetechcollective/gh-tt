@@ -31,12 +31,77 @@ class SemverVersion:
     def __post_init__(self):
         pass
             
-
+    # Removed redundant _compare_prerelease and _compare_build methods
+    # Now directly using _compare_identifiers in _compare_prerelease_components and _compare_build_components
+        
+    def _compare_identifiers(self, self_identifiers: str, other_identifiers: str) -> bool:
+        """Generic method to compare dot-separated identifiers according to SemVer spec.
+        Works for both prerelease and build metadata.
+        
+        Args:
+            self_identifiers: The first identifiers string
+            other_identifiers: The second identifiers string
+            
+        Returns:
+            True if self_identifiers < other_identifiers, False otherwise
+        """
+        self_parts = self_identifiers.split('.')
+        other_parts = other_identifiers.split('.')
+        
+        # Compare each identifier
+        for i in range(min(len(self_parts), len(other_parts))):
+            self_is_numeric = self_parts[i].isdigit()
+            other_is_numeric = other_parts[i].isdigit()
+            
+            # If both identifiers are numeric, compare numerically
+            if self_is_numeric and other_is_numeric:
+                self_num = int(self_parts[i])
+                other_num = int(other_parts[i])
+                if self_num != other_num:
+                    return self_num < other_num
+                continue
+                
+            # If only one is numeric, numeric has lower precedence
+            if self_is_numeric:
+                return True  # self is lower
+            if other_is_numeric:
+                return False  # self is higher
+                
+            # Otherwise compare lexically
+            if self_parts[i] != other_parts[i]:
+                return self_parts[i] < other_parts[i]
+        
+        # If we get here, one string is a prefix of the other
+        # The shorter one is the smaller version
+        return len(self_parts) < len(other_parts)
+        
         
     def __lt__(self, other):
+        """Compare two SemVer versions according to SemVer 2.0.0 specification.
+        
+        Args:
+            other: The other SemverVersion to compare against
+            
+        Returns:
+            True if self < other, False otherwise
+        """
         if not isinstance(other, SemverVersion):
             return NotImplemented
             
+        # Compare major.minor.patch numerically
+        return self._compare_core_version(other)
+            
+    def _compare_core_version(self, other):
+        """Compare the core version components (major.minor.patch).
+        
+        Args:
+            other: The other SemverVersion to compare against
+            
+        Returns:
+            True if self < other based on core version,
+            False if self > other or equal based on core version
+            If equal, calls _compare_prerelease_components to continue comparison
+        """
         # First compare major.minor.patch
         if self.major != other.major:
             return self.major < other.major
@@ -45,18 +110,43 @@ class SemverVersion:
         if self.patch != other.patch:
             return self.patch < other.patch
             
+        # If core versions are equal, compare prerelease components
+        return self._compare_prerelease_components(other)
+    
+    def _compare_prerelease_components(self, other):
+        """Compare the prerelease components after core versions are found equal.
+        
+        Args:
+            other: The other SemverVersion to compare against
+            
+        Returns:
+            True if self < other based on prerelease,
+            False if self > other or equal based on prerelease
+            If equal, calls _compare_build_components to continue comparison
+        """
         # Handle prerelease special case: a version WITH prerelease is LOWER than one WITHOUT
         if self.prerelease is None and other.prerelease is not None:
             return False  # self is higher
         if self.prerelease is not None and other.prerelease is None:
             return True   # self is lower
             
-        # If both have prerelease or both don't, compare lexically
-        prerelease_compare = (self.prerelease or "") < (other.prerelease or "")
-        if self.prerelease != other.prerelease:
-            return prerelease_compare
+        # If both have prerelease identifiers, compare them
+        if self.prerelease is not None and other.prerelease is not None and self.prerelease != other.prerelease:
+            return self._compare_identifiers(self.prerelease, other.prerelease)
+                
+        # If prerelease components are equal, compare build components
+        return self._compare_build_components(other)
+        
+    def _compare_build_components(self, other):
+        """Compare the build components after prerelease components are found equal.
+        
+        Args:
+            other: The other SemverVersion to compare against
             
-        # If prerelease versions are identical, consider build metadata
+        Returns:
+            True if self < other based on build,
+            False if self > other or equal based on build
+        """
         # For versions that are otherwise identical, a version with build metadata
         # should sort higher than one without
         if self.build is None and other.build is not None:
@@ -64,8 +154,12 @@ class SemverVersion:
         if self.build is not None and other.build is None:
             return False  # self is higher (has build > no build)
             
-        # If both have build metadata, compare lexically
-        return (self.build or "") < (other.build or "")
+        # If both have build metadata, compare them
+        if self.build is not None and other.build is not None and self.build != other.build:
+            return self._compare_identifiers(self.build, other.build)
+            
+        # If we get here, both are None, so they're equal
+        return False
 
     def __str__(self) -> str:
         version = f"{self.major}.{self.minor}.{self.patch}"
