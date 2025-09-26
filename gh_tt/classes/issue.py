@@ -78,7 +78,7 @@ class Issue(Lazyload):
 
         issue_number = self.get('number')
 
-        [output, result] = asyncio.run(Gitter(
+        [output, _] = asyncio.run(Gitter(
             cmd=f"gh issue edit {issue_number} --add-assignee '{assignee}'",
             msg="Assign @me to the issue").run()
         )

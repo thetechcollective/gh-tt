@@ -187,7 +187,7 @@ class Status(Lazyload):
             # Get the commit status from GitHub API
             cmd = f"gh api -H 'Accept: application/vnd.github+json' -H 'X-GitHub-Api-Version: 2022-11-28' /repos/{repository}/commits/{sha}/status"
             
-            [result, process] = asyncio.run(
+            [result, _] = asyncio.run(
                 Gitter(
                     cmd=cmd,
                     msg=f"Getting commit status for SHA {sha[:8]}"

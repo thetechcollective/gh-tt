@@ -74,7 +74,7 @@ class Project(Lazyload):
         if not owner or not number:
             return {}
 
-        [field_json_str, result] = asyncio.run(Gitter(
+        [field_json_str, _] = asyncio.run(Gitter(
             cmd=f"gh project field-list {number} --owner {owner} --format json --jq '.fields[] | select(.name == \"{field}\")'",
             msg="Get the field description in json format").run(cache=True)
         )
