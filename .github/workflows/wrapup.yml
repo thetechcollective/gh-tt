@@ -14,8 +14,23 @@ on:
 permissions:
   contents: read
 
+env:
+  PYTHON_VERSIONS: "['3.11', '3.12', '3.13']"
+
 jobs:
 
+  # It is not possible to pass an environment variable down to
+  # a reusable workflow as an argument via _with_.
+  # See: https://stackoverflow.com/a/73305536
+  # The workaround is to put the environment variable as a step output.
+  python_versions:
+    runs-on: ubuntu-latest
+    outputs:
+      python_versions: ${{ steps.step1.outputs.python_versions }}
+    steps:
+      - id: step1
+        run: echo "python_versions=$PYTHON_VERSIONS" >> "$GITHUB_OUTPUT"
+      
   mark-pending:
     name: Statuses
     permissions:
@@ -24,30 +39,38 @@ jobs:
     uses: lakruzz/workflows/.github/workflows/mark_pending.yml@experimental
     with:
       statuses: |
-        Pytest + cov
         Ruff
         Cspell
-        Property-based testing
+        Property-based testing - Python 3.11
+        Property-based testing - Python 3.12
+        Property-based testing - Python 3.13
+        Unit testing w/ coverage - Python 3.11
+        Unit testing w/ coverage - Python 3.12
+        Unit testing w/ coverage - Python 3.13
 
   pytest_with_coverage:
     name: Unit testing
-    needs: mark-pending
+    needs: [mark-pending, python_versions]
     permissions:
       statuses: write
       contents: read
-    uses: lakruzz/workflows/.github/workflows/pytest_with_coverage.yml@experimental
+    uses: lakruzz/workflows/.github/workflows/pytest_matrix.yml@experimental
     with:
-      context: Pytest + cov
+      context: Unit testing w/ coverage
+      pytest_arguments: "--cov=. --cov-config=.coveragerc -m unittest"
+      python_versions: ${{ needs.python_versions.outputs.python_versions }}
 
   pytest_hypothesis:
     name: Property-based testing
-    needs: mark-pending
-    permissions:
+    needs: [mark-pending, python_versions]
+    permissions: 
       statuses: write
       contents: read
-    uses: ./.github/workflows/pytest_hypothesis.yml
+    uses: lakruzz/workflows/.github/workflows/pytest_matrix.yml@experimental
     with:
       context: Property-based testing
+      pytest_arguments: "-m hypothesis --hypothesis-profile=1000"
+      python_versions: ${{ needs.python_versions.outputs.python_versions }}
 
   ruff_linting:
     name: Linting
