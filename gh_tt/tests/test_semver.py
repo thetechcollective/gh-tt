@@ -186,7 +186,6 @@ def tag_strings(draw, *, prerelease_strategy: PrereleaseStrategy = PrereleaseStr
     draw(st.randoms()).shuffle(all_tags)
     return "\n".join(all_tags)
 
-@pytest.mark.pbt
 @given(version=semver_versions())
 def test_semver_version_bump(version):
 
@@ -209,7 +208,6 @@ def test_semver_version_bump(version):
     assert version_patch_bumped.patch == version.patch + 1
 
 
-@pytest.mark.pbt
 @given(version=semver_versions(with_prerelease=True))
 def test_semver_prerelease_bump(version: SemverVersion):
     import re
@@ -263,7 +261,6 @@ def test_semver_prerelease_bump(version: SemverVersion):
     version_patch_bumped = version.bump_patch()
     assert version_patch_bumped.prerelease is None
 
-@pytest.mark.pbt
 @given(version=semver_versions())
 def test_semver_version_parse_roundtrip(version):
     version_str = str(version)
@@ -304,7 +301,6 @@ def test_semver_version_parsing_raises_on_invalid_semver(invalid_version):
     with pytest.raises(ValueError, match='Invalid semver format:'):
         SemverVersion.from_string(invalid_version)
 
-@pytest.mark.pbt
 @given(tag_string=tag_strings().filter(lambda x: x.strip() != ''))
 def test_semver_parse_tags(tag_string: str):
     new_lines = len(tag_string.split('\n'))
@@ -315,7 +311,6 @@ def test_semver_parse_tags(tag_string: str):
     # No tags disappear when parsing
     assert len(current_tags['release']) + len(current_tags['prerelease']) + len(current_tags['other']) == new_lines
 
-@pytest.mark.pbt
 @given(current_release=semver_versions(), current_prerelease=semver_versions(with_prerelease=True))
 def test_semver_get_next_semvers(current_release, current_prerelease):
     Semver()._get_next_semvers(current_release, current_prerelease)

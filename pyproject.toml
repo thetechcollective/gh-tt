@@ -137,7 +137,6 @@ markers = [
     "dev: these tests are for development purposes - not necessarily mocked or stable, used by development team in the devcontainer",
     "unittest: these tests are for unit testing",
     "integration: test calling external apis",
-    "pbt: property-based tests"
 ]
 # Ignore the temp directory during test collection
 testpaths = [
