@@ -46,5 +46,7 @@ def test_label_create_true_calls_create_new(mocker: MockerFixture):
 
     Config.add_config(config_file=config_file)
     Label(name='new-label', create=True)
+    
+    Path.unlink(config_file)
 
     create_new.assert_called_once()
