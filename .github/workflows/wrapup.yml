@@ -36,7 +36,7 @@ jobs:
     permissions:
       statuses: write
       contents: read
-    uses: lakruzz/workflows/.github/workflows/mark_pending.yml@experimental
+    uses: thetechcollective/workflows/.github/workflows/doing_mark_pending.yaml@stable
     with:
       statuses: |
         Ruff
@@ -54,7 +54,7 @@ jobs:
     permissions:
       statuses: write
       contents: read
-    uses: lakruzz/workflows/.github/workflows/pytest_matrix.yml@experimental
+    uses: thetechcollective/workflows/.github/workflows/checking_python_pytest_matrix.yaml@stable
     with:
       context: Unit testing w/ coverage
       pytest_arguments: "--cov=. --cov-config=.coveragerc -m unittest"
@@ -66,7 +66,7 @@ jobs:
     permissions: 
       statuses: write
       contents: read
-    uses: lakruzz/workflows/.github/workflows/pytest_matrix.yml@experimental
+    uses: thetechcollective/workflows/.github/workflows/checking_python_pytest_matrix.yaml@stable
     with:
       context: Property-based testing
       pytest_arguments: "-m hypothesis --hypothesis-profile=1000"
@@ -78,7 +78,7 @@ jobs:
     permissions:
       statuses: write
       contents: read
-    uses: lakruzz/workflows/.github/workflows/ruff_check.yml@experimental
+    uses: thetechcollective/workflows/.github/workflows/checking_python_ruff_lint.yaml@stable
     with:
       context: Ruff
 
@@ -88,6 +88,6 @@ jobs:
     permissions:
       statuses: write
       contents: read
-    uses: lakruzz/workflows/.github/workflows/cspell_check.yml@experimental
+    uses: thetechcollective/workflows/.github/workflows/checking_cspell_check.yaml@stable
     with:
       context: Cspell

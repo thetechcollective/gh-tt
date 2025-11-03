@@ -20,7 +20,7 @@ jobs:
     permissions:
       statuses: write
       contents: read
-    uses: lakruzz/workflows/.github/workflows/mark_pending.yml@experimental
+    uses: thetechcollective/workflows/.github/workflows/doing_mark_pending.yaml@stable
     with:
       statuses: |
         E2E in testbed
@@ -30,7 +30,7 @@ jobs:
     permissions:
       statuses: write
       contents: read
-    uses: lakruzz/workflows/.github/workflows/inherit_statuses.yml@experimental
+    uses: thetechcollective/workflows/.github/workflows/doing_inherit_statuses.yaml@stable
 
   pytest_integration:
     name: Integration testing
@@ -52,8 +52,8 @@ jobs:
     permissions:
       contents: write
     secrets:
-      READY_PUSHER: ${{ secrets.READY_PUSHER }}
-    uses: lakruzz/workflows/.github/workflows/fast_forward.yml@experimental
+      token: ${{ secrets.READY_PUSHER }}
+    uses: thetechcollective/workflows/.github/workflows/doing_fast_forward.yaml@stable
     with:
       target_branch: main #default is main
       user_name: "GitHub Action: ready" #required 
@@ -64,7 +64,7 @@ jobs:
     permissions:
       issues: write
       contents: write
-    uses: lakruzz/workflows/.github/workflows/close_issue.yml@experimental
+    uses: thetechcollective/workflows/.github/workflows/doing_close_issue.yaml@stable
     with:
       user_name: "GitHub Action: ready" #required 
       user_email: "tt-ready@thetechcollective.eu" # required
