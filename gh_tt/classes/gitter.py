@@ -21,6 +21,8 @@ class Gitter(Lazyload):
     fetched = False  # Flag to indicate if the repository has been fetched
     class_cache: ClassVar[dict] = {}  # Dictionary to store class cache data
 
+    _fetch_lock = asyncio.Lock()
+
     git_path = shutil.which('git')
     assert git_path is not None, "Git not found on PATH. Git is required for gh-tt to work. To proceed, install git."
 
@@ -213,19 +215,20 @@ class Gitter(Lazyload):
     async def fetch(cls, *, prune=False, again=False):
         """Fetch """
 
-        if cls.fetched and not again:
+        async with cls._fetch_lock:
+            if cls.fetched and not again:
+                return True
+
+            msg = "Fetch all branches and tags from all remotes"
+
+            prune_switch = "--prune --prune-tags" if prune else ""
+            if prune:
+                msg += " and prune local branches and tags)"
+
+            [_, _] = await Gitter(
+                cmd=f"git fetch --tags --all -f {prune_switch}",
+                msg=f"{msg}").run()
+
+            cls.fetched = True
+
             return True
-
-        msg = "Fetch all branches and tags from all remotes"
-
-        prune_switch = "--prune --prune-tags" if prune else ""
-        if prune:
-            msg += " and prune local branches and tags)"
-
-        [_, _] = await Gitter(
-            cmd=f"git fetch --tags --all -f {prune_switch}",
-            msg=f"{msg}").run()
-
-        cls.fetched = True
-
-        return True

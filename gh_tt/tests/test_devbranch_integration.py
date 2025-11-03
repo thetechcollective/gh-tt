@@ -90,7 +90,7 @@ def test_workon_success(workon_success_env):
     branch_name, _ = Testbed.gitter_run(cmd="git rev-parse --abbrev-ref HEAD", cwd=env.local_repo_path)
 
     issue_data, _ = Testbed.gitter_run(
-        cmd=f"gh issue view -R {env.github_repo_url} {env.issue_number} --json assignees,body,closed,comments,labels,projectItems,projectCards,state"
+        cmd=f"gh issue view -R {env.github_repo_url} {env.issue_number} --json assignees,body,closed,comments,labels,projectItems,state"
     )
     issue = json.loads(issue_data)
 
