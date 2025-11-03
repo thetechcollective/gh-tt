@@ -3,7 +3,7 @@
 # The owners will recieve a mention in the issue you are 
 # working in when you use `gh tt wrapup` 
 
-**/*           @lakruzz
+**/* @vemolista
 
 # Order is important; the last matching pattern takes the most
 # precedence. 
