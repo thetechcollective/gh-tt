@@ -5,7 +5,7 @@
     },
     "workon": {
         "default_type_labels": {
-            "title": "type: adhoc",
+            "title": "type: ad hoc",
             "issue": "type: development"
         }
     },
