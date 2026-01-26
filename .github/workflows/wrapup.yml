@@ -91,3 +91,15 @@ jobs:
     uses: thetechcollective/workflows/.github/workflows/checking_cspell_check.yaml@stable
     with:
       context: Cspell
+
+  pytest_integration:
+    name: Integration testing
+    needs: 
+      - mark-pending
+    permissions:
+      statuses: write
+    # continue-on-error: true # <- This doesn't work in reusable workflows, so we set it in the integration_test.yml
+    secrets: inherit
+    uses: ./.github/workflows/integration_test.yml
+    with:
+      context: E2E in testbed

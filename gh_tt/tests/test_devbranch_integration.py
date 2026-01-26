@@ -29,7 +29,7 @@ def query_github_org_name_from_id(github_org_id: str):
                     name
                 }}
             }}
-        }})'
+        }}'
     """
 
 @pytest.fixture
