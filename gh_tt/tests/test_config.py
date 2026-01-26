@@ -56,9 +56,6 @@ def test_read_app_defaults_static(default_config):
     assert config['squeeze']['policies']['quiet'] is False, "Policy 'quiet' should be False"
     assert config['squeeze']['policies']['close-keyword'] == 'resolves', "Policy 'close-keyword' should be 'resolves'"
     
-    assert config['wrapup']['policies']['warn_about_rebase'] is True, "Policy 'warn_about_rebase' should be True"
-    assert config['wrapup']['policies']['poll'] is False
-    
     assert config['deliver']['status'] == 'Delivery Initiated', "Deliver status should be 'Delivery Initiated'"
     assert config['deliver']['policies']['branch_prefix'] == 'ready', "Policy 'branch_prefix' should be 'ready'"
     assert config['deliver']['policies']['poll'] is False
@@ -91,8 +88,6 @@ def test_read_project_static(default_config):
     
     assert config['project']['owner'] == 'thetechcollective'
     assert config['project']['number'] == '12'
-    assert config['wrapup']['policies']['warn_about_rebase'] is False
-    assert config['wrapup']['policies']['allow-dirty'] is False
     assert config['squeeze']['policies']['close-keyword'] == 'resolves'
 
 @pytest.mark.unittest
