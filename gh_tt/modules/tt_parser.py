@@ -21,8 +21,7 @@ def tt_parse(args=None):
         parents=[parent_parser, version_parser],
         description="""
             A command-line tool to support a consistent team workflow. 
-            It supports a number of subcommands which define the entire process: `workon`,
-            `wrapup`, `deliver`.  Use the `-h|--help` switch on each to learn more. The extension utilizes 
+            It supports a number of subcommands which define the entire process: `workon`, `deliver`.  Use the `-h|--help` switch on each to learn more. The extension utilizes 
             the GitHub CLI tool `gh` to interact with GitHub and therefore it's provided as a gh extension. 
             GitHub Projects integration is supported. It enables issues to automatically 
             propagate through the columns in the (kanban) board. Please consult the README.md file 
@@ -44,13 +43,6 @@ def tt_parse(args=None):
     assign_group.add_argument('--assign', dest='assignee', action='store_true', help='Assign @me to the issue (default)')
     assign_group.add_argument('--no-assign', dest='assignee', action='store_false', help='Do not assign anybody to the issue')
     workon_parser.set_defaults(assignee=True, exclusive_groups=['workon'])
-    
-    # Add wrapup subcommand
-    wrapup_parser = subparsers.add_parser('wrapup', parents=[parent_parser, poll_parser], help='Commit the status of the current issue branch and push it to the remote',)
-    wrapup_message_group = wrapup_parser.add_mutually_exclusive_group(required=True)
-    wrapup_message_group.add_argument('message', nargs='?', help='Message for the commit (short hand positional option - no flag needed, mutually exclusive with -m|--message)')
-    wrapup_message_group.add_argument('-m', '--message', dest='message_by_flag', type=str, help='Message for the commit')
-
 
 
     # Add deliver subcommand
