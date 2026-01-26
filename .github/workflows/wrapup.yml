@@ -30,27 +30,10 @@ jobs:
     steps:
       - id: step1
         run: echo "python_versions=$PYTHON_VERSIONS" >> "$GITHUB_OUTPUT"
-      
-  mark-pending:
-    name: Statuses
-    permissions:
-      statuses: write
-      contents: read
-    uses: thetechcollective/workflows/.github/workflows/doing_mark_pending.yaml@stable
-    with:
-      statuses: |
-        Ruff
-        Cspell
-        Property-based testing - Python 3.11
-        Property-based testing - Python 3.12
-        Property-based testing - Python 3.13
-        Unit testing w/ coverage - Python 3.11
-        Unit testing w/ coverage - Python 3.12
-        Unit testing w/ coverage - Python 3.13
 
   pytest_with_coverage:
     name: Unit testing
-    needs: [mark-pending, python_versions]
+    needs: [python_versions]
     permissions:
       statuses: write
       contents: read
@@ -62,7 +45,7 @@ jobs:
 
   pytest_hypothesis:
     name: Property-based testing
-    needs: [mark-pending, python_versions]
+    needs: [python_versions]
     permissions: 
       statuses: write
       contents: read
@@ -74,7 +57,6 @@ jobs:
 
   ruff_linting:
     name: Linting
-    needs: mark-pending
     permissions:
       statuses: write
       contents: read
@@ -84,7 +66,6 @@ jobs:
 
   cspel_check:
     name: Spelling
-    needs: mark-pending
     permissions:
       statuses: write
       contents: read
@@ -94,8 +75,6 @@ jobs:
 
   pytest_integration:
     name: Integration testing
-    needs: 
-      - mark-pending
     permissions:
       statuses: write
     # continue-on-error: true # <- This doesn't work in reusable workflows, so we set it in the integration_test.yml
