@@ -22,7 +22,8 @@
 				"streetsidesoftware.code-spell-checker",
 				"charliermarsh.ruff",
 				"github.vscode-github-actions",
-				"tamasfe.even-better-toml"
+				"tamasfe.even-better-toml",
+				"GitHub.copilot-chat"
 			]	
 		}
 	},
