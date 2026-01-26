@@ -29,6 +29,8 @@ Communication about business logic should be as close to the client as possible 
 Blocking reviews are a completely self-imposed step in the process. PRs might make reviews the default, but are in no way required. We are keeping our philosophy of non-blocking entry to `main`. No changes are expected due to using PRs.
 
 ## Going forward
+[View the repository before these changes were implemented](https://github.com/thetechcollective/gh-tt/tree/f96c697d31436d393dd58375ef4b408016709f69)
+
 Given these considerations, we have identified the following adjustments to `gh-tt`:
 
 - `workon`
