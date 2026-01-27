@@ -31,7 +31,9 @@ class Command:
         )
 
         output_equals_name = [o for o in self.outputs if o == self.name]
-        assert not output_equals_name, f"No output can be named as the command. Violating output(s): '{output_equals_name}'"
+        assert not output_equals_name, (
+            f"No output can be named as the command. Violating output(s): '{output_equals_name}'"
+        )
 
         self._validate_substitution()
 

@@ -8,6 +8,7 @@ from gh_tt.commands.command import Command
 
 pytestmark = pytest.mark.unittest
 
+
 @given(
     name=st.text(),
     command=st.text(),

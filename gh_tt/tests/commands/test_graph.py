@@ -8,6 +8,7 @@ from gh_tt.commands.graph import CommandGraph
 
 pytestmark = pytest.mark.unittest
 
+
 def test_register_command_success():
     graph = CommandGraph()
     command = Command(name="name", description="test", command="echo 'test'")
