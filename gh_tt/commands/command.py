@@ -50,16 +50,9 @@ class Command:
         )
 
     # TODO: test
-    def format(
-        self, dependency_results: dict[str, str] | None = None, params: dict[str, Any] | None = None
-    ) -> str:
+    def format(self, dependency_results: dict[str, str], params: dict[str, Any]) -> str:
         """Substitute placeholders with resolved values."""
 
-        # TODO: this sucks - we should
-        if dependency_results is None:
-            dependency_results = {}
-        if params is None:
-            params = {}
         values = dependency_results | params
 
         result = self.command
