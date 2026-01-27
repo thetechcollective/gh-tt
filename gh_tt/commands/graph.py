@@ -6,7 +6,7 @@ from gh_tt.classes.gitter import Gitter
 from gh_tt.commands.command import Command
 
 type CommandDefinitions = dict[str, Command]
-type CachedResults = dict[str, str]
+type CachedResults = dict[str, Any]
 type CommandLocks = dict[str, asyncio.Lock]
 
 
@@ -37,7 +37,7 @@ class CommandGraph:
 
         return self.commands
 
-    async def resolve(self, name: str, **kwargs) -> str:
+    async def resolve(self, name: str, **kwargs) -> str | dict[str, Any]:
         cmd = self._get_command(name)
         assert cmd, f"Command '{name}' is not registered, and not an output of any command"
         assert cmd.name in self._locks, f"Lock for command '{cmd.name}' is missing"
@@ -72,6 +72,9 @@ class CommandGraph:
 
                     self.results[key] = result[key]
 
+                # Cache the whole result of the parser under the command key
+                self.result[cmd.name] = result
+                
                 # When a command has outputs, return the whole return value of the parser
                 return result
 
@@ -100,9 +103,12 @@ class CommandGraph:
         ]
         assert not missing, f"Command '{cmd.name}' missing required params: {missing}"
 
-        # Assert all parameters have the correct type
         for supplied_param, value in supplied_params.items():
             expected_type = [t for p, t in cmd.params if p == supplied_param]
+            assert expected_type, (
+                f"Command '{cmd.name}' does not declare parameter '{supplied_param}'. "
+                f"Declared parameters: {[p for p, _ in cmd.params]}"
+            )
             assert len(expected_type) == 1, (
                 f"Found two or more types for a declared parameter: '{expected_type}'. Parameters must be unique - and therefore only one type should be returned."
             )

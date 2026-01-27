@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 from gh_tt.commands.command import Command
 
@@ -33,7 +34,7 @@ DEFAULT_BRANCH = Command(
 )
 
 
-def parse_issue_all(raw: str) -> dict[str, str]:
+def parse_issue_all(raw: str) -> dict[str, Any]:
     data = json.loads(raw)
 
     return {

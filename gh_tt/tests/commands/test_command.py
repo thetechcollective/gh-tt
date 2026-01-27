@@ -77,3 +77,19 @@ def test_placeholders_defined_in_params_or_deps(name, description, placeholder):
             command=f"command {{{placeholder}}}",
             description=description,
         )
+
+
+@given(
+    name=st.text(),
+    command=st.text(),
+    description=st.text(),
+)
+def test_output_names_are_not_command_name(name, description, command):
+    with pytest.raises(AssertionError, match=r"can be named as the command"):
+        Command(
+            name=name,
+            command=command,
+            description=description,
+            outputs=(name,),
+            parser=lambda _: {},
+        )
