@@ -38,7 +38,7 @@ class CommandGraph:
 
         return self.commands
 
-    async def resolve(self, name: str, **kwargs) -> str | dict[str, Any]:
+    async def resolve(self, name: str, *, cache: bool = True, **kwargs) -> str | dict[str, Any]:
         cmd = self._get_command(name)
         assert cmd, f"Command '{name}' is not registered, and not an output of any command"
         assert cmd.name in self._locks, f"Lock for command '{cmd.name}' is missing"
@@ -50,7 +50,7 @@ class CommandGraph:
 
         async with self._locks[cmd.name]:
             # Check cache inside the lock to avoid duplicate execution
-            if cache_key in self.results:
+            if cache and cache_key in self.results:
                 return self.results[cache_key]
 
             if cmd.depends_on:
@@ -66,11 +66,17 @@ class CommandGraph:
 
             result = cmd.parser(raw) if cmd.parser else raw
 
+            if not cache:
+                return result
+
             if cmd.outputs:
                 for key in cmd.outputs:
                     output = result.get(key)
-                    assert output is not None, (
-                        f"Resolving '{name}' failed for output '{key}'. The command parser does not provide all expected outputs - missing output: '{key}'."
+                    if output is None:
+                        raise RuntimeError(f"Resolving '{name}' failed for output '{key}'.")
+
+                    assert isinstance(output, cmd.outputs[output]), (
+                        f"Expected output type to be '{cmd.outputs[output].__name__}', but got {type(output).__name__}"
                     )
 
                     output_key = self._cache_key(key, supplied_params)
