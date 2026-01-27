@@ -6,7 +6,8 @@ from gh_tt.classes.gitter import Gitter
 from gh_tt.commands.command import Command
 
 type CommandDefinitions = dict[str, Command]
-type CachedResults = dict[str, Any]
+type CacheKey = tuple[str, frozenset[tuple[str, Any]]]
+type CachedResults = dict[CacheKey, Any]
 type CommandLocks = dict[str, asyncio.Lock]
 
 
@@ -45,10 +46,12 @@ class CommandGraph:
         supplied_params = dict(kwargs.items())
         self._validate_params(cmd, supplied_params)
 
+        cache_key = self._cache_key(name, supplied_params)
+
         async with self._locks[cmd.name]:
             # Check cache inside the lock to avoid duplicate execution
-            if name in self.results:
-                return self.results[name]
+            if cache_key in self.results:
+                return self.results[cache_key]
 
             if cmd.depends_on:
                 await asyncio.gather(*[self.resolve(dep) for dep in cmd.depends_on])
@@ -70,17 +73,23 @@ class CommandGraph:
                         f"Resolving '{name}' failed for output '{key}'. The command parser does not provide all expected outputs - missing output: '{key}'."
                     )
 
-                    self.results[key] = result[key]
+                    output_key = self._cache_key(key, supplied_params)
+                    self.results[output_key] = result[key]
 
                 # Cache the whole result of the parser under the command key
-                self.result[cmd.name] = result
-                
+                cmd_key = self._cache_key(cmd.name, supplied_params)
+                self.results[cmd_key] = result
+
                 # When a command has outputs, return the whole return value of the parser
                 return result
 
             # Command has no declared outputs -> save and return the result of the command
-            self.results[cmd.name] = result
-            return self.results[name]
+            self.results[cache_key] = result
+            return self.results[cache_key]
+
+    def _cache_key(self, name: str, params: dict[str, Any]) -> CacheKey:
+        """Generate a composite cache key from name and parameters."""
+        return (name, frozenset(params.items()))
 
     def _get_command(self, name: str) -> Command | None:
         """Get which command needs to be resolved"""
