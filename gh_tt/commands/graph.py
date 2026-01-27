@@ -30,10 +30,30 @@ def register(*commands: Command) -> CommandDefinitions:
                 f"Dependency '{d}' of command '{cmd.name}' is not registered. Dependencies must be registered before commands that depend on them."
             )
 
+        has_cycle, cmd_name, dep = _has_cycle(cmd.name, cmd.depends_on)
+        assert not has_cycle, (
+            f"Dependency cycle found: '{cmd_name}' -> '{dep}'. Dependencies must not have cycles."
+        )
+
         _commands[cmd.name] = cmd
         _locks[cmd.name] = asyncio.Lock()
 
     return _commands
+
+
+def _has_cycle(name: str, depends_on: tuple[str, ...], visited: set[str] | None = None):
+    """DFS cycle detection at registration time."""
+    visited = visited or {name}
+    for dep in depends_on:
+        if dep in visited:
+            return True, name, dep
+
+        if dep in _commands and _commands[dep].depends_on:
+            result = _has_cycle(dep, _commands[dep].depends_on, visited | {dep})
+            if result[0]:
+                return result
+
+    return False, None, None
 
 
 async def resolve(name: str, *, cache: bool = True, **kwargs) -> str | dict[str, Any]:
