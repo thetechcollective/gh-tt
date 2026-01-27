@@ -53,15 +53,15 @@ ISSUE = Command(
     description="Get properties from an issue",
     command="gh issue view {number} --json url,title,number,labels,assignees,closed,comments",
     params={"number": int},
-    outputs=(
-        "issue_url",
-        "issue_title",
-        "issue_number",
-        "issue_labels",
-        "issue_assignees",
-        "issue_closed",
-        "issue_comments",
-    ),
+    outputs={
+        "issue_url": str,
+        "issue_title": str,
+        "issue_number": int,
+        "issue_labels": list,
+        "issue_assignees": list,
+        "issue_closed": bool,
+        "issue_comments": list,
+    },
     parser=parse_issue_all,
 )
 

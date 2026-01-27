@@ -16,7 +16,7 @@ class Command:
     depends_on: tuple[str, ...] | None = None
     params: dict[str, type] = field(default_factory=dict)
     parser: Callable[[CommandOutput], dict[str, Any]] | None = None
-    outputs: tuple[str, ...] = field(default_factory=tuple)
+    outputs: dict[str, type] = field(default_factory=dict)
 
     def __post_init__(self):
         """Validate command configuration."""
@@ -25,7 +25,7 @@ class Command:
             f"Command '{self.name}': parser requires outputs to be defined"
         )
 
-        assert self.outputs == () or self.parser is not None, (
+        assert not self.outputs or self.parser is not None, (
             f"Command '{self.name}': outputs require a parser to be defined"
         )
 
