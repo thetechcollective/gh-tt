@@ -30,9 +30,9 @@ class Command:
             f"Command '{self.name}': outputs require a parser to be defined"
         )
 
-        self._validate_substition()
+        self._validate_substitution()
 
-    def _validate_substition(self):
+    def _validate_substitution(self):
         placeholders = re.findall(r"\{(\w+)\}", self.command)
         assert len(placeholders) == len(set(placeholders)), "Placeholders must be unique"
 
