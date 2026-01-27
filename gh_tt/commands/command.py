@@ -19,7 +19,6 @@ class Command:
     parser: Callable[[CommandOutput], dict[str, Any]] | None = None
     outputs: tuple[str, ...] = field(default_factory=tuple)
 
-    # TODO: test
     def __post_init__(self):
         """Validate command configuration."""
 
@@ -33,7 +32,6 @@ class Command:
 
         self._validate_substition()
 
-    # TODO: test
     def _validate_substition(self):
         placeholders = re.findall(r"\{(\w+)\}", self.command)
         assert len(placeholders) == len(set(placeholders)), "Placeholders must be unique"
