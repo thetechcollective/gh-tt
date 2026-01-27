@@ -31,7 +31,8 @@
         "squezeed",
         "devcontainer",
         "devcontainers",
-        "affordances"
+        "affordances",
+        "stringly"
     ],
     "ignoreWords": [
         "cspell",
@@ -39,6 +40,8 @@
         "cspellrc",
         "pytest",
         "coveragerc",
-        "pyproject"
+        "pyproject",
+        "Gitter",
+        "Lazyload",
     ]
 }

@@ -2,7 +2,7 @@
 name = "gh-tt"
 version = "0.0.1"
 description = "GitHub extension automating trunk-based development"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 authors = [
     {name = "Lars Kruse", email = "lars@lakruzz.com"}
 ]
@@ -25,6 +25,7 @@ dependencies = [
 dev = [
     "hypothesis>=6.138.2",
     "pytest",
+    "pytest-asyncio>=1.3.0",
     "pytest-cov",
     "pytest-mock>=3.14.1",
     "ruff>=0.12.0",
