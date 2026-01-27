@@ -6,6 +6,7 @@ from gh_tt.commands.command import Command
 from gh_tt.commands.definitions import ALL_COMMANDS
 from gh_tt.commands.graph import CommandGraph
 
+pytestmark = pytest.mark.unittest
 
 def test_register_command_success():
     graph = CommandGraph()

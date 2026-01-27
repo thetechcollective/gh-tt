@@ -6,6 +6,7 @@ from hypothesis import strategies as st
 
 from gh_tt.commands.command import Command
 
+pytestmark = pytest.mark.unittest
 
 @given(
     name=st.text(),
