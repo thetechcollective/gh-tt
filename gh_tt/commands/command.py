@@ -3,7 +3,6 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-type Parameter = tuple[str, type]
 type CommandOutput = str
 
 
@@ -15,9 +14,9 @@ class Command:
     command: str
     description: str
     depends_on: tuple[str, ...] | None = None
-    params: tuple[Parameter, ...] = field(default_factory=tuple)
+    params: dict[str, type] = field(default_factory=dict)
     parser: Callable[[CommandOutput], dict[str, Any]] | None = None
-    outputs: tuple[str, ...] = field(default_factory=tuple)
+    outputs: dict[str, type] = field(default_factory=dict)
 
     def __post_init__(self):
         """Validate command configuration."""
@@ -26,7 +25,7 @@ class Command:
             f"Command '{self.name}': parser requires outputs to be defined"
         )
 
-        assert self.outputs == () or self.parser is not None, (
+        assert not self.outputs or self.parser is not None, (
             f"Command '{self.name}': outputs require a parser to be defined"
         )
 
@@ -43,10 +42,9 @@ class Command:
 
         # Collect all valid placeholder names
         valid_placeholders = set()
-        param_names = [param_name for param_name, _ in self.params]
         if self.depends_on:
             valid_placeholders.update(self.depends_on)
-        valid_placeholders.update(param_names)
+        valid_placeholders.update(self.params.keys())
 
         # Check all placeholders are valid
         invalid_placeholders = set(placeholders) - valid_placeholders

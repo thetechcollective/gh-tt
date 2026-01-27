@@ -14,7 +14,11 @@ pytestmark = pytest.mark.unittest
     command=st.text(),
     description=st.text(),
     depends_on=st.lists(st.text()),
-    outputs=st.lists(st.sampled_from([str, int, dict, tuple, float]), min_size=1),
+    outputs=st.dictionaries(
+        keys=st.text(min_size=1),
+        values=st.sampled_from([str, int, dict, tuple, float]),
+        min_size=1,
+    ),
 )
 def test_validation_fails_when_outputs_without_parser(
     name, command, description, depends_on, outputs
@@ -25,7 +29,7 @@ def test_validation_fails_when_outputs_without_parser(
             command=command,
             description=description,
             depends_on=tuple(depends_on),
-            outputs=tuple(outputs),
+            outputs=outputs,
         )
 
 
@@ -63,7 +67,7 @@ def test_placeholders_unique(name, description, placeholder):
             command=f"command {{{placeholder}}} {{{placeholder}}}",
             description=description,
             depends_on="",
-            params=((str(placeholder), str),),
+            params={placeholder: str},
         )
 
 
@@ -92,6 +96,6 @@ def test_output_names_are_not_command_name(name, description, command):
             name=name,
             command=command,
             description=description,
-            outputs=(name,),
+            outputs={name: str},
             parser=lambda _: {},
         )
