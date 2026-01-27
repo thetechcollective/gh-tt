@@ -63,7 +63,7 @@ def test_placeholders_unique(name, description, placeholder):
             command=f"command {{{placeholder}}} {{{placeholder}}}",
             description=description,
             depends_on="",
-            params=((str(placeholder), str),),
+            params={placeholder: str},
         )
 
 
