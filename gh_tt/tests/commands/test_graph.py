@@ -3,6 +3,7 @@ import asyncio
 import pytest
 
 from gh_tt.commands.command import Command
+from gh_tt.commands.definitions import ALL_COMMANDS
 from gh_tt.commands.graph import CommandGraph
 
 
@@ -27,3 +28,7 @@ def test_register_command_deps_order():
 
     with pytest.raises(AssertionError, match=r"^Dependency 'some_dep'"):
         graph.register(command)
+
+
+def test_register_all_success():
+    CommandGraph().register(*ALL_COMMANDS)
