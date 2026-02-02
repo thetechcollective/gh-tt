@@ -19,6 +19,8 @@ classifiers = [
 ]
 
 dependencies = [
+    "async-lru>=2.1.0",
+    "pydantic>=2.12.5",
 ]
 
 [project.optional-dependencies]
@@ -138,7 +140,11 @@ markers = [
     "dev: these tests are for development purposes - not necessarily mocked or stable, used by development team in the devcontainer",
     "unittest: these tests are for unit testing",
     "integration: test calling external apis",
+    "gh_actions: tests that run only in a GH Action context"
 ]
+
+asyncio_mode = "auto"
+
 # Ignore the temp directory during test collection
 testpaths = [
     "gh_tt/tests"

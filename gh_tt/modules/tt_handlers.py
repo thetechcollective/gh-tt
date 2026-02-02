@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import asyncio
 import contextlib
 import sys
 
@@ -11,10 +12,15 @@ from gh_tt.classes.issue import Issue
 from gh_tt.classes.label import Label
 from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver
 from gh_tt.classes.status import Status
+from gh_tt.workon import workon_issue
 
 
 def handle_workon(args):
     """Handle the workon command"""
+    if args.pr_workflow:
+        asyncio.run(workon_issue(args.issue, assign=args.assignee))
+        return
+
     devbranch = Devbranch()
     label = None
 
