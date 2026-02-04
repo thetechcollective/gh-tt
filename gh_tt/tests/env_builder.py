@@ -165,7 +165,7 @@ class IntegrationEnv:
         async def cleanup():
             await shell.run('gh', 'project', 'delete', self.project_number, '--owner', self.owner, die_on_error=False)
             
-        self._steps.append('project', create, cleanup)
+        self._steps.append(('project', create, cleanup))
         return self
 
     def add_project_config(self, workon_status_value: str) -> Self:
@@ -189,7 +189,7 @@ class IntegrationEnv:
             # Is removed together with the local repo temp directory
             pass
 
-        self._steps.append('project_config', create, noop)
+        self._steps.append(('project_config', create, noop))
         return self
     
     @contextlib.asynccontextmanager
