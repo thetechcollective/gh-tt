@@ -159,11 +159,11 @@ class IntegrationEnv:
             assert self.owner, "Owner required before creating a project (call require_owner first)"
 
             project_title = self._generate_name('project')
-            project_number = await shell.run('gh', 'project', 'create', '--title', project_title, '--owner', self.owner, '--format', 'json', '--jq', '.number')
+            project_number = await shell.run(['gh', 'project', 'create', '--title', project_title, '--owner', self.owner, '--format', 'json', '--jq', '.number'])
             self.project_number = project_number
 
         async def cleanup():
-            await shell.run('gh', 'project', 'delete', self.project_number, '--owner', self.owner, die_on_error=False)
+            await shell.run(['gh', 'project', 'delete', self.project_number, '--owner', self.owner], die_on_error=False)
             
         self._steps.append(('project', create, cleanup))
         return self
