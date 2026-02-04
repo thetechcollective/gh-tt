@@ -169,12 +169,12 @@ class IntegrationEnv:
         return self
 
     def add_project_config(self, workon_status_value: str) -> Self:
-        assert self.local_repo is not None, 'Local repo required before adding config'
-        assert self.project_number, 'Project required before adding config'
-        assert self.owner, "Owner required before creating a project (call require_owner first)"
 
         async def create():
-            with Path.open(self.local_repo / CONFIG_FILE_NAME) as f:
+            assert self.local_repo is not None, 'Local repo required before adding config'
+            assert self.project_number, 'Project required before adding config'
+            assert self.owner, "Owner required before creating a project (call require_owner first)"
+            with Path.open(self.local_repo / CONFIG_FILE_NAME, 'w') as f:
                 f.write(json.dumps({
                     'workon': {
                         'status': workon_status_value
