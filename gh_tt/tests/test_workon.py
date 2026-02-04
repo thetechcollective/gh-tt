@@ -1,10 +1,18 @@
+import argparse
 import json
 
 import pytest
 
 from gh_tt import shell
+from gh_tt.modules.tt_handlers import handle_workon
 from gh_tt.tests.env_builder import IntegrationEnv
 
+
+async def test_workon_title_not_implemented():
+    args = argparse.Namespace(command='workon', title='some title', pr_workflow=True)
+
+    with pytest.raises(NotImplementedError):
+        handle_workon(args)
 
 @pytest.mark.usefixtures('check_end_to_end_env')
 async def test_workon_basic_success():

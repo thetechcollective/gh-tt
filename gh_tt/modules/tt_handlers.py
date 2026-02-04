@@ -18,6 +18,12 @@ from gh_tt.workon import workon_issue
 def handle_workon(args):
     """Handle the workon command"""
     if args.pr_workflow:
+        if args.title:
+            raise NotImplementedError(
+                'Running with the --title option is not implemented yet. '
+                'Please create an issue to work on via `gh issue create` and then execute gh tt workon -i <issue_number>'
+            )
+
         asyncio.run(workon_issue(args.issue, assign=args.assignee))
         return
 
