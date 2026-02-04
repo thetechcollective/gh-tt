@@ -3,7 +3,6 @@
 .ruff_cache/
 logs/
 *.egg-info
-*testbed
 .coverage
 .tt_cache
 **/.venv/

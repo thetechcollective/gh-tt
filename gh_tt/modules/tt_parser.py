@@ -5,6 +5,7 @@ def tt_parse(args=None):
     # Define the parent parser with the --verbose argument
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose output', default=False)
+    parent_parser.add_argument('--pr-workflow', action='store_true', help='Migration flag to ease transition to a new workflow', default=False, dest='pr_workflow')
 
     version_parser = argparse.ArgumentParser(add_help=False)
     version_parser.add_argument('--version', action='store_true', help='Print version information and exit')
