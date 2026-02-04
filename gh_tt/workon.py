@@ -51,5 +51,5 @@ async def workon_issue(issue_number: int, *, assign: bool):
 
     if project_number is not None and project_owner is not None and status_value is not None:
         project = await gh.get_project(project_owner=project_owner, project_number=project_number)
-        project_item_id = await gh.add_item_to_project(project_number=project.number, project_owner=project.owner, item_url=issue.url)
+        project_item_id = await gh.add_item_to_project(project_number=project.number, project_owner=project.owner, item_url=str(issue.url))
         await gh.update_project_item_status(project_id=project.identifier, project_number=project.number, project_owner=project.owner, item_id=project_item_id, status_value=status_value)
