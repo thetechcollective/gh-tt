@@ -111,7 +111,7 @@ async def update_project_item_status(project_id: str, project_number: int, proje
 
     project_status_field = ProjectStatusField(**json.loads(result.stdout))
 
-    status_option_id = [option.id for option in project_status_field.options if option.name == status_value]
+    status_option_id = [option.option_id for option in project_status_field.options if option.name == status_value]
     assert status_value, f'Provided status value {status_value} is not among the options for the project\'s status field. Options: {[option.name for option in project_status_field.options]}'
 
     await shell.run(['gh', 'project', 'item-edit', '--project-id', project_id, '--field-id', project_status_field.field_id, '--id', item_id, '--single-select-option-id', status_option_id]) 
