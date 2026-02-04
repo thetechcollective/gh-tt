@@ -14,7 +14,6 @@ jobs:
   integration_test:
     name: Integration tests
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
@@ -68,4 +67,4 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           QA_ORGANIZATION_ID: ${{ vars.QA_ORG_ID }}
         run: |
-          uv run pytest -m gh_actions
+          uv run pytest -m end_to_end

@@ -91,8 +91,10 @@ async def get_project(project_number: int, project_owner: str) -> Project:
 class ProjectItem(BaseModel):
     identifier: str = Field(alias='id')
 
-async def add_item_to_project(project_number: int, project_owner: str, item_url: str) -> None:
-    await shell.run(['gh', 'project', 'item-add', str(project_number), '--owner', project_owner, '--url', item_url, '--format', 'json'])
+async def add_item_to_project(project_number: int, project_owner: str, item_url: str) -> ProjectItem:
+    result = await shell.run(['gh', 'project', 'item-add', str(project_number), '--owner', project_owner, '--url', item_url, '--format', 'json'])
+
+    return ProjectItem(**json.loads(result.stdout))
 
 class StatusFieldOption(BaseModel):
     option_id: str = Field(alias='id')

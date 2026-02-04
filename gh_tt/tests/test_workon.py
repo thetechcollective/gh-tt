@@ -6,7 +6,7 @@ from gh_tt import shell
 from gh_tt.tests.env_builder import IntegrationEnv
 
 
-@pytest.mark.gh_actions
+@pytest.mark.usefixtures('check_end_to_end_env')
 async def test_workon_basic_success():
     async with (IntegrationEnv()
         .require_owner()
@@ -29,7 +29,7 @@ async def test_workon_basic_success():
         assert pr['isDraft'], 'Expected PR to be a draft'
         assert f"#{env.issue_number}" in pr['body'], 'Expected PR body to reference the issue'
 
-@pytest.mark.gh_actions
+@pytest.mark.usefixtures('check_end_to_end_env')
 async def test_workon_reuses_remote_branch():
     async with (IntegrationEnv()
         .require_owner()
@@ -65,8 +65,7 @@ async def test_workon_reuses_remote_branch():
         result = await shell.run(['git', 'rev-parse', 'HEAD'], cwd=env.local_repo)
         assert result.stdout == marker_sha
 
-
-@pytest.mark.gh_actions
+@pytest.mark.usefixtures('check_end_to_end_env')
 async def test_workon_reuses_local_branch():
     async with (IntegrationEnv()
         .require_owner()
@@ -100,7 +99,7 @@ async def test_workon_reuses_local_branch():
         result = await shell.run(['git', 'rev-parse', 'HEAD'], cwd=env.local_repo)
         assert result.stdout.strip() == marker_sha
 
-@pytest.mark.gh_actions
+@pytest.mark.usefixtures('check_end_to_end_env')
 async def test_workon_with_project():
     workon_status_value = 'In Progress'
 
@@ -116,7 +115,7 @@ async def test_workon_with_project():
         await shell.run(["gh", "tt", "workon", "--pr-workflow", "-i", str(env.issue_number),'--no-assign'], cwd=env.local_repo)
 
         # check project has an item in progress
-        result = await shell.run(['gh', 'project', 'item-list', env.project_number, '--owner', env.owner, '--format', 'json', '--jq', f'.items[] | select(.content.number == {env.issue_number})'])
+        result = await shell.run(['gh', 'project', 'item-list', str(env.project_number), '--owner', env.owner, '--format', 'json', '--jq', f'.items[] | select(.content.number == {env.issue_number})'])
         project_item_data = json.loads(result.stdout)
         
         assert project_item_data['content']['number'] == env.issue_number

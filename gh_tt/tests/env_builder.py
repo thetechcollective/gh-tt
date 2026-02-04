@@ -18,6 +18,7 @@ from typing import Self
 from gh_tt import shell
 from gh_tt.classes.config import CONFIG_FILE_NAME
 
+QA_ORG_NAME = 'gh-tt-qa'
 
 class IntegrationEnv:
     """
@@ -60,14 +61,37 @@ class IntegrationEnv:
         Require a GitHub owner from QA_ORGANIZATION_ID environment variable.
         """
         async def create():
-            qa_org_id = os.getenv("QA_ORGANIZATION_ID")
-            assert qa_org_id is not None, "QA_ORGANIZATION_ID environment variable must be set"
+            is_gh_actions = os.getenv('GITHUB_ACTIONS') is not None
             
-            result = await shell.run([
-                "gh", "api", "graphql",
-                "-f", f'query=query {{ node(id: "{qa_org_id}") {{ ... on Organization {{ name }} }} }}'
-            ])
-            self.owner = json.loads(result.stdout)['data']['node']['name']
+            if not is_gh_actions:
+                result = await shell.run(['gh', 'auth', 'status'], die_on_error=False)
+                assert result.return_code == 0, (
+                    'gh CLI is not authenticated. Run: gh auth login'
+                )
+
+                result = await shell.run(['gh', 'org', 'list'])
+                orgs = result.stdout
+                assert 'gh-tt-qa' in orgs, 'You must have access to the gh-tt-qa organization to trigger integration tests locally. Contact a maintainer of gh-tt for access.'
+
+                result = await shell.run(['gh', 'extension', 'list'])
+                extensions = result.stdout
+
+                assert 'thetechcollective/gh-tt' not in extensions, 'You have a remote version of the gh-tt extension installed. To trigger an integration test run, you must install a local version of the extension. Install the local version with\ngh ext remove thetechcollective/gh-tt && gh ext install .'
+                assert 'gh tt' in extensions, 'gh tt is not installed. Install with\ngh extension install .'
+                
+            qa_org_id = os.getenv("QA_ORGANIZATION_ID")
+            if qa_org_id is not None:
+                result = await shell.run([
+                    "gh", "api", "graphql",
+                    "-f", f'query=query {{ node(id: "{qa_org_id}") {{ ... on Organization {{ name }} }} }}'
+                ])
+                self.owner = json.loads(result.stdout)['data']['node']['name']
+            else:
+                # Fallback for local so we don't have to keep the org id stored in the code/env
+                # But is brittle in case the name of the QA org changes
+                self.owner = QA_ORG_NAME
+
+            assert self.owner    
         
         async def noop():
             pass
@@ -163,7 +187,7 @@ class IntegrationEnv:
             self.project_number = int(project_number.stdout)
 
         async def cleanup():
-            await shell.run(['gh', 'project', 'delete', self.project_number, '--owner', self.owner], die_on_error=False)
+            await shell.run(['gh', 'project', 'delete', str(self.project_number), '--owner', self.owner], die_on_error=False)
             
         self._steps.append(('project', create, cleanup))
         return self
