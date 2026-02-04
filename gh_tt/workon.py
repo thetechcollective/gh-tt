@@ -40,10 +40,9 @@ async def workon_issue(issue_number: int, *, assign: bool):
                 default_branch=repo.default_branch,
             )
         case CheckBranchExistsResult(branch_type="local", name=branch_name):
-            await switch_branch(branch_name)
+            dev_branch = await switch_branch(branch_name)
         case CheckBranchExistsResult(branch_type="remote", name=branch_name):
-            await switch_branch(SwitchRemoteInput(branch_to_switch_to=branch_name, remote=remote))
-
+            dev_branch = await switch_branch(SwitchRemoteInput(branch_to_switch_to=branch_name, remote=remote))
     if assign:
         await asyncio.gather(
             assign_issue(issue_number=issue.number, assignee="@me"),

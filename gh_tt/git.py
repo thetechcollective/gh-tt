@@ -52,13 +52,16 @@ class SwitchRemoteInput:
     remote: str
 
 type LocalBranchName = str
+type BranchName = str
 
-async def switch_branch(switch_input: LocalBranchName | SwitchRemoteInput):
+async def switch_branch(switch_input: LocalBranchName | SwitchRemoteInput) -> BranchName:
     match switch_input:
         case str():
             await shell.run(['git', 'switch', switch_input])
+            return switch_input
         case SwitchRemoteInput(branch_to_switch_to=branch, remote=remote):
             await shell.run(['git', 'switch', '-c', branch, f'{remote}/{branch}'])
+            return branch
 
 
 async def push_empty_commit(dev_branch: str):

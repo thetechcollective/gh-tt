@@ -33,8 +33,7 @@ async def get_issue(issue_number: int) -> Issue:
     return Issue(**json.loads(result.stdout))
 
 async def develop_issue(issue_title: str, issue_number: int, default_branch: str) -> str:
-    # Replace any non-ASCII characters with underscore
-    sanitized_title = re.sub(r'[^\x00-\x7F]+','_', issue_title)
+    sanitized_title = re.sub(r'[^a-zA-Z0-9]+', '_', issue_title)
     branch_name = f'{issue_number}-{sanitized_title}'
 
     await shell.run(cmd=['gh', 'issue', 'develop', str(issue_number), '--base', default_branch, '--name', branch_name, '--checkout'])
