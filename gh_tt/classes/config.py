@@ -9,6 +9,7 @@ from typing import ClassVar
 from gh_tt.classes.gitter import Gitter
 from gh_tt.classes.lazyload import Lazyload
 
+CONFIG_FILE_NAME = '.tt-config.json'
 
 def deep_update(dict1, dict2):
     """Recursively update dict1 with dict2 without deleting keys."""
@@ -67,10 +68,9 @@ class Config(Lazyload):
     # Class-level configuration dictionary
     _config_dict: ClassVar[dict] = {}
     _config_files: ClassVar[list] = []  # List to hold the configuration files in the order they are read
-    _config_file_name = '.tt-config.json'
 
     _config_dict, _config_files = load_default_configuration(
-        config_file_name=_config_file_name,
+        config_file_name=CONFIG_FILE_NAME,
         config_dict=_config_dict,
         config_files=_config_files
     )
@@ -90,7 +90,7 @@ class Config(Lazyload):
         if load_only_default is LoadStrategy.ONLY_DEFAULT_CONFIG:
             return cls._config_dict
         
-        _project_config_file = Path(Gitter.git_root) / cls._config_file_name
+        _project_config_file = Path(Gitter.git_root) / CONFIG_FILE_NAME
 
         if Path.exists(_project_config_file):
             cls._config_dict = add_config(_project_config_file, cls._config_dict)
@@ -123,7 +123,7 @@ class Config(Lazyload):
 
         # Reload the default configuration
         cls._config_dict, cls._config_files = load_default_configuration(
-            config_file_name=cls._config_file_name,
+            config_file_name=CONFIG_FILE_NAME,
             config_dict=cls._config_dict,
             config_files=cls._config_files
         )

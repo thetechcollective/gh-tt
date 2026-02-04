@@ -139,8 +139,7 @@ markers = [
     "smoke: marks tests as smoke tests",
     "dev: these tests are for development purposes - not necessarily mocked or stable, used by development team in the devcontainer",
     "unittest: these tests are for unit testing",
-    "integration: test calling external apis",
-    "gh_actions: tests that run only in a GH Action context"
+    "end_to_end: tests touching systems out of our control"
 ]
 
 asyncio_mode = "auto"
