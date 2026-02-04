@@ -187,7 +187,66 @@ class Devbranch(Lazyload):
                     break
         return match
 
+    def wrapup(self, message: str):
+        """Mapped to the 'wrapup' subcommand in the main program"""
 
+        asyncio.run(self._load_issue_number())
+
+        if self.get('issue_number') is None:
+            print('⛔️ Wrapup is supported only on branches named <issue number>-<branch_name>', file=sys.stderr)
+            sys.exit(1)
+
+        self._load_status()
+        asyncio.run(self._assert_props(['me', 'merge_base', 'remote_sha1', 'default_sha1' ]))
+
+        if Config.config()['wrapup']['policies']['warn_about_rebase'] and self.get('merge_base') != self.get('default_sha1'):
+            print(
+                f"⚠️  WARNING: The '{self.get('default_branch')}' branch has commits your branch has never seen. A Rebase is required before you can deliver.", file=sys.stderr)
+            print(f"💡 Run: git rebase {self.get('remote')}/{self.get('default_branch')}")                  
+            if self.get('is_dirty'):
+                print("⚠️  Psst: Your workspace is dirty you must stash or commit your changes first)", file=sys.stderr)
+
+
+        if not self.get('is_dirty'):
+            print("☝️  Nothing to commit. The working directory is clean.")
+
+            if self.get('sha1') != self.get('remote_sha1'):                
+                print("👉 The branch is ahead of its remote; ...pushing")
+                self._push(force=True)
+            return None
+
+        # If nothing is staged, stage all changes
+        if not len(self.get('staged_changes')) > 0:
+            # Stage all changes if nothing is staged
+            asyncio.run(self._run('add_all'))
+            self._load_status(reload=True)
+
+        self.set('commit_msg',f"\"{message} - #{self.get('issue_number')}\"")
+
+        # the commit may fire pre-commit hook that may fail - wrap this in a try catch and print a nice error instead of a stack dump
+        try:
+            asyncio.run(self._run('commit_changes') )
+        except Exception as e:
+            print(f"⛔️ Aaaargh!:\n {e}", file=sys.stderr)
+            sys.exit(1)
+
+        self._push(force=True)
+
+        issue_comments = Issue().load(number=self.get('issue_number')).get("comments")
+        self.set('responsibles_comment_content', self._get_responsibles(issue_comments=issue_comments))
+
+        responsibles_alert = ''
+        if self.get('responsibles_comment_content'):
+            asyncio.run(self._run("add_responsibles_comment"))
+
+            responsibles_alert = f"\n☝️ You touched on files that have named responsibles {self.get('responsibles_comment_content')}\nThey are now mentioned in the issue."
+
+
+        print(f"👍 SUCCESS: Branch has got a new commit that mentions issue '#{self.get('issue_number')}' and it's pushed\n{responsibles_alert}")
+        print("💡 Run: gh workflow view wrapup")      
+        print(f"💡 Run: gh browse {self.get('issue_number')}")
+        return True
+    
     def _get_responsibles(self, issue_comments: list[str]):
         change_list = self._get_pretty_changes()
         changed_past = self._past_responsible_file_paths(issue_comments=issue_comments)

@@ -6,6 +6,12 @@ name: Integration Testing
 
 on:
   workflow_call:
+    inputs:
+      context:
+        description: 'Context for the status check'
+        required: false
+        type: string
+        default: 'Integration tests'
 
 permissions:
   statuses: write

@@ -42,6 +42,27 @@ def handle_workon(args):
         devbranch.set_issue(issue_number=issue.get('number'), assign=args.assignee, reopen=args.reopen, label=label)
 
 
+def handle_wrapup(args):
+    """Handle the wrapup command"""
+    devbranch = Devbranch()
+    message = args.message_by_flag or args.message  
+    devbranch.wrapup(message)
+    
+    if args.poll is not None:
+        if args.poll:
+            Status.poll()
+
+        return
+    
+    config_poll = False
+    # If the config value is not set, proceed with False
+    with contextlib.suppress(KeyError):
+        config_poll = Config.config()['wrapup']['policies']['poll']
+
+    if config_poll:
+        Status.poll()
+
+
 def handle_deliver(args):
     """Handle the deliver command"""
     devbranch = Devbranch()
@@ -165,6 +186,7 @@ def handle_sync(args):
 # Command handler mapping - exported for use by main
 COMMAND_HANDLERS = {
     'workon': handle_workon,
+    'wrapup': handle_wrapup,
     'deliver': handle_deliver,
     'responsibles': handle_responsibles,
     'semver': handle_semver,
