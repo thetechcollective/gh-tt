@@ -160,7 +160,7 @@ class IntegrationEnv:
 
             project_title = self._generate_name('project')
             project_number = await shell.run(['gh', 'project', 'create', '--title', project_title, '--owner', self.owner, '--format', 'json', '--jq', '.number'])
-            self.project_number = project_number
+            self.project_number = int(project_number.stdout)
 
         async def cleanup():
             await shell.run(['gh', 'project', 'delete', self.project_number, '--owner', self.owner], die_on_error=False)
