@@ -5,16 +5,18 @@ Provides a fluent API to declaratively build test environments with
 GitHub resources (repos, issues) and local git clones.
 """
 
+import contextlib
 import json
 import os
 import tempfile
 import uuid
-from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Self
 
 from gh_tt import shell
+from gh_tt.classes.config import CONFIG_FILE_NAME
 
 
 class IntegrationEnv:
@@ -45,6 +47,7 @@ class IntegrationEnv:
         self.repo_url: str | None = None
         self.local_repo: Path | None = None
         self.issue_number: int | None = None
+        self.project_number: int | None = None
         
         # Build steps: list of (name, async_create_fn, async_cleanup_fn)
         self._steps: list[tuple[str, callable, callable]] = []
@@ -151,8 +154,46 @@ class IntegrationEnv:
         self._steps.append(("local_clone", create, cleanup))
         return self
     
-    @asynccontextmanager
-    async def build(self):
+    def create_gh_project(self) -> Self:
+        async def create():
+            assert self.owner, "Owner required before creating a project (call require_owner first)"
+
+            project_title = self._generate_name('project')
+            project_number = await shell.run('gh', 'project', 'create', '--title', project_title, '--owner', self.owner, '--format', 'json', '--jq', '.number')
+            self.project_number = project_number
+
+        async def cleanup():
+            await shell.run('gh', 'project', 'delete', self.project_number, '--owner', self.owner, die_on_error=False)
+            
+        self._steps.append('project', create, cleanup)
+        return self
+
+    def add_project_config(self, workon_status_value: str) -> Self:
+        assert self.local_repo is not None, 'Local repo required before adding config'
+        assert self.project_number, 'Project required before adding config'
+        assert self.owner, "Owner required before creating a project (call require_owner first)"
+
+        async def create():
+            with Path.open(self.local_repo / CONFIG_FILE_NAME) as f:
+                f.write(json.dumps({
+                    'workon': {
+                        'status': workon_status_value
+                    },
+                    'project': {
+                        'owner': self.owner,
+                        'number': self.project_number
+                    }
+                }))
+
+        async def noop():
+            # Is removed together with the local repo temp directory
+            pass
+
+        self._steps.append('project_config', create, noop)
+        return self
+    
+    @contextlib.asynccontextmanager
+    async def build(self) -> AsyncIterator[Self]:
         """Build the environment and yield self, then clean up."""
         pending_cleanups = []
         

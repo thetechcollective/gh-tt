@@ -99,3 +99,26 @@ async def test_workon_reuses_local_branch():
         
         result = await shell.run(['git', 'rev-parse', 'HEAD'], cwd=env.local_repo)
         assert result.stdout.strip() == marker_sha
+
+@pytest.mark.gh_actions
+async def test_workon_with_project():
+    workon_status_value = 'In Progress'
+
+    async with (IntegrationEnv()
+        .require_owner()
+        .create_repo()
+        .create_issue()
+        .create_local_clone()
+        .create_gh_project()
+        .add_project_config(workon_status_value=workon_status_value)
+        .build()
+    ) as env:
+        await shell.run(["gh", "tt", "workon", "--pr-workflow", "-i", str(env.issue_number),'--no-assign'], cwd=env.local_repo)
+
+        # check project has an item in progress
+        result = await shell.run(['gh', 'project', 'item-list', env.project_number, '--owner', env.owner, '--format', 'json', '--jq', f'.items[] | select(.content.number == {env.issue_number})'])
+        project_item_data = json.loads(result.stdout)
+        
+        assert project_item_data['content']['number'] == env.issue_number
+        assert project_item_data['content']['type'] == 'Issue'
+        assert project_item_data['status'] == workon_status_value

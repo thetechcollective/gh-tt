@@ -1,9 +1,13 @@
 import asyncio
+import contextlib
 
+from gh_tt.classes.config import Config
 from gh_tt.commands import gh, git
 
 
 async def workon_issue(issue_number: int, *, assign: bool):
+    config = Config().config()
+
     await git.fetch()
     issue, repo, remote = await asyncio.gather(gh.get_issue(issue_number), gh.get_repo(), git.get_remote())
 
@@ -37,4 +41,15 @@ async def workon_issue(issue_number: int, *, assign: bool):
             gh.assign_pr(dev_branch=dev_branch, assignee="@me"),
         )
 
-    # add to project
+    project_owner = None
+    project_number = None    
+    status_value = None
+    with contextlib.suppress(KeyError):
+        project_owner = config['project']['owner']
+        project_number = config["project"]['number']
+        status_value = config['workon']['status']
+
+    if project_number is not None and project_owner is not None and status_value is not None:
+        project = await gh.get_project(project_owner=project_owner, project_number=project_number)
+        project_item_id = await gh.add_item_to_project(project_number=project.number, project_owner=project.owner, item_url=issue.url)
+        await gh.update_project_item_status(project_id=project.identifier, project_number=project.number, project_owner=project.owner, item_id=project_item_id, status_value=status_value)
