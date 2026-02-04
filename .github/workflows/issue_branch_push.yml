@@ -79,3 +79,24 @@ jobs:
       statuses: write
     secrets: inherit
     uses: ./.github/workflows/end_to_end_test.yml
+
+  check:  # This job does nothing and is only used for the branch protection
+    name: ✅ All tests passed
+    if: always()
+
+    needs:
+    - ruff_linting
+    - cspel_check
+    - pytest_integration
+    - pytest_hypothesis
+    - pytest_with_coverage
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 1
+
+    steps:
+    - name: Decide whether the needed jobs succeeded or failed
+      uses: re-actors/alls-green@release/v1
+      with:
+        jobs: ${{ toJSON(needs) }}
