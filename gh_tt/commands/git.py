@@ -1,3 +1,7 @@
+"""
+Contains functions that execute command-line git commands
+"""
+
 import asyncio
 from dataclasses import dataclass
 from typing import Literal
@@ -67,14 +71,3 @@ async def switch_branch(switch_input: LocalBranchName | SwitchRemoteInput) -> Br
 async def push_empty_commit(dev_branch: str):
     await shell.run(['git', 'commit', '--allow-empty', '-m', 'PR start commit', '-m', 'This commit serves no other purpose than to allow creation of a PR when executing `gh tt workon`. Because creating a PR without a commit is not possible. This commit should be squashed or removed before merging this PR.'])
     await shell.run(['git', 'push', '-u', 'origin', dev_branch])
-
-async def create_draft_pr(issue_number: int, issue_title: str, default_branch: str):
-    # The PR would close the issue even without this reference, but mentioning the issue
-    # is nice for quick access
-    body = f'Closes #{issue_number}'
-    title = f'Issue {issue_number}: {issue_title}'
-
-    await shell.run(['gh', 'pr', 'create', '--base', default_branch, '--draft', '--title', title, '--body', body])
-
-async def assign_pr(dev_branch: str, assignee: str):
-    await shell.run(['gh', 'pr', 'edit', dev_branch, '--add-assignee', assignee])
