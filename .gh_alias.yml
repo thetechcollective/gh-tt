@@ -1,4 +1,5 @@
 workon:  '!gh tt workon "$@"'
+wrapup:  '!gh tt wrapup "$@"'
 deliver: '!gh tt deliver "$@"'
 responsibles: '!gh tt responsibles "$@"'
 semver: '!gh tt semver "$@"'

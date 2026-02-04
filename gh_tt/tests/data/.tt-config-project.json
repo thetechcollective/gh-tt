@@ -2,5 +2,11 @@
   "project": {
     "owner": "thetechcollective",
     "number": "12"
+  },
+  "wrapup": {
+    "policies":{
+        "warn_about_rebase": false,
+        "allow-dirty": false
+    }
   }
 }
