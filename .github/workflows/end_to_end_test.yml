@@ -27,6 +27,8 @@ jobs:
           python-version: '3.13'
       
       - name: Install extension (as end-user would)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh extension install .
       
       - name: Verify extension runs
