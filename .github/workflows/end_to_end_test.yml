@@ -17,6 +17,21 @@ permissions:
   statuses: write
 
 jobs:
+  smoke_test:
+    name: Smoke test - clean install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      
+      - name: Install extension (as end-user would)
+        run: gh extension install .
+      
+      - name: Verify extension runs
+        run: gh tt --help
+
   integration_test:
     name: Integration tests
     runs-on: ubuntu-latest
@@ -31,6 +46,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
+          uv venv
+          uv sync --extra dev
 
           gh extension install thetechcollective/gh-set-status --pin stable
 
