@@ -18,19 +18,19 @@ permissions:
 
 jobs:
   smoke_test:
-    name: Smoke test - clean install
+    name: Smoke test - clean install with uv
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
         with:
           python-version: '3.13'
-      
-      - name: Install extension (as end-user would)
+      - name: Install extension
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh extension install .
-      
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          gh extension install .
       - name: Verify extension runs
         run: gh tt --help
 
