@@ -159,3 +159,34 @@ async def test_workon_with_project():
         assert project_item_data['content']['number'] == env.issue_number
         assert project_item_data['content']['type'] == 'Issue'
         assert project_item_data['status'] == workon_status_value
+
+
+@pytest.mark.usefixtures('check_end_to_end_env')
+async def test_workon_commits_empty_with_pending_changes():
+    async with (
+        IntegrationEnv().require_owner().create_repo().create_issue().create_local_clone().build()
+    ) as env:
+        await shell.run(
+            ['echo', '"text"', '>', 'added.txt', '&&', 'git add added.txt'], cwd=env.local_repo
+        )
+        await shell.run(['echo', '"text"', '>', 'untracked.txt'], cwd=env.local_repo)
+
+        await shell.run(
+            ['gh', 'tt', 'workon', '--pr-workflow', '-i', str(env.issue_number), '--no-assign'],
+            cwd=env.local_repo,
+        )
+
+        result = await shell.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=env.local_repo)
+        branch_name = result.stdout
+
+        # Verify new branch has one commit
+        result = await shell.run(
+            ['git', 'rev-list', '--count', f'main..{branch_name}'], cwd=env.local_repo
+        )
+        assert int(result.stdout) == 1
+
+        # Verify new branch's commit is empty
+        result = await shell.run(
+            ['git', 'diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD'], cwd=env.local_repo
+        )
+        assert not result.stdout
