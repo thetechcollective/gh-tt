@@ -69,5 +69,15 @@ async def switch_branch(switch_input: LocalBranchName | SwitchRemoteInput) -> Br
 
 
 async def push_empty_commit(dev_branch: str):
-    await shell.run(['git', 'commit', '--allow-empty', '-m', 'PR start commit', '-m', 'This commit serves no other purpose than to allow creation of a PR when executing `gh tt workon`. Because creating a PR without a commit is not possible. This commit should be squashed or removed before merging this PR.'])
-    await shell.run(['git', 'push', '-u', 'origin', dev_branch])
+    status = await shell.run(['git', 'status', '--porcelain'])
+    has_changes = bool(status.stdout)
+
+    if has_changes:
+        await shell.run(['git', 'stash', '--include-untracked'])
+
+    try:
+        await shell.run(['git', 'commit', '--allow-empty', '--no-verify', '-m', 'PR start commit', '-m', 'This commit serves no other purpose than to allow creation of a PR when executing `gh tt workon`. Because creating a PR without a commit is not possible. This commit should be squashed or removed before merging this PR.'])
+        await shell.run(['git', 'push', '-u', 'origin', dev_branch])
+    finally:
+        if has_changes:
+            await shell.run(['git', 'stash', 'pop'])
