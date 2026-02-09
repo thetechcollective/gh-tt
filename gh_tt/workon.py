@@ -65,3 +65,8 @@ async def workon_issue(issue_number: int, *, assign: bool):
             item_id=project_item.identifier,
             status_value=status_value,
         )
+
+
+async def workon_title(issue_title: str, issue_body: str | None, *, assign: bool):
+    issue = await gh.create_issue(title=issue_title, body=issue_body)
+    await workon_issue(issue_number=issue.number, assign=assign)

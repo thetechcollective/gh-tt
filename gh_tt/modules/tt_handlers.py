@@ -13,19 +13,16 @@ from gh_tt.classes.label import Label
 from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver
 from gh_tt.classes.status import Status
 from gh_tt.deliver import deliver
-from gh_tt.workon import workon_issue
+from gh_tt.workon import workon_issue, workon_title
 
 
 def handle_workon(args):
     """Handle the workon command"""
     if args.pr_workflow:
         if args.title:
-            raise NotImplementedError(
-                'Running with the --title option is not implemented yet. '
-                'Please create an issue to work on via `gh issue create` and then execute gh tt workon -i <issue_number>'
-            )
-
-        asyncio.run(workon_issue(args.issue, assign=args.assignee))
+            asyncio.run(workon_title(issue_title=args.title, issue_body=args.body, assign=args.assignee))
+        else:
+            asyncio.run(workon_issue(args.issue, assign=args.assignee))
         return
 
     devbranch = Devbranch()
