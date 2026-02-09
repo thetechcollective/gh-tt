@@ -12,6 +12,7 @@ from gh_tt.classes.issue import Issue
 from gh_tt.classes.label import Label
 from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver
 from gh_tt.classes.status import Status
+from gh_tt.deliver import deliver
 from gh_tt.workon import workon_issue
 
 
@@ -71,6 +72,10 @@ def handle_wrapup(args):
 
 def handle_deliver(args):
     """Handle the deliver command"""
+    if args.pr_workflow:
+        asyncio.run(deliver())
+        return
+
     devbranch = Devbranch()
     squeeze_sha = devbranch.deliver()
     

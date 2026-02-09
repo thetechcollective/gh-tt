@@ -38,6 +38,14 @@ async def assign_pr(dev_branch: str, assignee: str):
     await shell.run(['gh', 'pr', 'edit', dev_branch, '--add-assignee', assignee])
 
 
+async def merge_pr(dev_branch: str):
+    await shell.run(['gh', 'pr', 'merge', dev_branch, '--auto', '--rebase', '--delete-branch'])
+
+
+async def mark_pr_ready(dev_branch: str):
+    await shell.run(['gh', 'pr', 'ready', dev_branch])
+
+
 class Label(BaseModel):
     identifier: str = Field(alias='id', pattern=r'^LA')
     name: str
