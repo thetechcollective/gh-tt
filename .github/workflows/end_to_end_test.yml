@@ -85,4 +85,4 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           QA_ORGANIZATION_ID: ${{ vars.QA_ORG_ID }}
         run: |
-          uv run --frozen pytest -m end_to_end
+          uv run --frozen --extra dev -- pytest -m end_to_end
