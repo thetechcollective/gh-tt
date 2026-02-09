@@ -17,11 +17,6 @@ def is_gh_actions() -> bool:
     return os.getenv('GITHUB_ACTIONS') is not None
 
 
-def pytest_sessionstart(session: pytest.Session):
-    print(session)
-    return
-
-
 @pytest.fixture(
     scope='session',
     # Abuse fixture parametrization to apply the end_to_end mark to all tests that require this fixture
