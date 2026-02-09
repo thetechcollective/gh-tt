@@ -3,12 +3,10 @@
 set -euo pipefail
 
 SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &>/dev/null && pwd )"
-PYTHON="${PYTHON:-python3}"
 
-command -v "$PYTHON" >/dev/null \
-  || { echo "🛑  $PYTHON not found in PATH"; exit 1; }
+command -v uv >/dev/null \
+  ||  { echo "ERROR: uv not found in PATH"; exit 1; }
 
-# Ensure this checkout wins on the import path
-export PYTHONPATH="$SCRIPT_DIR${PYTHONPATH:+:$PYTHONPATH}"
+uv sync --project "$SCRIPT_DIR" --quiet --frozen
 
-exec "$PYTHON" -m gh_tt "$@"
+exec uv run --project "$SCRIPT_DIR" python -m gh_tt "$@"
