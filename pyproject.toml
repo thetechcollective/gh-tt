@@ -78,9 +78,7 @@ exclude = [
 
 # Generous line length for wide screens
 line-length = 100
-
 indent-width = 4
-target-version = "py313"
 
 [tool.ruff.lint]
 # See https://docs.astral.sh/ruff/rules/
