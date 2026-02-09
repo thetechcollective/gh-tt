@@ -48,7 +48,7 @@ async def poll_until(
     interval: int = 3,
 ) -> ShellResult | None:
     """Reruns the command until the predicate is true. Be careful when using with effectful functions.
-    
+
     Naively reruns the `cmd` until the predicate is true or the timeout is reached.
 
     Args:

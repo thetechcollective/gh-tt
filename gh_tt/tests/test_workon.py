@@ -139,7 +139,7 @@ async def test_workon_with_project():
             cwd=env.local_repo,
         )
 
-        project_item_data = shell.poll_until(
+        result = await shell.poll_until(
             [
                 'gh',
                 'project',
@@ -156,8 +156,9 @@ async def test_workon_with_project():
             # given the jq filtering, we just want a non-empty result
             predicate=lambda r: r.stdout,
             timeout_seconds=15,
-            interval=2
+            interval=2,
         )
+        project_item_data = json.loads(result.stdout)
 
         assert project_item_data is not None, 'Expected the project to have an item in progress'
         assert project_item_data['content']['number'] == env.issue_number

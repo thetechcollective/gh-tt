@@ -40,6 +40,6 @@ async def test_workon_deliver_flow_success():
             cwd=env.local_repo,
             predicate=lambda r: r.stdout == PR_MERGED_STATUS,
             timeout_seconds=15,
-            interval=3
+            interval=3,
         )
         assert result is not None, 'Expected PR to be merged'
