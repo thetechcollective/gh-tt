@@ -19,10 +19,10 @@ def main():
 
     Gitter.read_cache()
     Gitter.validate_gh_scope(scope='project')
-    
+
     # Execute the appropriate command handler
     if args.command in COMMAND_HANDLERS:
         COMMAND_HANDLERS[args.command](args)
-            
-    Gitter.write_cache()            
+
+    Gitter.write_cache()
     sys.exit(0)

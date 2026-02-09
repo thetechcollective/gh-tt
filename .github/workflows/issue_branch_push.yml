@@ -64,6 +64,25 @@ jobs:
     with:
       context: Ruff
 
+  ruff_formatting:
+    name: Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          # Latest python compliant with the project's requires-python
+          python-version-file: 'pyproject.toml'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+            # Latest uv compliant with the project's tool.uv required version
+            version-file: 'pyproject.toml'
+
+      - run: |
+            uv run --frozen --extra dev -- ruff format --check
+
+
   cspel_check:
     name: Spelling
     permissions:
@@ -86,6 +105,7 @@ jobs:
 
     needs:
     - ruff_linting
+    - ruff_formatting
     - cspel_check
     - pytest_end_to_end
     - pytest_hypothesis

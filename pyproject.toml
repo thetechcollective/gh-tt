@@ -78,9 +78,7 @@ exclude = [
 
 # Generous line length for wide screens
 line-length = 100
-
 indent-width = 4
-target-version = "py313"
 
 [tool.ruff.lint]
 # See https://docs.astral.sh/ruff/rules/
@@ -140,6 +138,34 @@ ban-relative-imports = "all"
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+docstring-code-format = true
+exclude = [
+    "gh_tt/classes/*.py",
+    "gh_tt/modules/*.py",
+    "gh_tt/tests/testbed.py",
+    "gh_tt/tests/test_config.py",
+    "gh_tt/tests/test_devbranch_integration.py",
+    "gh_tt/tests/test_devbranch.py",
+    "gh_tt/tests/test_gitter.py",
+    "gh_tt/tests/test_handlers.py",
+    "gh_tt/tests/test_issue.py",
+    "gh_tt/tests/test_label.py",
+    "gh_tt/tests/test_parser.py",
+    "gh_tt/tests/test_parser_semver_list_filters.py",
+    "gh_tt/tests/test_parser_semver_list_sha.py",
+    "gh_tt/tests/test_parser_semver_top_level.py",
+    "gh_tt/tests/test_semver_list_sha.py",
+    "gh_tt/tests/test_semver_note_with_from_to.py",
+    "gh_tt/tests/test_semver_prerelease.py",
+    "gh_tt/tests/test_semver.py",
+    "gh_tt/tests/test_status.py",
+    "gh_tt/tests/test_sync.py",
+    "helpers/**"
+]
 
 [tool.pytest.ini_options]
 markers = [
