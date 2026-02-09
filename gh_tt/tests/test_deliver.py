@@ -1,26 +1,9 @@
-import asyncio
-
 import pytest
 
 from gh_tt import shell
 from gh_tt.tests.env_builder import IntegrationEnv
 
 PR_MERGED_STATUS = 'MERGED'
-
-
-async def check_pr_merged(
-    pr_number: int, repo: str, timeout_seconds: int = 30, interval: int = 3
-) -> bool:
-    async with asyncio.timeout(timeout_seconds):
-        while True:
-            result = await shell.run(
-                ['gh', 'pr', 'view', str(pr_number), '--json', 'state', '--jq', '.state'], cwd=repo
-            )
-            if result.stdout == PR_MERGED_STATUS:
-                return True
-            await asyncio.sleep(interval)
-
-    return False
 
 
 @pytest.mark.usefixtures('check_end_to_end_env')
@@ -52,6 +35,11 @@ async def test_workon_deliver_flow_success():
         )
         assert not result.stdout, f'Expected remote branch {branch_name} to be deleted'
 
-        assert await check_pr_merged(pr_number=pr_number, repo=env.local_repo), (
-            'Expected PR to be merged'
+        result = shell.poll_until(
+            ['gh', 'pr', 'view', str(pr_number), '--json', 'state', '--jq', '.state'],
+            cwd=env.local_repo,
+            predicate=lambda r: r.stdout == PR_MERGED_STATUS,
+            timeout_seconds=15,
+            interval=3
         )
+        assert result is not None, 'Expected PR to be merged'
