@@ -154,6 +154,7 @@ async def test_workon_with_project():
                 f'.items[] | select(.content.number == {env.issue_number})',
             ]
         )
+        print(result.stdout)
         project_item_data = json.loads(result.stdout)
 
         assert project_item_data['content']['number'] == env.issue_number
