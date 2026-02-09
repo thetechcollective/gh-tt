@@ -35,6 +35,11 @@ async def get_remote_branches() -> list[str]:
     return result.stdout.splitlines()
 
 
+async def get_current_branch() -> str:
+    result = await shell.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+    return result.stdout
+
+
 @dataclass
 class CheckBranchExistsResult:
     branch_type: Literal['local', 'remote']
