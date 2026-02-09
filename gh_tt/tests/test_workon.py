@@ -1,18 +1,9 @@
-import argparse
 import json
 
 import pytest
 
 from gh_tt import shell
-from gh_tt.modules.tt_handlers import handle_workon
 from gh_tt.tests.env_builder import IntegrationEnv
-
-
-async def test_workon_title_not_implemented():
-    args = argparse.Namespace(command='workon', title='some title', pr_workflow=True)
-
-    with pytest.raises(NotImplementedError):
-        handle_workon(args)
 
 
 @pytest.mark.usefixtures('check_end_to_end_env')
@@ -195,3 +186,30 @@ async def test_workon_commits_empty_with_pending_changes():
             ['git', 'diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD'], cwd=env.local_repo
         )
         assert not result.stdout
+
+
+@pytest.mark.usefixtures('check_end_to_end_env')
+async def test_workon_title_success():
+    async with IntegrationEnv().require_owner().create_repo().create_local_clone().build() as env:
+        await shell.run(
+            ['gh', 'tt', 'workon', '--pr-workflow', '-t', 'title of the issue', '--no-assign'],
+            cwd=env.local_repo,
+        )
+
+        # Check branch name matches expected pattern
+        result = await shell.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=env.local_repo)
+        branch_name = result.stdout
+
+        issue_number = int(branch_name.split('-')[0])
+        assert issue_number > 0, (
+            'Expected branch name to start with digits followed by a dash, instead got {branch_name}'
+        )
+
+        # Verify a draft PR was created for this branch
+        pr_data = await shell.run(
+            ['gh', 'pr', 'view', branch_name, '-R', env.repo_url, '--json', 'number,isDraft,body']
+        )
+        pr = json.loads(pr_data.stdout)
+
+        assert pr['isDraft'], 'Expected PR to be a draft'
+        assert f'#{issue_number}' in pr['body'], 'Expected PR body to reference the issue'

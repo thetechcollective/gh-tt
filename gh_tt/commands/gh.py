@@ -109,6 +109,18 @@ async def get_issue(issue_number: int) -> Issue:
     return Issue(**json.loads(result.stdout))
 
 
+async def create_issue(title: str, body: str | None = None) -> Issue:
+    result = await shell.run(
+        cmd=['gh', 'issue', 'create', '--title', title, '--body', body if body is not None else '']
+    )
+
+    # Command above outputs the issue URL, e.g.
+    # https://github.com/thetechcollective/gh-tt/issues/462
+    issue_number = int(result.stdout.split('/')[-1])
+
+    return await get_issue(issue_number=issue_number)
+
+
 class Repo(BaseModel):
     name: str = Field(alias='nameWithOwner')
     default_branch: str = Field(alias=AliasPath('defaultBranchRef', 'name'))
