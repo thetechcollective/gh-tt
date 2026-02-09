@@ -73,8 +73,8 @@ jobs:
     with:
       context: Cspell
 
-  pytest_integration:
-    name: Integration testing
+  pytest_end_to_end:
+    name: End to end testing
     permissions:
       statuses: write
     secrets: inherit
@@ -87,7 +87,7 @@ jobs:
     needs:
     - ruff_linting
     - cspel_check
-    - pytest_integration
+    - pytest_end_to_end
     - pytest_hypothesis
     - pytest_with_coverage
 
