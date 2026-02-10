@@ -31,6 +31,7 @@ dev = [
     "pytest-cov>=7.0.0",
     "pytest-mock>=3.15.1",
     "ruff>=0.14.6",
+    "ty>=0.0.15",
 ]
 
 [build-system]
@@ -43,6 +44,30 @@ module-root = ""
 [tool.uv]
 required-version = '>=0.10, <0.11'
 
+[tool.ty.src]
+exclude = [
+    "gh_tt/classes/*.py",
+    "gh_tt/modules/*.py",
+    "gh_tt/tests/testbed.py",
+    "gh_tt/tests/test_config.py",
+    "gh_tt/tests/test_devbranch_integration.py",
+    "gh_tt/tests/test_devbranch.py",
+    "gh_tt/tests/test_gitter.py",
+    "gh_tt/tests/test_handlers.py",
+    "gh_tt/tests/test_issue.py",
+    "gh_tt/tests/test_label.py",
+    "gh_tt/tests/test_parser.py",
+    "gh_tt/tests/test_parser_semver_list_filters.py",
+    "gh_tt/tests/test_parser_semver_list_sha.py",
+    "gh_tt/tests/test_parser_semver_top_level.py",
+    "gh_tt/tests/test_semver_list_sha.py",
+    "gh_tt/tests/test_semver_note_with_from_to.py",
+    "gh_tt/tests/test_semver_prerelease.py",
+    "gh_tt/tests/test_semver.py",
+    "gh_tt/tests/test_status.py",
+    "gh_tt/tests/test_sync.py",
+    "helpers/**"
+]
 
 [tool.ruff]
 exclude = [
