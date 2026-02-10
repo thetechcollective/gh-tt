@@ -100,6 +100,18 @@ In conclusions, todos here are
 
 ### Repository settings
 
+In the repo settings (Settings -> General), configure the following:
+- Features
+    - [x] Issues
+- Pull Requests
+    - [x] Allow squash merging
+    - [x] Allow auto-merge
+    - [x] Automatically delete head branches
+- Issues
+    - [x] Auto-close issues with merged linked pull requests
+
+#### Branch protection
+
 Add a [branch ruleset](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets) on the default (main) branch.
 
 Configure the following
