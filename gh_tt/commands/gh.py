@@ -3,6 +3,7 @@ Contains functions that execute command-line GitHub commands
 """
 
 import json
+import logging
 import re
 from typing import Literal
 
@@ -11,8 +12,11 @@ from pydantic import AliasPath, BaseModel, Field, HttpUrl, PositiveInt
 
 from gh_tt import shell
 
+logger = logging.getLogger(__name__)
+
 
 async def create_draft_pr(issue_number: int, issue_title: str, default_branch: str):
+    logger.debug('creating draft PR for issue #%d on base %s', issue_number, default_branch)
     # The PR would close the issue even without this reference, but mentioning the issue
     # is nice for quick access
     body = f'Closes #{issue_number}'
@@ -39,6 +43,7 @@ async def assign_pr(dev_branch: str, assignee: str):
 
 
 async def merge_pr(dev_branch: str, *, delete_branch: bool):
+    logger.debug('merging PR on branch %s (delete_branch=%s)', dev_branch, delete_branch)
     cmd = ['gh', 'pr', 'merge', dev_branch, '--auto', '--squash']
     if delete_branch:
         cmd.append('--delete-branch')
@@ -79,6 +84,7 @@ async def assign_issue(issue_number: int, assignee: str):
 async def develop_issue(issue_title: str, issue_number: int, default_branch: str) -> str:
     sanitized_title = re.sub(r'[^a-zA-Z0-9]+', '_', issue_title)
     branch_name = f'{issue_number}-{sanitized_title}'
+    logger.debug('developing issue #%d with branch %s', issue_number, branch_name)
 
     await shell.run(
         cmd=[
@@ -114,6 +120,7 @@ async def get_issue(issue_number: int) -> Issue:
 
 
 async def create_issue(title: str, body: str | None = None) -> Issue:
+    logger.debug('creating issue: %s', title)
     result = await shell.run(
         cmd=['gh', 'issue', 'create', '--title', title, '--body', body if body is not None else '']
     )
@@ -194,6 +201,7 @@ class ProjectStatusField(BaseModel):
 async def update_project_item_status(
     project_id: str, project_number: int, project_owner: str, item_id: str, status_value: str
 ):
+    logger.debug('updating project item status: item=%s, status=%s', item_id, status_value)
     status_field_name = 'Status'
 
     result = await shell.run(

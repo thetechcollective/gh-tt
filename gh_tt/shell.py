@@ -1,7 +1,10 @@
 import asyncio
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -23,6 +26,7 @@ class ShellResult:
 
 
 async def run(cmd: list[str], *, cwd: Path | None = None, die_on_error: bool = True) -> ShellResult:
+    logger.debug('running command: %s', cmd)
     process = await asyncio.create_subprocess_exec(
         *cmd,
         stdout=asyncio.subprocess.PIPE,
@@ -34,7 +38,10 @@ async def run(cmd: list[str], *, cwd: Path | None = None, die_on_error: bool = T
     stdout = stdout.decode().rstrip()
     stderr = stderr.decode().rstrip()
 
+    logger.debug('command returned %d: %s', process.returncode, cmd)
+
     if die_on_error and process.returncode != 0:
+        logger.debug('command failed, raising ShellError')
         raise ShellError(cmd=cmd, stdout=stdout, stderr=stderr, return_code=process.returncode)
 
     return ShellResult(stdout=stdout, stderr=stderr, return_code=process.returncode)
@@ -66,12 +73,21 @@ async def poll_until(
         Returns `None` if the timeout is reached.
     """
 
+    logger.debug(
+        'poll_until: starting with timeout=%ss, interval=%ss, cmd=%s',
+        timeout_seconds,
+        interval,
+        cmd,
+    )
     try:
         async with asyncio.timeout(timeout_seconds):
             while True:
                 result = await run(cmd, cwd=cwd)
                 if predicate(result):
+                    logger.debug('poll_until: predicate satisfied')
                     return result
+                logger.debug('poll_until: predicate not satisfied, retrying in %ds', interval)
                 await asyncio.sleep(interval)
     except TimeoutError:
+        logger.debug('poll_until: timed out after %ds', timeout_seconds)
         return None

@@ -2,6 +2,7 @@
 
 import asyncio
 import contextlib
+import logging
 import sys
 
 from gh_tt.classes import sync
@@ -15,13 +16,17 @@ from gh_tt.classes.status import Status
 from gh_tt.deliver import deliver
 from gh_tt.workon import workon_issue, workon_title
 
+logger = logging.getLogger(__name__)
+
 
 def handle_workon(args):
     """Handle the workon command"""
     if args.pr_workflow:
         if args.title:
+            logger.debug("handle_workon: pr_workflow with title=%s", args.title)
             asyncio.run(workon_title(issue_title=args.title, issue_body=args.body, assign=args.assignee))
         else:
+            logger.debug("handle_workon: pr_workflow with issue=%s", args.issue)
             asyncio.run(workon_issue(args.issue, assign=args.assignee))
         return
 
@@ -70,6 +75,7 @@ def handle_wrapup(args):
 def handle_deliver(args):
     """Handle the deliver command"""
     if args.pr_workflow:
+        logger.debug("handle_deliver: pr_workflow with delete_branch=%s", args.delete_branch)
         asyncio.run(deliver(delete_branch=args.delete_branch))
         return
 
