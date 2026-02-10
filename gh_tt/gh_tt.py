@@ -23,6 +23,10 @@ def setup_logging(verbose: int):
         stream=sys.stderr,
     )
 
+    # logging.basicConfig could be a no-op if a logger is already configured
+    # e.g. by pytest - so we explicitly set the level to preserve args.verbose
+    logging.getLogger().setLevel(level=level)
+
 
 def main():
     args = tt_parse(sys.argv[1:])
