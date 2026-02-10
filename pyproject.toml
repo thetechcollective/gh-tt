@@ -23,16 +23,15 @@ dependencies = [
     "pydantic>=2.12.5",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
-    "hypothesis>=6.138.2",
-    "pytest",
+    "hypothesis>=6.148.2",
+    "pytest>=9.0.1",
     "pytest-asyncio>=1.3.0",
-    "pytest-cov",
-    "pytest-mock>=3.14.1",
-    "ruff>=0.12.0",
+    "pytest-cov>=7.0.0",
+    "pytest-mock>=3.15.1",
+    "ruff>=0.14.6",
 ]
-
 
 [build-system]
 requires = ["uv_build>=0.9.0,<0.10.0"]

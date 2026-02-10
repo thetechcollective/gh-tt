@@ -15,7 +15,7 @@ echo "$PREFIX Setting up the uv environment"
 curl -LsSf https://astral.sh/uv/install.sh | sh
 uv venv
 . .venv/bin/activate
-uv sync --extra dev
+uv sync
 
 # Check if the GH CLI is required
 if [ -e $(dirname $0)/_temp.token ]; then
