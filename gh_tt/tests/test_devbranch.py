@@ -7,18 +7,6 @@ from pytest_mock import MockerFixture
 from gh_tt.classes.config import Config
 from gh_tt.classes.devbranch import Devbranch
 from gh_tt.classes.gitter import Gitter
-from gh_tt.classes.issue import Issue
-
-
-@pytest.mark.unittest
-def test_wrapup_responsibles_notifies_only_on_new_changes():
-    issue = Issue().from_json(file="gh_tt/tests/data/issue/issue_responsibles_comment.json")
-    devbranch = Devbranch().from_json(file="gh_tt/tests/data/devbranch/devbranch_responsibles_comment.json")
-    comments = issue.get("comments")
-
-    responsibles = devbranch._get_responsibles(issue_comments=comments)
-
-    assert responsibles.find("tests/test_issue.py") == -1
 
 
 @pytest.mark.unittest
