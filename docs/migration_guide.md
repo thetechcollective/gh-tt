@@ -130,6 +130,22 @@ Configure the following
     - + Add checks: 'All passed' (status check configured in [GitHub Actions](#github-actions))
 - [x] Block force pushes
 
+### GH CLI Aliases
+
+In most projects, the `postCreateCommand.sh` adds some aliases, so you don't have to type out `tt` all the time.
+
+If you'd like to _not_ type `--pr-workflow` all the time, you can change your aliases to add this flag.
+
+```diff
+- workon:  '!gh tt workon "$@"'
++ workon:  '!gh tt workon --pr-workflow "$@"'
+wrapup:  '!gh tt wrapup "$@"'
+- deliver: '!gh tt deliver "$@"'
++ deliver: '!gh tt deliver --pr-workflow "$@"'
+responsibles: '!gh tt responsibles "$@"'
+semver: '!gh tt semver "$@"'
+```
+
 ### Need help?
 1. Check out how the (`gh-tt` repo)[https://github.com/thetechcollective/gh-tt] is set up as a reference implementation
 2. Reach out to @vemolista

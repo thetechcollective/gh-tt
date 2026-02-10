@@ -1,5 +1,5 @@
 workon:  '!gh tt workon --pr-workflow "$@"'
 wrapup:  '!gh tt wrapup "$@"'
-deliver: '!gh tt deliver "$@"'
+deliver: '!gh tt deliver --pr-workflow "$@"'
 responsibles: '!gh tt responsibles "$@"'
 semver: '!gh tt semver "$@"'
