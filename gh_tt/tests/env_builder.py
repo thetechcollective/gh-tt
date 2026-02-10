@@ -209,7 +209,7 @@ class IntegrationEnv:
 
         async def cleanup():
             await shell.run(
-                ['gh', 'project', 'delete', str(self.project_number), '--owner', self.owner],
+                ['gh', 'project', 'delete', str(self.project_number), '--owner', str(self.owner)],
                 die_on_error=False,
             )
 
