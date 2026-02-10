@@ -147,7 +147,7 @@ semver: '!gh tt semver "$@"'
 ```
 
 ### Need help?
-1. Check out how the (`gh-tt` repo)[https://github.com/thetechcollective/gh-tt] is set up as a reference implementation
+1. Check out how the [`gh-tt` repo](https://github.com/thetechcollective/gh-tt) is set up as a reference implementation
 2. Reach out to @vemolista
 
 
