@@ -24,7 +24,16 @@ async def test_workon_basic_success():
 
         # Verify a draft PR was created for this branch
         pr_data = await shell.run(
-            ['gh', 'pr', 'view', branch_name, '-R', str(env.repo_url), '--json', 'number,isDraft,body']
+            [
+                'gh',
+                'pr',
+                'view',
+                branch_name,
+                '-R',
+                str(env.repo_url),
+                '--json',
+                'number,isDraft,body',
+            ]
         )
         pr = json.loads(pr_data.stdout)
 
@@ -131,7 +140,6 @@ async def test_workon_with_project():
             cwd=env.local_repo,
         )
 
-
         assert isinstance(env.local_repo, Path), f'Expected type Path, got {type(env.local_repo)}'
         result = await shell.poll_until(
             [
@@ -214,7 +222,16 @@ async def test_workon_title_success():
 
         # Verify a draft PR was created for this branch
         pr_data = await shell.run(
-            ['gh', 'pr', 'view', branch_name, '-R', str(env.repo_url), '--json', 'number,isDraft,body']
+            [
+                'gh',
+                'pr',
+                'view',
+                branch_name,
+                '-R',
+                str(env.repo_url),
+                '--json',
+                'number,isDraft,body',
+            ]
         )
         pr = json.loads(pr_data.stdout)
 

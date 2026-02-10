@@ -2,7 +2,6 @@
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
 name: Issue branch push
-# This workflow is triggered on push to branches that begins with a number (issue-branches)
 
 on:
   workflow_dispatch:
@@ -85,6 +84,24 @@ jobs:
 
       - run: |
             uv run --frozen -- ruff format --check
+
+  type_check:
+    name: Type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          # Latest python compliant with the project's requires-python
+          python-version-file: 'pyproject.toml'
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+            # Latest uv compliant with the project's tool.uv required version
+            version-file: 'pyproject.toml'
+
+      - run: |
+            uv run --frozen -- ty check --output-format github
 
 
   cspel_check:
