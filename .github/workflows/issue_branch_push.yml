@@ -6,6 +6,7 @@ name: Issue branch push
 
 on:
   workflow_dispatch:
+  merge_group:
   push:
     branches: 
       - '[0-9]*'

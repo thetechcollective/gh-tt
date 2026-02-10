@@ -32,7 +32,8 @@
         "devcontainer",
         "devcontainers",
         "affordances",
-        "stringly"
+        "stringly",
+        "vemolista"
     ],
     "ignoreWords": [
         "cspell",
