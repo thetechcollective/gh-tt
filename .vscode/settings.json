@@ -14,7 +14,7 @@
     },
     "ruff.configuration": "${workspaceFolder}/pyproject.toml",
     "python.defaultInterpreterPath": ".venv/bin/python",
-    "python.languageServer": "Pylance",
+    "python.languageServer": "None",
     "github-actions.workflows.pinned.workflows": [
         ".github/workflows/ready.yml"
     ]

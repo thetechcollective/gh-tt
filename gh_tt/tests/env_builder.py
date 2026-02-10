@@ -10,7 +10,7 @@ import json
 import os
 import tempfile
 import uuid
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Self
@@ -52,7 +52,7 @@ class IntegrationEnv:
         self.project_number: int | None = None
 
         # Build steps: list of (name, async_create_fn, async_cleanup_fn)
-        self._steps: list[tuple[str, callable, callable]] = []
+        self._steps: list[tuple[str, Callable, Callable]] = []
 
         # Track temp directory for cleanup
         self._temp_dir: tempfile.TemporaryDirectory | None = None
@@ -209,7 +209,7 @@ class IntegrationEnv:
 
         async def cleanup():
             await shell.run(
-                ['gh', 'project', 'delete', str(self.project_number), '--owner', self.owner],
+                ['gh', 'project', 'delete', str(self.project_number), '--owner', str(self.owner)],
                 die_on_error=False,
             )
 

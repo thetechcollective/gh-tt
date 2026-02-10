@@ -18,9 +18,9 @@
 			"extensions": [
 				"ms-python.debugpy",
 				"ms-python.python",
-				"ms-python.vscode-pylance",
 				"streetsidesoftware.code-spell-checker",
 				"charliermarsh.ruff",
+                "astral-sh.ty",
 				"github.vscode-github-actions",
 				"tamasfe.even-better-toml",
 				"GitHub.copilot-chat"

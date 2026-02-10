@@ -24,7 +24,7 @@ if [ -e $(dirname $0)/_temp.token ]; then
     echo "$PREFIX Installing the techcollective/gh-tt gh cli extension"
     gh extension install thetechcollective/gh-tt
     echo "$PREFIX Installing the gh aliases"    
-    gh alias import .devcontainer/gh_alias.yml --clobber
+    gh alias import .devcontainer/.gh_alias.yml --clobber
 
 fi
 

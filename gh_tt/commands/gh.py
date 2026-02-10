@@ -134,7 +134,7 @@ async def create_issue(title: str, body: str | None = None) -> Issue:
 
 class Repo(BaseModel):
     name: str = Field(alias='nameWithOwner')
-    default_branch: str = Field(alias=AliasPath('defaultBranchRef', 'name'))
+    default_branch: str = Field(validation_alias=AliasPath('defaultBranchRef', 'name'))
 
 
 @alru_cache
@@ -149,7 +149,7 @@ class Project(BaseModel):
     url: HttpUrl
     title: str
     number: int
-    owner: str = Field(alias=AliasPath('owner', 'login'))
+    owner: str = Field(validation_alias=AliasPath('owner', 'login'))
 
 
 @alru_cache

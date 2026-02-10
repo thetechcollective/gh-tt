@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 
@@ -23,7 +24,16 @@ async def test_workon_basic_success():
 
         # Verify a draft PR was created for this branch
         pr_data = await shell.run(
-            ['gh', 'pr', 'view', branch_name, '-R', env.repo_url, '--json', 'number,isDraft,body']
+            [
+                'gh',
+                'pr',
+                'view',
+                branch_name,
+                '-R',
+                str(env.repo_url),
+                '--json',
+                'number,isDraft,body',
+            ]
         )
         pr = json.loads(pr_data.stdout)
 
@@ -130,6 +140,7 @@ async def test_workon_with_project():
             cwd=env.local_repo,
         )
 
+        assert isinstance(env.local_repo, Path), f'Expected type Path, got {type(env.local_repo)}'
         result = await shell.poll_until(
             [
                 'gh',
@@ -137,7 +148,7 @@ async def test_workon_with_project():
                 'item-list',
                 str(env.project_number),
                 '--owner',
-                env.owner,
+                str(env.owner),
                 '--format',
                 'json',
                 '--jq',
@@ -149,7 +160,11 @@ async def test_workon_with_project():
             timeout_seconds=15,
             interval=2,
         )
-        project_item_data = json.loads(result.stdout)
+
+        if result is None:
+            pytest.fail('Polling for project item timed out')
+
+        project_item_data = json.loads(result.stdout)  # ty:ignore[possibly-missing-attribute] - we check the result above
 
         assert project_item_data is not None, 'Expected the project to have an item in progress'
         assert project_item_data['content']['number'] == env.issue_number
@@ -207,7 +222,16 @@ async def test_workon_title_success():
 
         # Verify a draft PR was created for this branch
         pr_data = await shell.run(
-            ['gh', 'pr', 'view', branch_name, '-R', env.repo_url, '--json', 'number,isDraft,body']
+            [
+                'gh',
+                'pr',
+                'view',
+                branch_name,
+                '-R',
+                str(env.repo_url),
+                '--json',
+                'number,isDraft,body',
+            ]
         )
         pr = json.loads(pr_data.stdout)
 
