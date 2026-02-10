@@ -1,3 +1,5 @@
+from contextlib import nullcontext as does_not_raise
+
 import pytest
 
 from gh_tt.modules.tt_parser import tt_parse
@@ -135,3 +137,22 @@ def test_parser_semver_bump_build_options():
     # Test that --no-sha cannot be used with other levels
     with pytest.raises(SystemExit):
         tt_parse(['semver', 'bump', '--major', '--no-sha'])
+
+@pytest.mark.unittest
+@pytest.mark.parametrize(
+    ('delete_flag', 'pr_workflow_flag', 'expectation'),
+    [
+        ('--delete-branch', '', pytest.raises(SystemExit)),
+        ('-d', '', pytest.raises(SystemExit)),
+        ('', '--pr-workflow', does_not_raise()),
+        ('-d', '--pr-workflow', does_not_raise()),
+        ('--delete-branch', '--pr-workflow', does_not_raise()),
+    ],
+)
+def test_parser_deliver_delete_branch_only_with_pr_workflow(delete_flag, pr_workflow_flag, expectation):
+    args = (['deliver']
+        # Filter out empty strings
+        + [arg for arg in [pr_workflow_flag, delete_flag] if arg])
+
+    with expectation:
+        tt_parse(args)
