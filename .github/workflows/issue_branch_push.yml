@@ -43,6 +43,7 @@ jobs:
       context: Unit testing w/ coverage
       pytest_arguments: "--cov=. --cov-config=.coveragerc -m unittest"
       python_versions: ${{ needs.python_versions.outputs.python_versions }}
+      uv-sync-args: '' # override the default and pass nothing
 
   pytest_hypothesis:
     name: Property-based testing
@@ -55,6 +56,7 @@ jobs:
       context: Property-based testing
       pytest_arguments: "-m hypothesis --hypothesis-profile=1000"
       python_versions: ${{ needs.python_versions.outputs.python_versions }}
+      uv-sync-args: '' # override the default and pass nothing
 
   ruff_linting:
     name: Linting
@@ -64,6 +66,7 @@ jobs:
     uses: thetechcollective/workflows/.github/workflows/checking_python_ruff_lint.yaml@stable
     with:
       context: Ruff
+      uv-sync-args: '' # override the default and pass nothing
 
   ruff_formatting:
     name: Formatting
@@ -81,7 +84,7 @@ jobs:
             version-file: 'pyproject.toml'
 
       - run: |
-            uv run --frozen --extra dev -- ruff format --check
+            uv run --frozen -- ruff format --check
 
 
   cspel_check:
