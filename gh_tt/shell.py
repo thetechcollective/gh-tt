@@ -9,10 +9,10 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ShellError(Exception):
-    cmd: str
+    cmd: list[str]
     stdout: str
     stderr: str
-    return_code: int
+    return_code: int | None
 
     def __str__(self) -> str:
         return f'Command failed with return code {self.return_code}\ncommand: {self.cmd}\nstdout: {self.stdout}\nstderr: {self.stderr}'
@@ -22,7 +22,7 @@ class ShellError(Exception):
 class ShellResult:
     stdout: str
     stderr: str
-    return_code: int
+    return_code: int | None
 
 
 async def run(cmd: list[str], *, cwd: Path | None = None, die_on_error: bool = True) -> ShellResult:
