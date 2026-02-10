@@ -7,4 +7,4 @@ SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &>/dev/null && pwd )"
 command -v uv >/dev/null \
   ||  { echo "ERROR: uv not found in PATH"; exit 1; }
 
-exec uv run --project "$SCRIPT_DIR" --frozen python -m gh_tt "$@"
+exec uv run --quiet --project "$SCRIPT_DIR" --frozen python -m gh_tt "$@"
