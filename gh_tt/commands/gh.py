@@ -39,7 +39,7 @@ async def assign_pr(dev_branch: str, assignee: str):
 
 
 async def merge_pr(dev_branch: str):
-    await shell.run(['gh', 'pr', 'merge', dev_branch, '--auto', '--squash', '--delete-branch'])
+    await shell.run(['gh', 'pr', 'merge', dev_branch, '--auto', '--squash'])
 
 
 async def mark_pr_ready(dev_branch: str):
