@@ -70,7 +70,7 @@ def handle_wrapup(args):
 def handle_deliver(args):
     """Handle the deliver command"""
     if args.pr_workflow:
-        asyncio.run(deliver())
+        asyncio.run(deliver(delete_branch=args.delete_branch))
         return
 
     devbranch = Devbranch()

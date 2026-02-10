@@ -55,7 +55,7 @@ def tt_parse(args=None):
 
 
     # Add deliver subcommand
-    subparsers.add_parser(
+    deliver_parser = subparsers.add_parser(
         'deliver', 
         parents=[parent_parser, poll_parser], help="Create a collapsed 'ready' branch for the current issue branch and push it to the remote",
         description="""
@@ -64,6 +64,7 @@ def tt_parse(args=None):
             Policies for the delivery can be set in the configuration file '.tt-config.json'. Consult the README
             in 'thetechcollective/gh-tt' for details.
             """)
+    deliver_parser.add_argument('-d,', '--delete-branch', action='store_true', dest='delete_branch', default=False, help='Delete branch after the PR is merged. Only supported with the --pr-workflow flag.')
     
     #Add the responsibles subcommand
     responsibles_parser = subparsers.add_parser(
@@ -180,5 +181,8 @@ def tt_parse(args=None):
     # Validate that --no-sha is only used with --build
     if hasattr(args, 'include_sha') and args.include_sha is False and (not hasattr(args, 'level') or args.level != 'build'):
         semver_bump_parser.error("🛑 The --no-sha flag can only be used with the --build level")
+
+    if args.command == 'deliver' and (not args.pr_workflow and args.delete_branch):
+        deliver_parser.error("🛑 The --delete-branch flag can only be used with the --pr-workflow flag")
 
     return args
