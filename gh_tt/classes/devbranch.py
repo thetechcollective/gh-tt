@@ -344,6 +344,10 @@ class Devbranch(Lazyload):
 
         issue = Issue.load(number=issue_number)
 
+        if issue.get('closed'):
+            print(f"⛔️ ERROR: Issue '{issue_number}' is closed.", file=sys.stderr)
+            sys.exit(1)
+
         reuse = asyncio.run(self.__reuse_issue_branch(issue_number=issue_number))
         if not reuse:
             # Construct a valid branch name based on the issue number, and the title, replacing spaces with underscores and weed out any chars that aren't allowind in branch names
