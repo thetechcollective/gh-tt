@@ -41,14 +41,14 @@ def handle_workon(args):
             with contextlib.suppress(KeyError, AttributeError):
                 label = Config().config()['workon']['default_type_labels']['issue']
 
-        devbranch.set_issue(issue_number=args.issue, assign=args.assignee, msg=args.body, reopen=args.reopen, label=label)
+        devbranch.set_issue(issue_number=args.issue, assign=args.assignee, msg=args.body, label=label)
         
     elif args.title:
         if label is None:
             with contextlib.suppress(KeyError, AttributeError):
                 label = Config().config()['workon']['default_type_labels']['title']
         issue = Issue.create_new(title=args.title, body=args.body)
-        devbranch.set_issue(issue_number=issue.get('number'), assign=args.assignee, reopen=args.reopen, label=label)
+        devbranch.set_issue(issue_number=issue.get('number'), assign=args.assignee, label=label)
 
 
 def handle_wrapup(args):
