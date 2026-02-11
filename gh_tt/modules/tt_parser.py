@@ -40,7 +40,7 @@ def tt_parse(args=None):
     workon_group.add_argument('-t', '--title', type=str, help='Title for the new issue')
     workon_parser.add_argument('--type', type=str, help='Set an issue type label', default=None)
     workon_parser.add_argument('-b', '--body', dest='body', type=str, help='Optional body (issue comment) for the new issue')
-    workon_parser.add_argument('-r', '--reopen', action='store_true', help='Reopens a closed issue. Required when you want to continue working on a closed issue.', default=False)
+
     assign_group = workon_parser.add_mutually_exclusive_group()
     assign_group.add_argument('--assign', dest='assignee', action='store_true', help='Assign @me to the issue (default)')
     assign_group.add_argument('--no-assign', dest='assignee', action='store_false', help='Do not assign anybody to the issue')
@@ -164,9 +164,6 @@ def tt_parse(args=None):
     sync_parser.add_argument('--milestones', action='store_true', help='Read milestones from the template repo and create them in all sibling repos')
 
     args = parser.parse_args(args)
-
-    if args.command == "workon" and args.reopen and not args.issue:
-        parser.error("🛑 --reopen flag can only be used with the `workon --issue` command")
 
     if not args.command and not args.version:
         parser.print_help()

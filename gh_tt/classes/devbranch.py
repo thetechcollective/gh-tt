@@ -333,8 +333,7 @@ class Devbranch(Lazyload):
             issue_number: int,
             label:str | None = None,
             msg:str | None = None,
-            *, assign = True,
-            reopen : bool = False
+            *, assign = True
         ):
         """Set the issue number context to work on"""
 
@@ -345,12 +344,9 @@ class Devbranch(Lazyload):
 
         issue = Issue.load(number=issue_number)
 
-        if issue.get('closed'): 
-            if not reopen:
-                print(f"⛔️ ERROR: Issue '{issue_number}' is closed, you must use --reopen if you want to work on this issue.", file=sys.stderr)
-                sys.exit(1)
-            # Reopen the issue if it is closed
-            issue.reopen()
+        if issue.get('closed'):
+            print(f"⛔️ ERROR: Issue '{issue_number}' is closed. Create a new issue to work on.", file=sys.stderr)
+            sys.exit(1)
 
         reuse = asyncio.run(self.__reuse_issue_branch(issue_number=issue_number))
         if not reuse:
