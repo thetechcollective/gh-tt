@@ -1,5 +1,6 @@
+from unittest.mock import Mock
+
 import pytest
-from unittest.mock import Mock, patch
 
 from gh_tt.modules.tt_parser import tt_parse
 
