@@ -24,7 +24,9 @@ async def test_workon_basic_success():
         assert branch_name.startswith(f'{env.issue_number}-')
 
         output = workon_result.stdout
-        assert int(output.split('/')[-1]) == env.issue_number, 'Expected output url to end with the issue number'
+        assert int(output.split('/')[-1]) == env.issue_number, (
+            'Expected output url to end with the issue number'
+        )
         assert HttpUrl(output), 'Expected output to be a valid url'
 
         # Verify a draft PR was created for this branch
@@ -226,7 +228,9 @@ async def test_workon_title_success():
         )
 
         output = workon_result.stdout
-        assert int(output.split('/')[-1]) == issue_number, 'Expected output url to end with the issue number'
+        assert int(output.split('/')[-1]) == issue_number, (
+            'Expected output url to end with the issue number'
+        )
         assert HttpUrl(output), 'Expected output to be a valid url'
 
         # Verify a draft PR was created for this branch

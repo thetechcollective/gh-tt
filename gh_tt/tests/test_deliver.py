@@ -49,5 +49,7 @@ async def test_workon_deliver_flow_success():
         assert result is not None, 'Expected PR to be merged'
 
         output = deliver_result.stdout
-        assert int(output.split('/')[-1]) == int(pr_number), 'Expected output url to end with the PR number'
+        assert int(output.split('/')[-1]) == int(pr_number), (
+            'Expected output url to end with the PR number'
+        )
         assert HttpUrl(output), 'Expected output to be a valid url'
