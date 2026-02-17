@@ -222,7 +222,7 @@ async def test_workon_title_success(capsys: pytest.CaptureFixture):
 
         issue_number = int(branch_name.split('-')[0])
         assert issue_number > 0, (
-            'Expected branch name to start with digits followed by a dash, instead got {branch_name}'
+            f'Expected branch name to start with digits followed by a dash, instead got {branch_name}'
         )
 
         output = capsys.readouterr().out
