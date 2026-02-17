@@ -2,13 +2,14 @@ import json
 from pathlib import Path
 
 import pytest
+from pydantic import HttpUrl
 
 from gh_tt import shell
 from gh_tt.tests.env_builder import IntegrationEnv
 
 
 @pytest.mark.usefixtures('check_end_to_end_env')
-async def test_workon_basic_success():
+async def test_workon_basic_success(capsys: pytest.CaptureFixture):
     async with (
         IntegrationEnv().require_owner().create_repo().create_issue().create_local_clone().build()
     ) as env:
@@ -21,6 +22,10 @@ async def test_workon_basic_success():
         result = await shell.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=env.local_repo)
         branch_name = result.stdout
         assert branch_name.startswith(f'{env.issue_number}-')
+
+        output = capsys.readouterr().out
+        assert int(output.split('/')[-1]) == env.issue_number, 'Expected output url to end with the issue number'
+        assert HttpUrl(output), 'Expected output to be a valid url'
 
         # Verify a draft PR was created for this branch
         pr_data = await shell.run(
@@ -204,7 +209,7 @@ async def test_workon_commits_empty_with_pending_changes():
 
 
 @pytest.mark.usefixtures('check_end_to_end_env')
-async def test_workon_title_success():
+async def test_workon_title_success(capsys: pytest.CaptureFixture):
     async with IntegrationEnv().require_owner().create_repo().create_local_clone().build() as env:
         await shell.run(
             ['gh', 'tt', 'workon', '--pr-workflow', '-t', 'title of the issue', '--no-assign'],
@@ -219,6 +224,10 @@ async def test_workon_title_success():
         assert issue_number > 0, (
             'Expected branch name to start with digits followed by a dash, instead got {branch_name}'
         )
+
+        output = capsys.readouterr().out
+        assert int(output.split('/')[-1]) == issue_number, 'Expected output url to end with the issue number'
+        assert HttpUrl(output), 'Expected output to be a valid url'
 
         # Verify a draft PR was created for this branch
         pr_data = await shell.run(
