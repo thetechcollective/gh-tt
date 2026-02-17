@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pytest
+from pydantic import HttpUrl
 
 from gh_tt import shell
 from gh_tt.tests.env_builder import IntegrationEnv
@@ -27,7 +28,7 @@ async def test_workon_deliver_flow_success():
         pr_number = result.stdout
 
         # Act
-        await shell.run(
+        deliver_result = await shell.run(
             ['gh', 'tt', 'deliver', '--pr-workflow', '--delete-branch'], cwd=env.local_repo
         )
 
@@ -46,3 +47,7 @@ async def test_workon_deliver_flow_success():
             interval=3,
         )
         assert result is not None, 'Expected PR to be merged'
+
+        output = deliver_result.stdout
+        assert int(output.split('/')[-1]) == int(pr_number), 'Expected output url to end with the PR number'
+        assert HttpUrl(output), 'Expected output to be a valid url'

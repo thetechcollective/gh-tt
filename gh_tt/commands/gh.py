@@ -14,6 +14,14 @@ from gh_tt import shell
 
 logger = logging.getLogger(__name__)
 
+class PullRequest(BaseModel):
+    url: HttpUrl
+
+async def get_pr() -> PullRequest:
+    result = await shell.run(['gh', 'pr', 'view', '--json', 'url'])
+
+    return PullRequest(**json.loads(result.stdout))
+
 
 async def create_draft_pr(issue_number: int, issue_title: str, default_branch: str):
     logger.debug('creating draft PR for issue #%d on base %s', issue_number, default_branch)
