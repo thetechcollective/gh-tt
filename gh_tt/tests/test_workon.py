@@ -9,11 +9,11 @@ from gh_tt.tests.env_builder import IntegrationEnv
 
 
 @pytest.mark.usefixtures('check_end_to_end_env')
-async def test_workon_basic_success(capsys: pytest.CaptureFixture):
+async def test_workon_basic_success():
     async with (
         IntegrationEnv().require_owner().create_repo().create_issue().create_local_clone().build()
     ) as env:
-        await shell.run(
+        workon_result = await shell.run(
             ['gh', 'tt', 'workon', '--pr-workflow', '-i', str(env.issue_number), '--no-assign'],
             cwd=env.local_repo,
         )
@@ -23,7 +23,7 @@ async def test_workon_basic_success(capsys: pytest.CaptureFixture):
         branch_name = result.stdout
         assert branch_name.startswith(f'{env.issue_number}-')
 
-        output = capsys.readouterr().out
+        output = workon_result.stdout
         assert int(output.split('/')[-1]) == env.issue_number, 'Expected output url to end with the issue number'
         assert HttpUrl(output), 'Expected output to be a valid url'
 
@@ -209,9 +209,9 @@ async def test_workon_commits_empty_with_pending_changes():
 
 
 @pytest.mark.usefixtures('check_end_to_end_env')
-async def test_workon_title_success(capsys: pytest.CaptureFixture):
+async def test_workon_title_success():
     async with IntegrationEnv().require_owner().create_repo().create_local_clone().build() as env:
-        await shell.run(
+        workon_result = await shell.run(
             ['gh', 'tt', 'workon', '--pr-workflow', '-t', 'title of the issue', '--no-assign'],
             cwd=env.local_repo,
         )
@@ -225,7 +225,7 @@ async def test_workon_title_success(capsys: pytest.CaptureFixture):
             f'Expected branch name to start with digits followed by a dash, instead got {branch_name}'
         )
 
-        output = capsys.readouterr().out
+        output = workon_result.stdout
         assert int(output.split('/')[-1]) == issue_number, 'Expected output url to end with the issue number'
         assert HttpUrl(output), 'Expected output to be a valid url'
 
