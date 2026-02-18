@@ -84,6 +84,8 @@ async def workon_issue(issue_number: int, *, assign: bool):
     else:
         logger.debug('skipping project status update (project config not fully set)')
 
+    print(str(issue.url))
+
 
 async def workon_title(issue_title: str, issue_body: str | None, *, assign: bool):
     logger.debug('workon_title: title=%s, assign=%s', issue_title, assign)
