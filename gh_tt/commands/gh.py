@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 class PullRequestState(Enum):
     Open = 'OPEN'
     Closed = 'CLOSED'
+    Merged = 'MERGED'
 
 
 class PullRequest(BaseModel):
