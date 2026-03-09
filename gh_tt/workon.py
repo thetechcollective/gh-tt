@@ -4,7 +4,6 @@ import logging
 
 from gh_tt.classes.config import Config
 from gh_tt.commands import gh, git
-from gh_tt.commands.gh import PullRequestState
 
 logger = logging.getLogger(__name__)
 
@@ -43,25 +42,25 @@ async def workon_issue(issue_number: int, *, assign: bool):
             )
         case git.CheckBranchExistsResult(branch_type='local', name=branch_name):
             logger.debug('found local branch: %s', branch_name)
-            dev_branch, pr_state = await asyncio.gather(
-                git.switch_branch(branch_name), gh.check_pr_open(branch_name)
+            dev_branch, is_pr_open = await asyncio.gather(
+                git.switch_branch(branch_name), gh.is_pr_open(branch_name)
             )
 
-            if pr_state is not PullRequestState.Open:
+            if not is_pr_open:
                 raise RuntimeError(
                     f"Found local branch '{dev_branch}', but could not find a corresponding open pull request. This indicates this branch was not created via `gh tt workon`. gh-tt currently does not support working on branches not created via gh-tt.\n\nTo fix this, please create a PR manually.\n\nIf this branch was created via gh tt workon, please report this as a bug."
                 )
 
         case git.CheckBranchExistsResult(branch_type='remote', name=branch_name):
             logger.debug('found remote branch: %s', branch_name)
-            dev_branch, pr_state = await asyncio.gather(
+            dev_branch, is_pr_open = await asyncio.gather(
                 git.switch_branch(
                     git.SwitchRemoteInput(branch_to_switch_to=branch_name, remote=remote)
                 ),
-                gh.check_pr_open(branch_name),
+                gh.is_pr_open(branch_name),
             )
 
-            if pr_state is not PullRequestState.Open:
+            if not is_pr_open:
                 raise RuntimeError(
                     f"Found remote branch '{dev_branch}', but could not find a corresponding open pull request. This indicates this branch was not created via `gh tt workon`. gh-tt currently does not support working on branches not created via gh-tt.\n\nTo fix this, please create a PR manually.\n\nIf this branch was created via gh tt workon, please report this as a bug."
                 )

@@ -2,6 +2,7 @@
 Contains functions that execute command-line GitHub commands
 """
 
+
 import json
 import logging
 import re
@@ -73,11 +74,17 @@ async def mark_pr_ready(dev_branch: str):
     await shell.run(['gh', 'pr', 'ready', dev_branch])
 
 
-async def check_pr_open(dev_branch: str) -> PullRequestState:
-    result = await shell.run(['gh', 'pr', 'view', dev_branch, '--json', 'url,state'])
-    data = json.loads(result.stdout)
+async def is_pr_open(dev_branch: str) -> bool:
+    result = await shell.run(
+        ['gh', 'pr', 'view', dev_branch, '--json', 'url,state'], die_on_error=False
+    )
 
-    return PullRequestState(data['state'])
+    if result.return_code == 1:
+        # Did not find PR
+        return False
+
+    pr = PullRequest(**json.loads(result.stdout))
+    return pr.state is PullRequestState.Open
 
 
 class Label(BaseModel):
