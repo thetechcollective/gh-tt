@@ -5,6 +5,7 @@ Contains functions that execute command-line GitHub commands
 import json
 import logging
 import re
+from enum import Enum
 from typing import Literal
 
 from async_lru import alru_cache
@@ -15,12 +16,18 @@ from gh_tt import shell
 logger = logging.getLogger(__name__)
 
 
+class PullRequestState(Enum):
+    Open = 'OPEN'
+    Closed = 'CLOSED'
+
+
 class PullRequest(BaseModel):
     url: HttpUrl
+    state: PullRequestState
 
 
 async def get_pr() -> PullRequest:
-    result = await shell.run(['gh', 'pr', 'view', '--json', 'url'])
+    result = await shell.run(['gh', 'pr', 'view', '--json', 'url,state'])
 
     return PullRequest(**json.loads(result.stdout))
 
@@ -63,6 +70,13 @@ async def merge_pr(dev_branch: str, *, delete_branch: bool):
 
 async def mark_pr_ready(dev_branch: str):
     await shell.run(['gh', 'pr', 'ready', dev_branch])
+
+
+async def check_pr_open(dev_branch: str) -> PullRequestState:
+    result = await shell.run(['gh', 'pr', 'view', dev_branch, '--json', 'url,state'])
+    data = json.loads(result.stdout)
+
+    return PullRequestState(data['state'])
 
 
 class Label(BaseModel):
