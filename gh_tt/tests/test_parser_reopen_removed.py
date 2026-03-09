@@ -18,7 +18,7 @@ def test_workon_reopen_flag_removed():
 
 
 @pytest.mark.unittest
-def test_workon_closed_issue_fails(mocker):
+def test_workon_closed_issue_fails(mocker, capsys):
     """Test that working on a closed issue always fails"""
     
     # Mock a closed issue
@@ -52,4 +52,10 @@ def test_workon_closed_issue_fails(mocker):
     
     # Verify exit code
     assert exc_info.value.code == 1
+    
+    # Verify the error message indicates the issue is closed and instructs creating a new issue
+    captured = capsys.readouterr()
+    assert '123' in captured.err
+    assert 'closed' in captured.err
+    assert 'new issue' in captured.err
 
