@@ -42,6 +42,7 @@ def test_workon_closed_issue_fails(mocker, capsys):
 
     # Mock the devbranch properties
     from gh_tt.classes.devbranch import Devbranch
+
     devbranch = Devbranch()
     devbranch.set('remote', 'origin')
     devbranch.set('default_branch', 'main')
