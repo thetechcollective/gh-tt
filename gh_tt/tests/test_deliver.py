@@ -53,3 +53,52 @@ async def test_workon_deliver_flow_success():
             'Expected output url to end with the PR number'
         )
         assert HttpUrl(output), 'Expected output to be a valid url'
+
+
+@pytest.mark.usefixtures('check_end_to_end_env')
+async def test_workon_deliver_fails_when_not_up_to_date():
+    async with (
+        IntegrationEnv().require_owner().create_repo().create_issue().create_local_clone().build()
+    ) as env:
+        # Arrange
+        await shell.run(
+            ['gh', 'tt', 'workon', '--pr-workflow', '-i', str(env.issue_number), '--no-assign'],
+            cwd=env.local_repo,
+        )
+
+        result = await shell.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=env.local_repo)
+        branch_name = result.stdout
+
+        await shell.run(['git', 'switch', 'main'], cwd=env.local_repo)
+        await shell.run(
+            ['git', 'commit', '-m', 'main is ahead', '--allow-empty'], cwd=env.local_repo
+        )
+        await shell.run(['git', 'push', 'origin', 'main'], cwd=env.local_repo)
+
+        # Act
+        result = await shell.run(
+            ['gh', 'tt', 'deliver', '--pr-workflow', '--delete-branch'],
+            cwd=env.local_repo,
+            die_on_error=False,
+        )
+
+        # Assert
+        assert result.return_code == 1
+
+        pr_result = await shell.run(
+            [
+                'gh',
+                'pr',
+                'view',
+                branch_name,
+                '--json',
+                'state,autoMergeRequest',
+                '--jq',
+                '{state, autoMergeRequest}',
+            ],
+            cwd=env.local_repo,
+        )
+        assert '"state":"OPEN"' in pr_result.stdout.replace(' ', ''), 'Expected PR to still be open'
+        assert '"autoMergeRequest":null' in pr_result.stdout.replace(' ', ''), (
+            'Expected PR to not have auto-merge enabled'
+        )

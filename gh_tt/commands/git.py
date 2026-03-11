@@ -21,6 +21,7 @@ async def fetch():
 @alru_cache
 async def get_remote() -> str:
     result = await shell.run(['git', 'remote'])
+    assert '\n' not in result.stdout, f'Multiple remotes are not supported, found: {result.stdout}'
     return result.stdout
 
 
@@ -40,6 +41,16 @@ async def get_remote_branches() -> list[str]:
 
 async def get_current_branch() -> str:
     result = await shell.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+    return result.stdout
+
+
+async def get_default_head_hash(remote: str, default_branch: str) -> str:
+    result = await shell.run(['git', 'rev-parse', f'{remote}/{default_branch}'])
+    return result.stdout
+
+
+async def get_merge_base(branch: str, remote: str, default_branch: str) -> str:
+    result = await shell.run(['git', 'merge-base', branch, f'{remote}/{default_branch}'])
     return result.stdout
 
 
