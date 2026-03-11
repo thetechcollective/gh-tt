@@ -2,7 +2,6 @@
 Contains functions that execute command-line GitHub commands
 """
 
-
 import json
 import logging
 import re
