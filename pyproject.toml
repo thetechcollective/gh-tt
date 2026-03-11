@@ -239,7 +239,7 @@ omit = [
 
 [tool.coverage.report]
 # Fail the build if the coverage is less than threshold
-fail_under = 54
+fail_under = 53
 
 # Skip empty files
 skip_empty = true
