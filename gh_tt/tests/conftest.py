@@ -1,3 +1,4 @@
+import logging
 import os
 
 import pytest
@@ -43,3 +44,13 @@ async def check_end_to_end_env():
         'You have a remote version of the gh-tt extension installed. To trigger an integration test run, you must install a local version of the extension. Install the local version with\ngh ext remove thetechcollective/gh-tt && gh ext install .'
     )
     assert 'gh tt' in extensions, 'gh tt is not installed. Install with\ngh extension install .'
+
+
+def pytest_configure(config):
+    worker_id = os.environ.get('PYTEST_XDIST_WORKER')
+    if worker_id is not None:
+        logging.basicConfig(
+            format=config.getini('log_format'),
+            filename=f'logs/tests_{worker_id}.log',
+            level=config.getini('log_level'),
+        )
