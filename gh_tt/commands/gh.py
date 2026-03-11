@@ -16,6 +16,15 @@ from gh_tt import shell
 logger = logging.getLogger(__name__)
 
 
+@alru_cache
+async def get_default_branch() -> str:
+    result = await shell.run(
+        ['gh', 'repo', 'view', '--json', 'defaultBranchRef', '--jq', "'.defaultBranchRef.name'"]
+    )
+
+    return result.stdout
+
+
 class PullRequestState(Enum):
     Open = 'OPEN'
     Closed = 'CLOSED'

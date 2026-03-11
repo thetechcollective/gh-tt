@@ -43,6 +43,16 @@ async def get_current_branch() -> str:
     return result.stdout
 
 
+async def get_default_head_hash(remote: str, default_branch: str) -> str:
+    result = await shell.run(['git', 'rev-parse', f'{remote}/{default_branch}'])
+    return result.stdout
+
+
+async def get_merge_base(branch: str, remote: str, default_branch: str) -> str:
+    result = await shell.run(['git', 'merge-base', branch, f'{remote}/{default_branch}'])
+    return result.stdout
+
+
 @dataclass
 class CheckBranchExistsResult:
     branch_type: Literal['local', 'remote']
