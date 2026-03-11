@@ -21,6 +21,7 @@ async def fetch():
 @alru_cache
 async def get_remote() -> str:
     result = await shell.run(['git', 'remote'])
+    assert '\n' not in result.stdout, f'Multiple remotes are not supported, found: {result.stdout}'
     return result.stdout
 
 
