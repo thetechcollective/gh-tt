@@ -23,22 +23,18 @@ def test_workon_closed_issue_fails(mocker, capsys):
 
     # Mock a closed issue
     mock_issue = Mock()
-    mock_issue.get = Mock(side_effect=lambda key: {
-        'title': 'Closed Issue',
-        'url': 'https://github.com/test/repo/issues/123',
-        'closed': True
-    }.get(key))
-
-    mocker.patch(
-        'gh_tt.classes.issue.Issue.load',
-        return_value=mock_issue
+    mock_issue.get = Mock(
+        side_effect=lambda key: {
+            'title': 'Closed Issue',
+            'url': 'https://github.com/test/repo/issues/123',
+            'closed': True,
+        }.get(key)
     )
+
+    mocker.patch('gh_tt.classes.issue.Issue.load', return_value=mock_issue)
 
     # Mock Devbranch._assert_props to avoid actual git operations
-    mocker.patch(
-        'gh_tt.classes.devbranch.asyncio.run',
-        return_value=None
-    )
+    mocker.patch('gh_tt.classes.devbranch.asyncio.run', return_value=None)
 
     # Mock the devbranch properties
     from gh_tt.classes.devbranch import Devbranch
@@ -53,10 +49,9 @@ def test_workon_closed_issue_fails(mocker, capsys):
 
     # Verify exit code
     assert exc_info.value.code == 1
-    
+
     # Verify the error message indicates the issue is closed and instructs creating a new issue
     captured = capsys.readouterr()
     assert '123' in captured.err
     assert 'closed' in captured.err
     assert 'new issue' in captured.err
-
