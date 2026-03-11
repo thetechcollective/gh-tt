@@ -5,6 +5,7 @@ import pytest
 from pydantic import HttpUrl
 
 from gh_tt import shell
+from gh_tt.shell import ShellError
 from gh_tt.tests.env_builder import IntegrationEnv
 
 
@@ -87,6 +88,67 @@ async def test_workon_reuses_remote_branch():
 
         result = await shell.run(['git', 'rev-parse', 'HEAD'], cwd=env.local_repo)
         assert result.stdout == marker_sha
+
+
+@pytest.mark.usefixtures('check_end_to_end_env')
+async def test_workon_given_existing_local_branch_workon_exits_when_pr_does_not_exist():
+    async with (
+        IntegrationEnv()
+        .require_owner()
+        .create_repo()
+        .create_issue()
+        .create_local_clone()
+        .build() as env
+    ):
+        # First workon - creates the branch and PR
+        await shell.run(
+            ['gh', 'tt', 'workon', '--pr-workflow', '-i', str(env.issue_number), '--no-assign'],
+            cwd=env.local_repo,
+        )
+
+        result = await shell.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=env.local_repo)
+        branch_name = result.stdout
+
+        await shell.run(['gh', 'pr', 'close', branch_name], cwd=env.local_repo)
+        await shell.run(['git', 'switch', 'main'], cwd=env.local_repo)
+
+        # Run workon again - should switch to existing local branch - but there is no open PR
+        # We are expecting a ShellError because we execute shell.run which exposes ShellError on failure,
+        # even though the code raises a RuntimeError. If we called workon() directly, RuntimeError would be expected
+        with pytest.raises(ShellError):
+            await shell.run(
+                ['gh', 'tt', 'workon', '--pr-workflow', '-i', str(env.issue_number), '--no-assign'],
+                cwd=env.local_repo,
+            )
+
+
+@pytest.mark.usefixtures('check_end_to_end_env')
+async def test_workon_given_existing_remote_branch_workon_exits_when_pr_does_not_exist():
+    async with (
+        IntegrationEnv().require_owner().create_repo().create_issue().create_local_clone().build()
+    ) as env:
+        # First workon - creates the branch
+        await shell.run(
+            ['gh', 'tt', 'workon', '--pr-workflow', '-i', str(env.issue_number), '--no-assign'],
+            cwd=env.local_repo,
+        )
+
+        result = await shell.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=env.local_repo)
+        branch_name = result.stdout
+
+        # Switch back to main, delete local branch, close PR
+        await shell.run(['git', 'checkout', 'main'], cwd=env.local_repo)
+        await shell.run(['git', 'branch', '-D', branch_name], cwd=env.local_repo)
+        await shell.run(['gh', 'pr', 'close', branch_name], cwd=env.local_repo)
+
+        # Run workon again - should reuse remote branch - but there is no PR
+        # We are expecting a ShellError because we execute shell.run which exposes ShellError on failure,
+        # even though the code raises a RuntimeError. If we called workon() directly, RuntimeError would be expected
+        with pytest.raises(ShellError):
+            await shell.run(
+                ['gh', 'tt', 'workon', '--pr-workflow', '-i', str(env.issue_number), '--no-assign'],
+                cwd=env.local_repo,
+            )
 
 
 @pytest.mark.usefixtures('check_end_to_end_env')

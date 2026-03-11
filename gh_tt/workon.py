@@ -42,12 +42,29 @@ async def workon_issue(issue_number: int, *, assign: bool):
             )
         case git.CheckBranchExistsResult(branch_type='local', name=branch_name):
             logger.debug('found local branch: %s', branch_name)
-            dev_branch = await git.switch_branch(branch_name)
+            dev_branch, is_pr_open = await asyncio.gather(
+                git.switch_branch(branch_name), gh.is_pr_open(branch_name)
+            )
+
+            if not is_pr_open:
+                raise RuntimeError(
+                    f"Found local branch '{dev_branch}', but could not find a corresponding open pull request. This indicates this branch was not created via `gh tt workon`. gh-tt currently does not support working on branches not created via gh-tt.\n\nTo fix this, please create a PR manually.\n\nIf this branch was created via gh tt workon, please report this as a bug."
+                )
+
         case git.CheckBranchExistsResult(branch_type='remote', name=branch_name):
             logger.debug('found remote branch: %s', branch_name)
-            dev_branch = await git.switch_branch(
-                git.SwitchRemoteInput(branch_to_switch_to=branch_name, remote=remote)
+            dev_branch, is_pr_open = await asyncio.gather(
+                git.switch_branch(
+                    git.SwitchRemoteInput(branch_to_switch_to=branch_name, remote=remote)
+                ),
+                gh.is_pr_open(branch_name),
             )
+
+            if not is_pr_open:
+                raise RuntimeError(
+                    f"Found remote branch '{dev_branch}', but could not find a corresponding open pull request. This indicates this branch was not created via `gh tt workon`. gh-tt currently does not support working on branches not created via gh-tt.\n\nTo fix this, please create a PR manually.\n\nIf this branch was created via gh tt workon, please report this as a bug."
+                )
+
     if assign:
         logger.debug('assigning issue and PR to @me')
         await asyncio.gather(
