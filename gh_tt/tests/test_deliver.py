@@ -121,7 +121,6 @@ async def test_workon_deliver_fails_when_local_ahead_of_remote():
         await shell.run(
             ['git', 'commit', '-m', 'local is ahead', '--allow-empty'], cwd=env.local_repo
         )
-        await shell.run(['git', 'push', '-u', 'origin', branch_name], cwd=env.local_repo)
 
         # Act
         result = await shell.run(
