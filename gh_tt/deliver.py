@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 async def deliver(*, delete_branch: bool):
     logger.debug('deliver: delete_branch=%s', delete_branch)
     dev_branch, _, remote, default_branch = await asyncio.gather(
-        git.get_current_branch(), git.fetch(), git.get_remote(), gh.get_default_branch()
+        git.get_current_branch_name(), git.fetch(), git.get_remote(), gh.get_default_branch()
     )
     logger.debug(
         'current branch: %s, remote: %s, default_branch: %s', dev_branch, remote, default_branch

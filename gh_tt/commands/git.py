@@ -39,7 +39,7 @@ async def get_remote_branches() -> list[str]:
     return result.stdout.splitlines()
 
 
-async def get_current_branch() -> str:
+async def get_current_branch_name() -> str:
     result = await shell.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
     return result.stdout
 
