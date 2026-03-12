@@ -89,9 +89,34 @@ async def test_poll_checks_some_fail(mocker):
 async def test_poll_checks_no_checks_returns_true(mocker):
     mocker.patch('gh_tt.deliver.gh.get_pr_checks', return_value=[])
 
-    result = await poll_checks('dev', interval_seconds=0)
+    result = await poll_checks('dev', interval_seconds=0, no_checks_retries=0)
 
     assert result is True
+
+
+@pytest.mark.unittest
+async def test_poll_checks_retries_before_reporting_no_checks(mocker):
+    checks = [_make_check('Build', CheckBucket.PASS)]
+    mock = mocker.patch('gh_tt.deliver.gh.get_pr_checks', side_effect=[[], [], checks])
+
+    result = await poll_checks('dev', interval_seconds=0, no_checks_retries=3)
+
+    assert result is True
+    assert mock.call_count == 3
+
+
+@pytest.mark.unittest
+async def test_poll_checks_retries_gives_up(mocker, capsys):
+    checks = [_make_check('Build', CheckBucket.PASS)]
+    mocker.patch('gh_tt.deliver.gh.get_pr_checks', side_effect=[[], [], checks])
+
+    result = await poll_checks('dev', interval_seconds=0, no_checks_retries=1)
+
+    assert result is True
+
+    captured = capsys.readouterr()
+    assert captured.out == ''
+    assert 'No checks found' in captured.err
 
 
 @pytest.mark.unittest
@@ -152,7 +177,7 @@ async def test_poll_checks_output_goes_to_stderr(mocker, capsys):
 async def test_poll_checks_no_checks_message_to_stderr(mocker, capsys):
     mocker.patch('gh_tt.deliver.gh.get_pr_checks', return_value=[])
 
-    await poll_checks('dev', interval_seconds=0)
+    await poll_checks('dev', interval_seconds=0, no_checks_retries=0)
 
     captured = capsys.readouterr()
     assert captured.out == ''

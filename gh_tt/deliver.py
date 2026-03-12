@@ -68,9 +68,14 @@ FIFTEEN_MINUTES_IN_SECONDS = 15 * 60
 
 
 async def poll_checks(
-    branch: str, *, interval_seconds: int = 5, timeout_seconds: int = FIFTEEN_MINUTES_IN_SECONDS
+    branch: str,
+    *,
+    interval_seconds: int = 5,
+    timeout_seconds: int = FIFTEEN_MINUTES_IN_SECONDS,
+    no_checks_retries: int = 5,
 ) -> bool:
     """Poll PR checks until all are terminal. Returns True if all passed."""
+    empty_polls = 0
     try:
         async with asyncio.timeout(timeout_seconds):
             while True:
@@ -80,8 +85,12 @@ async def poll_checks(
                     raise DeliverError(e.stderr) from e
 
                 if not checks:
-                    print('No checks found on the PR.', file=sys.stderr)
-                    return True
+                    empty_polls += 1
+                    if empty_polls > no_checks_retries:
+                        print('No checks found on the PR.', file=sys.stderr)
+                        return True
+                    await asyncio.sleep(1)
+                    continue
 
                 pending = [c for c in checks if c.bucket not in TERMINAL_BUCKETS]
 
