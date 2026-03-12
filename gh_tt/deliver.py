@@ -17,7 +17,7 @@ async def deliver(*, delete_branch: bool):
     )
 
     (
-        default_head_hash,
+        default_branch_tip_hash,
         remote_dev_branch_tip_hash,
         current_branch_tip_hash,
         merge_base_hash,
@@ -27,12 +27,12 @@ async def deliver(*, delete_branch: bool):
         git.get_branch_tip_hash(branch='HEAD'),
         git.get_merge_base(branch=current_branch, remote=remote, default_branch=default_branch),
     )
-    logger.debug('default_head_hash=%s, merge_base_hash=%s', default_head_hash, merge_base_hash)
+    logger.debug('default_branch_tip_hash=%s, merge_base_hash=%s', default_branch_tip_hash, merge_base_hash)
 
-    if default_head_hash != merge_base_hash:
+    if default_branch_tip_hash != merge_base_hash:
         logger.debug('branch %s is not up to date with %s/%s', current_branch, remote, default_branch)
         print(
-            f'The {default_branch} has commits your branch does not. Run git rebase {remote}/{default_branch} to integrate commits from {default_branch}.',
+            f'The {default_branch} branch has commits your branch does not. Run git rebase {remote}/{default_branch} to integrate commits from {default_branch}.',
             file=sys.stderr,
         )
         sys.exit(1)
