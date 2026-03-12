@@ -37,15 +37,10 @@ jobs:
       pytest_arguments: --cov=. --cov-config=.coveragerc -m 'unittest or hypothesis'
       python_versions: ${{ needs.python_versions.outputs.python_versions }}
 
-  ruff_linting:
-    name: Linting
+  lint:
     permissions:
-      statuses: write
       contents: read
-    uses: thetechcollective/workflows/.github/workflows/checking_python_ruff_lint.yaml@stable
-    with:
-      context: Ruff
-      uv-sync-args: '' # override the default and pass nothing
+    uses: ./.github/workflows/callable_ruff_lint.yaml
 
   ruff_formatting:
     name: Formatting
@@ -105,7 +100,7 @@ jobs:
     if: always()
 
     needs:
-    - ruff_linting
+    - lint
     - ruff_formatting
     - cspel_check
     - pytest_end_to_end
