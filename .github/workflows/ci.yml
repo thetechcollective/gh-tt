@@ -47,24 +47,10 @@ jobs:
       contents: read
     uses: ./.github/workflows/callable_ruff_format.yaml
 
-  type_check:
-    name: Type check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-python@v6
-        with:
-          # Latest python compliant with the project's requires-python
-          python-version-file: 'pyproject.toml'
-      - name: Install uv
-        uses: astral-sh/setup-uv@v7
-        with:
-            # Latest uv compliant with the project's tool.uv required version
-            version-file: 'pyproject.toml'
-
-      - run: |
-            uv run --frozen -- ty check --output-format github
-
+  typecheck:
+    permissions:
+      contents: read
+    uses: ./.github/workflows/callable_ty_typecheck.yaml
 
   cspel_check:
     name: Spelling
@@ -89,6 +75,7 @@ jobs:
     needs:
     - lint
     - format
+    - typecheck
     - cspel_check
     - pytest_end_to_end
     - test
