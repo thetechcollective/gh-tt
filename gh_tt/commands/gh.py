@@ -69,6 +69,32 @@ async def assign_pr(dev_branch: str, assignee: str):
     await shell.run(['gh', 'pr', 'edit', dev_branch, '--add-assignee', assignee])
 
 
+class CheckBucket(Enum):
+    PENDING = 'pending'
+    PASS = 'pass'  # noqa: S105
+    FAIL = 'fail'
+    SKIPPING = 'skipping'
+
+
+TERMINAL_BUCKETS = frozenset({CheckBucket.PASS, CheckBucket.FAIL, CheckBucket.SKIPPING})
+
+
+class Check(BaseModel):
+    name: str
+    bucket: CheckBucket
+    workflow: str
+    link: HttpUrl
+
+
+async def get_pr_checks(branch: str) -> list[Check]:
+    """Fetch the current check runs for the PR corresponding to the input branch."""
+    result = await shell.run(
+        ['gh', 'pr', 'checks', branch, '--json', 'name,state,bucket,workflow,link']
+    )
+
+    return [Check(**item) for item in json.loads(result.stdout)]
+
+
 async def merge_pr(dev_branch: str, *, delete_branch: bool):
     logger.debug('merging PR on branch %s (delete_branch=%s)', dev_branch, delete_branch)
     cmd = ['gh', 'pr', 'merge', dev_branch, '--auto', '--squash']
