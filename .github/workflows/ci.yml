@@ -52,14 +52,11 @@ jobs:
       contents: read
     uses: ./.github/workflows/callable_ty_typecheck.yaml
 
-  cspel_check:
+  spelling:
     name: Spelling
     permissions:
-      statuses: write
       contents: read
-    uses: thetechcollective/workflows/.github/workflows/checking_cspell_check.yaml@stable
-    with:
-      context: Cspell
+    uses: ./.github/workflows/callable_cspell_spelling.yaml
 
   pytest_end_to_end:
     name: End to end testing
@@ -76,7 +73,7 @@ jobs:
     - lint
     - format
     - typecheck
-    - cspel_check
+    - spelling
     - pytest_end_to_end
     - test
 
