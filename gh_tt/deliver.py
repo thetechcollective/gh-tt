@@ -1,7 +1,11 @@
 import asyncio
 import logging
+import sys
+from datetime import UTC, datetime
 
 from gh_tt.commands import gh, git
+from gh_tt.commands.gh import TERMINAL_BUCKETS, CheckBucket
+from gh_tt.shell import ShellError
 
 logger = logging.getLogger(__name__)
 
@@ -10,13 +14,105 @@ class DeliverError(Exception):
     pass
 
 
-async def deliver(*, delete_branch: bool):
-    logger.debug('deliver: delete_branch=%s', delete_branch)
+def _format_check_line(check: gh.Check) -> str:
+    match check.bucket:
+        case CheckBucket.FAIL:
+            return f'  ❌ {check.name} ({check.workflow}) — {check.link}'
+        case CheckBucket.PASS:
+            return f'  ✅ {check.name} ({check.workflow})'
+        case CheckBucket.SKIPPING:
+            return f'  ⏭️ {check.name} ({check.workflow})'
+        case CheckBucket.PENDING:
+            return f'  🔄 {check.name} ({check.workflow})'
+        case _:
+            raise AssertionError(f'Unexpected check bucket: {check.bucket}')
+
+
+def _sort_checks(checks: list[gh.Check]) -> list[gh.Check]:
+    order = {
+        CheckBucket.PASS: 0,
+        CheckBucket.SKIPPING: 1,
+        CheckBucket.FAIL: 2,
+        CheckBucket.PENDING: 3,
+    }
+    return sorted(checks, key=lambda c: order[c.bucket])
+
+
+def _print_status(checks: list[gh.Check]) -> None:
+    now = datetime.now(tz=UTC).astimezone()
+    timestamp = now.strftime('%H:%M:%S')
+    terminal = [c for c in checks if c.bucket in TERMINAL_BUCKETS]
+    total = len(checks)
+
+    print(f'[{timestamp}] ⏳ {len(terminal)}/{total} checks completed', file=sys.stderr)
+    for check in _sort_checks(checks):
+        print(_format_check_line(check), file=sys.stderr)
+
+
+def _print_final(checks: list[gh.Check]) -> None:
+    now = datetime.now(tz=UTC).astimezone()
+    timestamp = now.strftime('%H:%M:%S')
+    total = len(checks)
+    failed = [c for c in checks if c.bucket == CheckBucket.FAIL]
+
+    if failed:
+        print(f'[{timestamp}] ❌ {len(failed)}/{total} checks failed', file=sys.stderr)
+    else:
+        print(f'[{timestamp}] ✅ All {total} checks passed', file=sys.stderr)
+
+    for check in _sort_checks(checks):
+        print(_format_check_line(check), file=sys.stderr)
+
+
+FIFTEEN_MINUTES_IN_SECONDS = 15 * 60
+
+
+async def poll_checks(
+    branch: str, *, interval_seconds: int = 5, timeout_seconds: int = FIFTEEN_MINUTES_IN_SECONDS
+) -> bool:
+    """Poll PR checks until all are terminal. Returns True if all passed."""
+    try:
+        async with asyncio.timeout(timeout_seconds):
+            while True:
+                try:
+                    checks = await gh.get_pr_checks(branch)
+                except ShellError as e:
+                    raise DeliverError(e.stderr) from e
+
+                if not checks:
+                    print('No checks found on the PR.', file=sys.stderr)
+                    return True
+
+                pending = [c for c in checks if c.bucket not in TERMINAL_BUCKETS]
+
+                if not pending:
+                    _print_final(checks)
+                    return all(c.bucket != CheckBucket.FAIL for c in checks)
+
+                _print_status(checks)
+                await asyncio.sleep(interval_seconds)
+    except TimeoutError:
+        if checks:
+            _print_status(checks)
+        print('Polling timed out.', file=sys.stderr)
+        return False
+    except KeyboardInterrupt:
+        failed = [c for c in checks if c.bucket == CheckBucket.FAIL]
+        for c in failed:
+            print(c.link, file=sys.stderr)
+        return True
+
+
+async def deliver(*, delete_branch: bool, poll: bool = False):
+    logger.debug('deliver: delete_branch=%s, poll=%s', delete_branch, poll)
     current_branch, _, remote, default_branch = await asyncio.gather(
         git.get_current_branch_name(), git.fetch(), git.get_remote(), gh.get_default_branch()
     )
     logger.debug(
-        'current branch: %s, remote: %s, default_branch: %s', current_branch, remote, default_branch
+        'current branch: %s, remote: %s, default_branch: %s',
+        current_branch,
+        remote,
+        default_branch,
     )
 
     (
@@ -66,3 +162,8 @@ async def deliver(*, delete_branch: bool):
     logger.debug('PR merged successfully: %s', pr.url)
 
     print(str(pr.url))
+
+    if poll:
+        passed = await poll_checks(current_branch)
+        if not passed:
+            sys.exit(1)

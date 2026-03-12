@@ -72,12 +72,24 @@ def handle_wrapup(args):
         Status.poll()
 
 
+def _resolve_poll_flag(args) -> bool:
+    """Resolve the poll flag: CLI > config > False."""
+    if args.poll is not None:
+        return args.poll
+
+    with contextlib.suppress(KeyError):
+        return Config.config()['deliver']['policies']['poll']
+
+    return False
+
+
 def handle_deliver(args):
     """Handle the deliver command"""
     if args.pr_workflow:
-        logger.debug("handle_deliver: pr_workflow with delete_branch=%s", args.delete_branch)
+        poll = _resolve_poll_flag(args)
+        logger.debug("handle_deliver: pr_workflow with delete_branch=%s, poll=%s", args.delete_branch, poll)
         try:
-            asyncio.run(deliver(delete_branch=args.delete_branch))
+            asyncio.run(deliver(delete_branch=args.delete_branch, poll=poll))
         except DeliverError as e:
             print(e, file=sys.stderr)
             sys.exit(1)
