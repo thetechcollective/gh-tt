@@ -17,7 +17,7 @@ async def deliver(*, delete_branch: bool):
     )
 
     default_head_hash, merge_base_hash = await asyncio.gather(
-        git.get_default_head_hash(remote=remote, default_branch=default_branch),
+        git.get_branch_tip_hash(remote=remote, branch=default_branch),
         git.get_merge_base(branch=dev_branch, remote=remote, default_branch=default_branch),
     )
     logger.debug('default_head_hash=%s, merge_base_hash=%s', default_head_hash, merge_base_hash)
