@@ -72,6 +72,16 @@ def _render_final(checks: list[gh.Check]) -> Text:
 FIFTEEN_MINUTES_IN_SECONDS = 15 * 60
 
 
+async def _fetch_checks(branch: str) -> list[gh.Check]:
+    try:
+        checks = await gh.get_pr_checks(branch)
+    except ShellError as e:
+        logger.debug('poll_checks: ShellError fetching checks: %s', e.stderr)
+        raise DeliverError(e.stderr) from e
+    logger.debug('poll_checks: got %d checks', len(checks))
+    return checks
+
+
 async def poll_checks(
     branch: str,
     *,
@@ -80,39 +90,59 @@ async def poll_checks(
     no_checks_retries: int = 5,
 ) -> bool:
     """Poll PR checks until all are terminal. Returns True if all passed."""
+    logger.debug(
+        'poll_checks: branch=%s, interval=%s, timeout=%s, no_checks_retries=%s',
+        branch,
+        interval_seconds,
+        timeout_seconds,
+        no_checks_retries,
+    )
     console = Console(stderr=True)
     empty_polls = 0
     with Live(Text(''), console=console, refresh_per_second=4) as live:
         try:
             async with asyncio.timeout(timeout_seconds):
                 while True:
-                    try:
-                        checks = await gh.get_pr_checks(branch)
-                    except ShellError as e:
-                        raise DeliverError(e.stderr) from e
+                    checks = await _fetch_checks(branch)
 
                     if not checks:
                         empty_polls += 1
+                        logger.debug(
+                            'poll_checks: empty poll %d/%d', empty_polls, no_checks_retries
+                        )
                         if empty_polls > no_checks_retries:
+                            logger.debug('poll_checks: no checks after retries, returning True')
                             live.update(Text('No checks found on the PR.'))
                             return True
                         await asyncio.sleep(1)
                         continue
 
                     pending = [c for c in checks if c.bucket not in TERMINAL_BUCKETS]
+                    logger.debug(
+                        'poll_checks: %d pending, %d terminal',
+                        len(pending),
+                        len(checks) - len(pending),
+                    )
 
                     if not pending:
+                        all_passed = all(c.bucket != CheckBucket.FAIL for c in checks)
+                        logger.debug('poll_checks: all terminal, all_passed=%s', all_passed)
                         live.update(_render_final(checks))
-                        return all(c.bucket != CheckBucket.FAIL for c in checks)
+                        return all_passed
+
+                    for c in pending:
+                        logger.debug('poll_checks: pending check: %s (%s)', c.name, c.workflow)
 
                     live.update(_render_status(checks))
                     await asyncio.sleep(interval_seconds)
         except TimeoutError:
+            logger.debug('poll_checks: timed out after %d seconds', timeout_seconds)
             if checks:
                 live.update(_render_status(checks))
             print('Polling timed out.', file=sys.stderr)
             return False
         except KeyboardInterrupt:
+            logger.debug('poll_checks: interrupted by user')
             failed = [c for c in checks if c.bucket == CheckBucket.FAIL]
             for c in failed:
                 print(c.link, file=sys.stderr)
