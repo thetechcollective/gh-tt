@@ -1,90 +1,212 @@
 name: CI
 
 on:
-  workflow_dispatch:
-  merge_group:
-  pull_request: 
-    branches: 
-      - main
+    workflow_dispatch:
+    merge_group:
+    pull_request:
+        branches:
+            - main
 
 # No special permissions defined before we need them
 permissions:
-  contents: read
+    contents: read
 
 env:
-  PYTHON_VERSIONS: "['3.12', '3.13', '3.14']"
+    PYTHON_VERSIONS: "['3.12', '3.13', '3.14']"
 
 jobs:
+    # It is not possible to pass an environment variable down to
+    # a reusable workflow as an argument via _with_.
+    # See: https://stackoverflow.com/a/73305536
+    # The workaround is to put the environment variable as a step output.
+    python_versions:
+        name: Set Python versions
+        runs-on: ubuntu-latest
+        outputs:
+            python_versions: ${{ steps.step1.outputs.python_versions }}
+        steps:
+            - id: step1
+              run: echo "python_versions=$PYTHON_VERSIONS" >> "$GITHUB_OUTPUT"
 
-  # It is not possible to pass an environment variable down to
-  # a reusable workflow as an argument via _with_.
-  # See: https://stackoverflow.com/a/73305536
-  # The workaround is to put the environment variable as a step output.
-  python_versions:
-    name: Set Python versions
-    runs-on: ubuntu-latest
-    outputs:
-      python_versions: ${{ steps.step1.outputs.python_versions }}
-    steps:
-      - id: step1
-        run: echo "python_versions=$PYTHON_VERSIONS" >> "$GITHUB_OUTPUT"
+    test:
+        needs: python_versions
+        strategy:
+            matrix:
+                python_version: ${{ fromJSON(needs.python_versions.outputs.python_versions) }}
 
-  test:
-    name: Test
-    needs: python_versions
-    permissions:
-      contents: read
-    uses: ./.github/workflows/callable_pytest_matrix.yaml
-    with:
-      pytest_arguments: --cov=. --cov-config=.coveragerc -m 'unittest or hypothesis'
-      python_versions: ${{ needs.python_versions.outputs.python_versions }}
+        name: Test - python v${{ matrix.python_version }}
+        runs-on: ubuntu-latest
 
-  lint:
-    name: Lint
-    permissions:
-      contents: read
-    uses: ./.github/workflows/callable_ruff_lint.yaml
+        steps:
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-  format:
-    name: Format
-    permissions:
-      contents: read
-    uses: ./.github/workflows/callable_ruff_format.yaml
+            - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+              with:
+                  python-version: ${{ matrix.python_version }}
 
-  type_check:
-    name: Type check
-    permissions:
-      contents: read
-    uses: ./.github/workflows/callable_ty_type_check.yaml
+            - uses: astral-sh/setup-uv@6ee6290f1cbc4156c0bdd66691b2c144ef8df19a # v7.4.0
+              with:
+                  version-file: "pyproject.toml"
+                  python-version: ${{ matrix.python_version }}
 
-  spell_check:
-    name: Spell check
-    permissions:
-      contents: read
-    uses: ./.github/workflows/callable_cspell_spell_check.yaml
+            - name: Run tests
+              run: |
+                  uv run --frozen -- pytest --cov=. --cov-config=.coveragerc --numprocesses=auto -m 'unittest or hypothesis'
 
-  test_e2e:
-    name: Test E2E
-    permissions:
-      statuses: write
-    secrets: inherit
-    uses: ./.github/workflows/end_to_end_test.yml
+    lint:
+        name: Lint
+        runs-on: ubuntu-latest
 
-  check:  # This job does nothing and is only used for the branch protection
-    name: ✅ All checks passed
-    runs-on: ubuntu-latest
-    timeout-minutes: 1
-    if: always()
-    needs:
-    - lint
-    - format
-    - type_check
-    - spell_check
-    - test_e2e
-    - test
+        steps:
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-    steps:
-    - name: Decide whether the needed jobs succeeded or failed
-      uses: re-actors/alls-green@release/v1
-      with:
-        jobs: ${{ toJSON(needs) }}
+            - uses: astral-sh/setup-uv@6ee6290f1cbc4156c0bdd66691b2c144ef8df19a # v7.4.0
+              with:
+                  version-file: "pyproject.toml"
+
+            - name: Run tests
+              run: |
+                  uv run --frozen -- ruff check --output-format=github
+
+    format:
+        name: Format
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+            - uses: astral-sh/setup-uv@6ee6290f1cbc4156c0bdd66691b2c144ef8df19a # v7.4.0
+              with:
+                  version-file: "pyproject.toml"
+
+            - name: Run tests
+              run: |
+                  uv run --frozen -- ruff format --check
+
+    type_check:
+        name: Type check
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+            - uses: astral-sh/setup-uv@6ee6290f1cbc4156c0bdd66691b2c144ef8df19a # v7.4.0
+              with:
+                  version-file: "pyproject.toml"
+
+            - name: Run tests
+              run: |
+                  uv run --frozen -- ty check --output-format=github
+
+    spell_check:
+        name: Spell check
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+            - run: npm install -g cspell
+
+            - name: Check spelling
+              run: cspell lint --no-progress --config ./cspell.json &>> $GITHUB_STEP_SUMMARY
+
+    smoke_test:
+        needs: python_versions
+        strategy:
+            matrix:
+                python_version: ${{ fromJSON(needs.python_versions.outputs.python_versions) }}
+
+        name: Smoke test - Python v${{ matrix.python_version }}
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+              with:
+                  python-version: ${{ matrix.python_version }}
+            - uses: astral-sh/setup-uv@6ee6290f1cbc4156c0bdd66691b2c144ef8df19a # v7.4.0
+              with:
+                  version-file: "pyproject.toml"
+
+            - name: Install extension
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              run: |
+                  gh extension install .
+            - name: Verify extension runs
+              run: gh tt --help
+
+    test_e2e:
+        needs: [python_versions, smoke_test]
+        strategy:
+            matrix:
+                python_version: ${{ fromJSON(needs.python_versions.outputs.python_versions) }}
+
+        name: Test E2E - Python v${{ matrix.python_version }}
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+            - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+              with:
+                  python-version: ${{ matrix.python_version }}
+            - uses: astral-sh/setup-uv@v7
+              with:
+                  # Latest uv compliant with the project's tool.uv required version
+                  version-file: "pyproject.toml"
+
+            - name: Generate GitHub App installation token
+              uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
+              id: app-token
+              with:
+                  app-id: ${{ vars.QA_RUNNER_APP_ID }}
+                  private-key: ${{ secrets.QA_RUNNER_SECRET }}
+                  owner: gh-tt-qa
+                  permission-organization-projects: admin
+                  permission-administration: write
+                  permission-issues: write
+                  permission-contents: write
+                  permission-pull-requests: write
+
+            - name: Install gh-tt extension
+              env:
+                  GH_TOKEN: ${{ steps.app-token.outputs.token }}
+              run: |
+                  gh extension install .
+
+            - name: Get GitHub App User ID
+              id: get-user-id
+              run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+              env:
+                  GH_TOKEN: ${{ steps.app-token.outputs.token }}
+
+            - name: Configure Git
+              run: |
+                  git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+                  git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token  .outputs.app-slug }}[bot]@users.noreply.github.com'
+                  git config --global url.'https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/'.insteadOf 'https://github.com/'
+
+            - name: Run end to end tests
+              env:
+                  GH_TOKEN: ${{ steps.app-token.outputs.token }}
+                  QA_ORGANIZATION_ID: ${{ vars.QA_ORG_ID }}
+              run: |
+                  uv run --frozen -- pytest --numprocesses=auto -m end_to_end
+
+    check: # This job acts as 'the mother of all jobs' and is the only required check to enter main
+        name: ✅ All required checks passed
+        runs-on: ubuntu-latest
+        timeout-minutes: 1
+        if: always()
+        needs:
+            - lint
+            - format
+            - type_check
+            - spell_check
+            - test_e2e
+            - smoke_test
+            - test
+
+        steps:
+            - name: Decide whether the needed jobs succeeded or failed
+              uses: re-actors/alls-green@release/v1
+              with:
+                  jobs: ${{ toJSON(needs) }}
