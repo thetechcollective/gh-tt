@@ -1,13 +1,32 @@
 version: 2
 
 updates:
-  - package-ecosystem: "uv"
-    directory: "/"
-    schedule:
-      interval: "weekly"
+    - package-ecosystem: "uv"
+      directory: "/"
+      schedule:
+          interval: "weekly"
+          day: "monday"
+          time: "03:30"
+          timezone: "Etc/UTC"
+      labels:
+        - "type: deps"
+      cooldown:
+          default-days: 5
+      groups:
+          production-dependencies:
+              dependency-type: "production"
+          development-dependencies:
+              dependency-type: "development"
 
-  - package-ecosystem: "github-actions"
-    # Workflow files stored in the default location of `.github/workflows`
-    directory: "/"
-    schedule:
-      interval: "weekly"
+    - package-ecosystem: "github-actions"
+      # Workflow files stored in the default location of `.github/workflows`
+      directory: "/"
+      schedule:
+          interval: "weekly"
+          day: "monday"
+          time: "03:30"
+          timezone: "Etc/UTC"
+      labels:
+          - "type: deps"
+      cooldown:
+          default-days: 5
