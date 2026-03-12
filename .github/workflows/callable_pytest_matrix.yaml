@@ -1,0 +1,45 @@
+# Workflow to run pytest with multiple python versions.
+
+name: Pytest
+
+on:
+  workflow_call:
+    inputs:
+      pytest_arguments:
+        required: false
+        type: string
+        default: ''
+        description: 'The argument string to pass to pytest (default is none)'
+      python_versions:
+        required: true
+        type: string
+        description: >
+          Python versions to use, e.g. "['3.11', '3.12']". Must be a string representing a JSON array of strings. The tests will be run against all versions in parallel. The workflow run will run for all python versions regardless of individual failures.
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    strategy:
+      matrix:
+        python_version: ${{ fromJSON(inputs.python_versions) }}
+
+    name: Tests - python v${{matrix.python_version}}
+    runs-on: ubuntu-latest    
+
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: ${{matrix.python_version}}
+
+    - uses: astral-sh/setup-uv@6ee6290f1cbc4156c0bdd66691b2c144ef8df19a # v7.4.0
+      with:
+        version-file: 'pyproject.toml'
+        python-version: ${{ matrix.python_version }}
+    
+    - name: Run tests
+      run: |
+        uv run --frozen -- pytest ${{ inputs.pytest_arguments }}
