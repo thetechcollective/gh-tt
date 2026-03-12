@@ -1,10 +1,13 @@
 import asyncio
 import logging
-import sys
 
 from gh_tt.commands import gh, git
 
 logger = logging.getLogger(__name__)
+
+
+class DeliverError(Exception):
+    pass
 
 
 async def deliver(*, delete_branch: bool):
@@ -39,11 +42,9 @@ async def deliver(*, delete_branch: bool):
         logger.debug(
             'branch %s is not up to date with %s/%s', current_branch, remote, default_branch
         )
-        print(
-            f'The {default_branch} branch has commits your branch does not. Run git rebase {remote}/{default_branch} to integrate commits from {default_branch}.',
-            file=sys.stderr,
+        raise DeliverError(
+            f'The {default_branch} branch has commits your branch does not. Run git rebase {remote}/{default_branch} to integrate commits from {default_branch}.'
         )
-        sys.exit(1)
 
     if remote_dev_branch_tip_hash != current_branch_tip_hash:
         logger.debug(
@@ -52,11 +53,9 @@ async def deliver(*, delete_branch: bool):
             remote,
             current_branch,
         )
-        print(
-            f'Branch {current_branch} is not up to date with its remote. You may have unpushed commits on your local branch. Align your local branch with its remote before delivering.',
-            file=sys.stderr,
+        raise DeliverError(
+            f'Branch {current_branch} is not up to date with its remote. You may have unpushed commits on your local branch. Align your local branch with its remote before delivering.'
         )
-        sys.exit(1)
 
     logger.debug(
         'branch is up to date and commits are pushed, marking PR ready and fetching PR info'

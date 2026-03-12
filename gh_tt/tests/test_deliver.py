@@ -74,6 +74,7 @@ async def test_workon_deliver_fails_when_not_up_to_date_with_default_branch():
             ['git', 'commit', '-m', 'main is ahead', '--allow-empty'], cwd=env.local_repo
         )
         await shell.run(['git', 'push', 'origin', 'main'], cwd=env.local_repo)
+        await shell.run(['git', 'switch', branch_name], cwd=env.local_repo)
 
         # Act
         result = await shell.run(
@@ -84,6 +85,7 @@ async def test_workon_deliver_fails_when_not_up_to_date_with_default_branch():
 
         # Assert
         assert result.return_code == 1
+        assert 'branch has commits your branch does not' in result.stderr
 
         pr_result = await shell.run(
             [
@@ -131,6 +133,7 @@ async def test_workon_deliver_fails_when_local_ahead_of_remote():
 
         # Assert
         assert result.return_code == 1
+        assert 'is not up to date with its remote' in result.stderr
 
         pr_result = await shell.run(
             [
@@ -181,6 +184,7 @@ async def test_workon_deliver_fails_when_local_behind_remote():
 
         # Assert
         assert result.return_code == 1
+        assert 'is not up to date with its remote' in result.stderr
 
         pr_result = await shell.run(
             [
