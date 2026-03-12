@@ -89,8 +89,22 @@ class Check(BaseModel):
 async def get_pr_checks(branch: str) -> list[Check]:
     """Fetch the current check runs for the PR corresponding to the input branch."""
     result = await shell.run(
-        ['gh', 'pr', 'checks', branch, '--json', 'name,state,bucket,workflow,link']
+        ['gh', 'pr', 'checks', branch, '--json', 'name,state,bucket,workflow,link'],
+        die_on_error=False,
     )
+
+    if result.return_code != 0:
+        # This can mean that GitHub has not 'loaded' the checks
+        # that are supposed to run on the PR. So return empty array
+        # because we can 'recover' by retrying the call.
+        if 'no checks reported on the' in result.stderr:
+            return []
+        raise shell.ShellError(
+            cmd=['gh', 'pr', 'checks'],
+            stdout=result.stdout,
+            stderr=result.stderr,
+            return_code=result.return_code,
+        )
 
     return [Check(**item) for item in json.loads(result.stdout)]
 
