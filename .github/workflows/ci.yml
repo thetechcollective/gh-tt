@@ -21,6 +21,7 @@ jobs:
   # See: https://stackoverflow.com/a/73305536
   # The workaround is to put the environment variable as a step output.
   python_versions:
+    name: Set Python versions
     runs-on: ubuntu-latest
     outputs:
       python_versions: ${{ steps.step1.outputs.python_versions }}
@@ -29,6 +30,7 @@ jobs:
         run: echo "python_versions=$PYTHON_VERSIONS" >> "$GITHUB_OUTPUT"
 
   test:
+    name: Test
     needs: python_versions
     permissions:
       contents: read
@@ -38,48 +40,48 @@ jobs:
       python_versions: ${{ needs.python_versions.outputs.python_versions }}
 
   lint:
+    name: Lint
     permissions:
       contents: read
     uses: ./.github/workflows/callable_ruff_lint.yaml
 
   format:
+    name: Format
     permissions:
       contents: read
     uses: ./.github/workflows/callable_ruff_format.yaml
 
-  typecheck:
+  type_check:
+    name: Type check
     permissions:
       contents: read
-    uses: ./.github/workflows/callable_ty_typecheck.yaml
+    uses: ./.github/workflows/callable_ty_type_check.yaml
 
-  spelling:
-    name: Spelling
+  spell_check:
+    name: Spell check
     permissions:
       contents: read
-    uses: ./.github/workflows/callable_cspell_spelling.yaml
+    uses: ./.github/workflows/callable_cspell_spell_check.yaml
 
-  pytest_end_to_end:
-    name: End to end testing
+  test_e2e:
+    name: Test E2E
     permissions:
       statuses: write
     secrets: inherit
     uses: ./.github/workflows/end_to_end_test.yml
 
   check:  # This job does nothing and is only used for the branch protection
-    name: ✅ All tests passed
+    name: ✅ All checks passed
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
     if: always()
-
     needs:
     - lint
     - format
-    - typecheck
-    - spelling
-    - pytest_end_to_end
+    - type_check
+    - spell_check
+    - test_e2e
     - test
-
-    runs-on: ubuntu-latest
-
-    timeout-minutes: 1
 
     steps:
     - name: Decide whether the needed jobs succeeded or failed
