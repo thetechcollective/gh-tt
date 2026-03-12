@@ -102,3 +102,101 @@ async def test_workon_deliver_fails_when_not_up_to_date_with_default_branch():
         assert '"autoMergeRequest":null' in pr_result.stdout.replace(' ', ''), (
             'Expected PR to not have auto-merge enabled'
         )
+
+
+@pytest.mark.usefixtures('check_end_to_end_env')
+async def test_workon_deliver_fails_when_local_ahead_of_remote():
+    async with (
+        IntegrationEnv().require_owner().create_repo().create_issue().create_local_clone().build()
+    ) as env:
+        # Arrange
+        await shell.run(
+            ['gh', 'tt', 'workon', '--pr-workflow', '-i', str(env.issue_number), '--no-assign'],
+            cwd=env.local_repo,
+        )
+
+        result = await shell.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=env.local_repo)
+        branch_name = result.stdout
+
+        await shell.run(
+            ['git', 'commit', '-m', 'local is ahead', '--allow-empty'], cwd=env.local_repo
+        )
+        await shell.run(['git', 'push', '-u', 'origin', branch_name], cwd=env.local_repo)
+
+        # Act
+        result = await shell.run(
+            ['gh', 'tt', 'deliver', '--pr-workflow', '--delete-branch'],
+            cwd=env.local_repo,
+            die_on_error=False,
+        )
+
+        # Assert
+        assert result.return_code == 1
+
+        pr_result = await shell.run(
+            [
+                'gh',
+                'pr',
+                'view',
+                branch_name,
+                '--json',
+                'state,autoMergeRequest',
+                '--jq',
+                '{state, autoMergeRequest}',
+            ],
+            cwd=env.local_repo,
+        )
+        assert '"state":"OPEN"' in pr_result.stdout.replace(' ', ''), 'Expected PR to still be open'
+        assert '"autoMergeRequest":null' in pr_result.stdout.replace(' ', ''), (
+            'Expected PR to not have auto-merge enabled'
+        )
+
+
+@pytest.mark.usefixtures('check_end_to_end_env')
+async def test_workon_deliver_fails_when_local_behind_remote():
+    async with (
+        IntegrationEnv().require_owner().create_repo().create_issue().create_local_clone().build()
+    ) as env:
+        # Arrange
+        await shell.run(
+            ['gh', 'tt', 'workon', '--pr-workflow', '-i', str(env.issue_number), '--no-assign'],
+            cwd=env.local_repo,
+        )
+
+        result = await shell.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=env.local_repo)
+        branch_name = result.stdout
+
+        # Push a commit to the remote and remove it from the local branch
+        await shell.run(
+            ['git', 'commit', '-m', 'remote is ahead', '--allow-empty'], cwd=env.local_repo
+        )
+        await shell.run(['git', 'push', '-u', 'origin', branch_name], cwd=env.local_repo)
+        await shell.run(['git', 'reset', '--hard', 'HEAD~1'], cwd=env.local_repo)
+
+        # Act
+        result = await shell.run(
+            ['gh', 'tt', 'deliver', '--pr-workflow', '--delete-branch'],
+            cwd=env.local_repo,
+            die_on_error=False,
+        )
+
+        # Assert
+        assert result.return_code == 1
+
+        pr_result = await shell.run(
+            [
+                'gh',
+                'pr',
+                'view',
+                branch_name,
+                '--json',
+                'state,autoMergeRequest',
+                '--jq',
+                '{state, autoMergeRequest}',
+            ],
+            cwd=env.local_repo,
+        )
+        assert '"state":"OPEN"' in pr_result.stdout.replace(' ', ''), 'Expected PR to still be open'
+        assert '"autoMergeRequest":null' in pr_result.stdout.replace(' ', ''), (
+            'Expected PR to not have auto-merge enabled'
+        )
