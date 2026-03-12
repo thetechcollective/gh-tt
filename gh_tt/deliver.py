@@ -3,6 +3,10 @@ import logging
 import sys
 from datetime import UTC, datetime
 
+from rich.console import Console
+from rich.live import Live
+from rich.text import Text
+
 from gh_tt.commands import gh, git
 from gh_tt.commands.gh import TERMINAL_BUCKETS, CheckBucket
 from gh_tt.shell import ShellError
@@ -38,30 +42,31 @@ def _sort_checks(checks: list[gh.Check]) -> list[gh.Check]:
     return sorted(checks, key=lambda c: order[c.bucket])
 
 
-def _print_status(checks: list[gh.Check]) -> None:
+def _render_status(checks: list[gh.Check]) -> Text:
     now = datetime.now(tz=UTC).astimezone()
     timestamp = now.strftime('%H:%M:%S')
     terminal = [c for c in checks if c.bucket in TERMINAL_BUCKETS]
     total = len(checks)
 
-    print(f'[{timestamp}] ⏳ {len(terminal)}/{total} checks completed', file=sys.stderr)
-    for check in _sort_checks(checks):
-        print(_format_check_line(check), file=sys.stderr)
+    lines = [f'[{timestamp}] ⏳ {len(terminal)}/{total} checks completed']
+    lines.extend(_format_check_line(check) for check in _sort_checks(checks))
+    return Text('\n'.join(lines))
 
 
-def _print_final(checks: list[gh.Check]) -> None:
+def _render_final(checks: list[gh.Check]) -> Text:
     now = datetime.now(tz=UTC).astimezone()
     timestamp = now.strftime('%H:%M:%S')
     total = len(checks)
     failed = [c for c in checks if c.bucket == CheckBucket.FAIL]
 
     if failed:
-        print(f'[{timestamp}] ❌ {len(failed)}/{total} checks failed', file=sys.stderr)
+        header = f'[{timestamp}] ❌ {len(failed)}/{total} checks failed'
     else:
-        print(f'[{timestamp}] ✅ All {total} checks passed', file=sys.stderr)
+        header = f'[{timestamp}] ✅ All {total} checks passed'
 
-    for check in _sort_checks(checks):
-        print(_format_check_line(check), file=sys.stderr)
+    lines = [header]
+    lines.extend(_format_check_line(check) for check in _sort_checks(checks))
+    return Text('\n'.join(lines))
 
 
 FIFTEEN_MINUTES_IN_SECONDS = 15 * 60
@@ -75,41 +80,43 @@ async def poll_checks(
     no_checks_retries: int = 5,
 ) -> bool:
     """Poll PR checks until all are terminal. Returns True if all passed."""
+    console = Console(stderr=True)
     empty_polls = 0
-    try:
-        async with asyncio.timeout(timeout_seconds):
-            while True:
-                try:
-                    checks = await gh.get_pr_checks(branch)
-                except ShellError as e:
-                    raise DeliverError(e.stderr) from e
+    with Live(Text(''), console=console, refresh_per_second=4) as live:
+        try:
+            async with asyncio.timeout(timeout_seconds):
+                while True:
+                    try:
+                        checks = await gh.get_pr_checks(branch)
+                    except ShellError as e:
+                        raise DeliverError(e.stderr) from e
 
-                if not checks:
-                    empty_polls += 1
-                    if empty_polls > no_checks_retries:
-                        print('No checks found on the PR.', file=sys.stderr)
-                        return True
-                    await asyncio.sleep(1)
-                    continue
+                    if not checks:
+                        empty_polls += 1
+                        if empty_polls > no_checks_retries:
+                            live.update(Text('No checks found on the PR.'))
+                            return True
+                        await asyncio.sleep(1)
+                        continue
 
-                pending = [c for c in checks if c.bucket not in TERMINAL_BUCKETS]
+                    pending = [c for c in checks if c.bucket not in TERMINAL_BUCKETS]
 
-                if not pending:
-                    _print_final(checks)
-                    return all(c.bucket != CheckBucket.FAIL for c in checks)
+                    if not pending:
+                        live.update(_render_final(checks))
+                        return all(c.bucket != CheckBucket.FAIL for c in checks)
 
-                _print_status(checks)
-                await asyncio.sleep(interval_seconds)
-    except TimeoutError:
-        if checks:
-            _print_status(checks)
-        print('Polling timed out.', file=sys.stderr)
-        return False
-    except KeyboardInterrupt:
-        failed = [c for c in checks if c.bucket == CheckBucket.FAIL]
-        for c in failed:
-            print(c.link, file=sys.stderr)
-        return True
+                    live.update(_render_status(checks))
+                    await asyncio.sleep(interval_seconds)
+        except TimeoutError:
+            if checks:
+                live.update(_render_status(checks))
+            print('Polling timed out.', file=sys.stderr)
+            return False
+        except KeyboardInterrupt:
+            failed = [c for c in checks if c.bucket == CheckBucket.FAIL]
+            for c in failed:
+                print(c.link, file=sys.stderr)
+            return True
 
 
 async def deliver(*, delete_branch: bool, poll: bool = False):

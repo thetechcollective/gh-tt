@@ -21,6 +21,7 @@ classifiers = [
 dependencies = [
     "async-lru>=2.1.0",
     "pydantic>=2.12.5",
+    "rich>=14.3.3",
 ]
 
 [dependency-groups]

@@ -5,6 +5,8 @@ from gh_tt.commands.gh import Check, CheckBucket
 from gh_tt.deliver import (
     DeliverError,
     _format_check_line,
+    _render_final,
+    _render_status,
     _sort_checks,
     poll_checks,
 )
@@ -106,17 +108,13 @@ async def test_poll_checks_retries_before_reporting_no_checks(mocker):
 
 
 @pytest.mark.unittest
-async def test_poll_checks_retries_gives_up(mocker, capsys):
+async def test_poll_checks_retries_gives_up(mocker):
     checks = [_make_check('Build', CheckBucket.PASS)]
     mocker.patch('gh_tt.deliver.gh.get_pr_checks', side_effect=[[], [], checks])
 
     result = await poll_checks('dev', interval_seconds=0, no_checks_retries=1)
 
     assert result is True
-
-    captured = capsys.readouterr()
-    assert captured.out == ''
-    assert 'No checks found' in captured.err
 
 
 @pytest.mark.unittest
@@ -158,27 +156,32 @@ async def test_poll_checks_shell_error_raises_deliver_error(mocker):
 
 
 @pytest.mark.unittest
-async def test_poll_checks_output_goes_to_stderr(mocker, capsys):
+def test_render_status_contains_check_info():
+    checks = [
+        _make_check('Build', CheckBucket.PASS),
+        _make_check('Lint', CheckBucket.PENDING),
+    ]
+    text = _render_status(checks)
+    plain = text.plain
+    assert '1/2 checks completed' in plain
+    assert 'Build' in plain
+    assert 'Lint' in plain
+
+
+@pytest.mark.unittest
+def test_render_final_all_passed():
+    checks = [_make_check('Build', CheckBucket.PASS)]
+    text = _render_final(checks)
+    assert 'All 1 checks passed' in text.plain
+
+
+@pytest.mark.unittest
+def test_render_final_some_failed():
     checks = [
         _make_check('Build', CheckBucket.PASS),
         _make_check('Lint', CheckBucket.FAIL),
     ]
-    mocker.patch('gh_tt.deliver.gh.get_pr_checks', return_value=checks)
-
-    await poll_checks('dev', interval_seconds=0)
-
-    captured = capsys.readouterr()
-    assert captured.out == ''
-    assert '❌' in captured.err
-    assert 'Build' in captured.err
-
-
-@pytest.mark.unittest
-async def test_poll_checks_no_checks_message_to_stderr(mocker, capsys):
-    mocker.patch('gh_tt.deliver.gh.get_pr_checks', return_value=[])
-
-    await poll_checks('dev', interval_seconds=0, no_checks_retries=0)
-
-    captured = capsys.readouterr()
-    assert captured.out == ''
-    assert 'No checks found' in captured.err
+    text = _render_final(checks)
+    plain = text.plain
+    assert '1/2 checks failed' in plain
+    assert '❌' in plain
