@@ -56,7 +56,7 @@ async def test_workon_deliver_flow_success():
 
 
 @pytest.mark.usefixtures('check_end_to_end_env')
-async def test_workon_deliver_fails_when_not_up_to_date():
+async def test_workon_deliver_fails_when_not_up_to_date_with_default_branch():
     async with (
         IntegrationEnv().require_owner().create_repo().create_issue().create_local_clone().build()
     ) as env:
