@@ -39,13 +39,14 @@ async def get_remote_branches() -> list[str]:
     return result.stdout.splitlines()
 
 
-async def get_current_branch() -> str:
+async def get_current_branch_name() -> str:
     result = await shell.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
     return result.stdout
 
 
-async def get_default_head_hash(remote: str, default_branch: str) -> str:
-    result = await shell.run(['git', 'rev-parse', f'{remote}/{default_branch}'])
+async def get_branch_tip_hash(branch: str, remote: str | None = None) -> str:
+    ref = f'{remote}/{branch}' if remote else branch
+    result = await shell.run(['git', 'rev-parse', ref])
     return result.stdout
 
 

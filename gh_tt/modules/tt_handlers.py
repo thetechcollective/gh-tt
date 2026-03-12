@@ -13,7 +13,7 @@ from gh_tt.classes.issue import Issue
 from gh_tt.classes.label import Label
 from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver
 from gh_tt.classes.status import Status
-from gh_tt.deliver import deliver
+from gh_tt.deliver import DeliverError, deliver
 from gh_tt.workon import workon_issue, workon_title
 
 logger = logging.getLogger(__name__)
@@ -76,7 +76,11 @@ def handle_deliver(args):
     """Handle the deliver command"""
     if args.pr_workflow:
         logger.debug("handle_deliver: pr_workflow with delete_branch=%s", args.delete_branch)
-        asyncio.run(deliver(delete_branch=args.delete_branch))
+        try:
+            asyncio.run(deliver(delete_branch=args.delete_branch))
+        except DeliverError as e:
+            print(e, file=sys.stderr)
+            sys.exit(1)
         return
 
     devbranch = Devbranch()
