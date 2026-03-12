@@ -6,9 +6,9 @@ name: Issue branch push
 on:
   workflow_dispatch:
   merge_group:
-  push:
+  pull_request: 
     branches: 
-      - '[0-9]*'
+      - main
 
 # No special permissions defined before we need them
 permissions:
