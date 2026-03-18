@@ -5,7 +5,6 @@ import pytest
 from gh_tt.classes.gitter import Gitter
 
 
-@pytest.mark.unittest
 def test_gitter_validate_gh_version_success(mocker):
     stdout = "gh version 2.65.0 (2025-01-06)\nhttps://github.com/cli/cli/releases/tag/v2.65.0"
 
@@ -18,7 +17,6 @@ def test_gitter_validate_gh_version_success(mocker):
     assert Gitter.validate_gh_version()
 
 
-@pytest.mark.unittest
 def test_gitter_validate_gh_version_failure(mocker, capsys):
     stdout = "gh version 2.54.0 (2025-01-06)\nhttps://github.com/cli/cli/releases/tag/v2.54.0"
 
@@ -34,7 +32,6 @@ def test_gitter_validate_gh_version_failure(mocker, capsys):
     assert cm.value.code == 1
     assert f"gh version 2.54.0 is not supported. Please upgrade to version {Gitter.required_version} or higher\n" in capsys.readouterr().err
 
-@pytest.mark.unittest
 def test_gitter_validate_gh_scope_success(mocker):
     stdout = """github.com
 ✓ Logged in to github.com account lakruzz (/home/vscode/.config/gh/hosts.yml)
@@ -50,7 +47,6 @@ def test_gitter_validate_gh_scope_success(mocker):
 
     assert Gitter.validate_gh_scope(scope="project")
 
-@pytest.mark.unittest
 def test_gitter_validate_gh_scope_ignores_ghs(mocker):
     stdout = """github.com
 ✓ Logged in to github.com account gh-tt-qa-runner[bot] (GH_TOKEN)
@@ -64,7 +60,6 @@ def test_gitter_validate_gh_scope_ignores_ghs(mocker):
             
     assert Gitter.validate_gh_scope(scope="project")
     
-@pytest.mark.unittest
 def test_gitter_validate_gh_scope_failure(mocker, capsys):
     stdout = """github.com
 ✓ Logged in to github.com account lakruzz (/home/vscode/.config/gh/hosts.yml)
@@ -86,7 +81,6 @@ def test_gitter_validate_gh_scope_failure(mocker, capsys):
     assert cm.value.code == 1
     assert f"gh token does not have the required scope '{value}'" in capsys.readouterr().err
 
-@pytest.mark.unittest
 def test_gitter_fetch(mocker):
     mock_gitter_run = mocker.patch(
         'gh_tt.classes.gitter.Gitter.run',
@@ -117,7 +111,6 @@ def test_gitter_fetch(mocker):
     assert result_4
     mock_gitter_run.assert_called_once_with()
 
-@pytest.mark.unittest
 def test_run_success(mocker):
     mock_process = mocker.AsyncMock()
     mock_process.communicate.return_value = (

@@ -10,7 +10,6 @@ from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver, SemverVersi
 from gh_tt.tests.testbed import Testbed
 
 
-@pytest.mark.unittest
 def test_semver_init(capsys):
     Gitter.verbose = False
 
@@ -35,7 +34,6 @@ def test_semver_init(capsys):
     assert "Invalid initial version" in capsys.readouterr().err
 
 
-@pytest.mark.unittest
 def test_semver_list(capsys):
     # Setup
     semver = Semver().from_json("gh_tt/tests/data/semver/semver_loaded_release_and_prerelease.json")
@@ -54,7 +52,6 @@ def test_semver_list(capsys):
     assert "0.7.3\n" in output
     assert "0.6.1\n" in output
 
-@pytest.mark.unittest
 def test_semver_get_current():
     semver = Semver().from_json('gh_tt/tests/data/semver/semver_loaded_release_and_prerelease.json')
     semver.set('semver_tags', semver._parse_tags(semver.get('tags'), prefix=None))
@@ -65,7 +62,6 @@ def test_semver_get_current():
     prerelease = semver.get_current_semver(release_type=ReleaseType.PRERELEASE)
     assert str(prerelease) == "1.0.11-rc1"
 
-@pytest.mark.unittest
 def test_semver_bump(capsys):
     semver = Semver().from_json('gh_tt/tests/data/semver/semver_loaded_release_and_prerelease.json')
     semver.set('semver_tags', semver._parse_tags(semver.get('tags'), prefix=semver.get('prefix')))
@@ -77,7 +73,6 @@ def test_semver_bump(capsys):
     assert "Test patch bump\"" in output
 
 
-@pytest.mark.unittest
 def test_semver_first_prerelease(capsys):
     # Setup
     semver = Semver().from_json("gh_tt/tests/data/semver/semver_loaded_release.json")
@@ -100,7 +95,6 @@ def test_semver_first_prerelease(capsys):
     assert prerelease is None
 
 
-@pytest.mark.unittest
 def test_semver_first_prerelease_bump(capsys):
     semver = Semver().from_json('gh_tt/tests/data/semver/semver_loaded_release.json')
     semver.set('semver_tags', semver._parse_tags(semver.get('tags'), prefix=semver.get('prefix')))
@@ -111,7 +105,7 @@ def test_semver_first_prerelease_bump(capsys):
     assert "Bumped patch from version '0.7.3' to '0.7.4-alpha1'" in output
     assert "Test patch bump\"" in output
 
-@pytest.mark.integration
+@pytest.mark.gh_actions
 def test_note_with_one_release():
     [extension_list, _] = Testbed.gitter_run(cmd='gh extension list')
     if 'thetechcollective/gh-tt' in extension_list:
@@ -266,7 +260,6 @@ def test_semver_version_parse_roundtrip(version):
     version_str = str(version)
     assert version == SemverVersion.from_string(version_str)
     
-@pytest.mark.unittest
 def test_bump_build():
     # Test without existing build
     version = SemverVersion(1, 2, 3)
@@ -286,7 +279,6 @@ def test_bump_build():
     version_with_bumped_complex_build = version_with_complex_build.bump_build(include_sha=False)
     assert version_with_bumped_complex_build.build == "8"
 
-@pytest.mark.unittest
 @pytest.mark.parametrize('invalid_version', [
     '01.0.0', # leading zero
     '0.1.', # missing digit
@@ -315,7 +307,6 @@ def test_semver_parse_tags(tag_string: str):
 def test_semver_get_next_semvers(current_release, current_prerelease):
     Semver()._get_next_semvers(current_release, current_prerelease)
 
-@pytest.mark.unittest
 @pytest.mark.parametrize(('prefix', 'expected'), [('v', 'v3.0.0'), ('', '3.0.0'), (' ', '3.0.0'), ('123', '1233.0.0')])
 def test_bump_user_passed_prefix_included_over_config(prefix, expected):
     semver = Semver.from_json('gh_tt/tests/data/semver/semver_loaded_prefix.json')

@@ -36,7 +36,6 @@ def default_config() -> tuple[dict, list[Path], Config]:
     return (config, config_files, Config)
 
 
-@pytest.mark.unittest
 def test_read_app_defaults_static(default_config):
     """Test app defaults"""
     config, files, _ = default_config
@@ -79,7 +78,6 @@ def test_read_app_defaults_static(default_config):
     assert re.match(r'.*', config['labels']['development']['description']), "Description for 'development' label should not be empty"
     assert len(config['labels']['development']['description']) <= 100, "Description for 'development' label exceeds 100 characters"
 
-@pytest.mark.unittest
 def test_read_project_static(default_config):
     """Test project specifics """
     _, _, config_class = default_config
@@ -95,7 +93,6 @@ def test_read_project_static(default_config):
     assert config['wrapup']['policies']['allow-dirty'] is False
     assert config['squeeze']['policies']['close-keyword'] == 'resolves'
 
-@pytest.mark.unittest
 def test_read_malformed_static_exit(capsys, default_config):
     """Test malformed config exits with error"""
     _, _, config_class = default_config
@@ -109,7 +106,6 @@ def test_read_malformed_static_exit(capsys, default_config):
     captured = capsys.readouterr()
     assert "Could not parse JSON" in captured.err
 
-@pytest.mark.unittest
 def test_read_nonexisting_static_exit(default_config):
     """Test nonexisting config exits with error"""
 

@@ -1,9 +1,7 @@
-import pytest
 
 from gh_tt.classes.issue import Issue
 
 
-@pytest.mark.unittest
 def test_issue_constructor_success(mocker):
     result = """
         {

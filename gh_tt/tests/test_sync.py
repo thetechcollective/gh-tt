@@ -12,7 +12,6 @@ from gh_tt.classes.sync import (
 )
 
 
-@pytest.mark.unittest
 def test_sync_exits_when_no_sibling_repos(mocker: MockerFixture, capsys):
     """Test that sync() exits with error when no sibling repositories are configured"""
     
@@ -35,7 +34,6 @@ def test_sync_exits_when_no_sibling_repos(mocker: MockerFixture, capsys):
     assert "Set the sync:sibling_repos configuration value" in captured.err
 
 
-@pytest.mark.unittest
 def test_sync_exits_when_no_template_repo(mocker: MockerFixture, capsys):
     """Test that sync() exits when no template repo"""
     
@@ -53,7 +51,6 @@ def test_sync_exits_when_no_template_repo(mocker: MockerFixture, capsys):
     assert "Cannot sync without a template repository" in capsys.readouterr().err
 
 
-@pytest.mark.unittest
 @pytest.mark.parametrize('override_labels', [True, False])
 def test_build_label_commands_generates_correct_commands(override_labels):
     """Test that build_label_commands generates correct command structure"""
@@ -81,7 +78,6 @@ def test_build_label_commands_generates_correct_commands(override_labels):
     assert metadata["resource_name"] == "bug"
 
 
-@pytest.mark.unittest
 def test_build_milestone_commands_generates_correct_commands():
     """Test that build_milestone_commands generates correct command structure"""
     
@@ -107,7 +103,6 @@ def test_build_milestone_commands_generates_correct_commands():
     assert metadata["resource_name"] == "v1.0"
 
 
-@pytest.mark.unittest
 def test_build_milestone_commands_skips_milestones_without_title():
     """Test that milestones without titles are skipped"""
     # Arrange
@@ -125,7 +120,6 @@ def test_build_milestone_commands_skips_milestones_without_title():
     assert len(commands) == 1  # Only the valid milestone
 
 
-@pytest.mark.unittest
 def test_build_sync_plan_combines_commands_correctly():
     """Test that build_sync_plan correctly combines label and milestone commands"""
     
@@ -144,7 +138,6 @@ def test_build_sync_plan_combines_commands_correctly():
     assert len(plan.commands_with_metadata) == 4 # (1 label + 1 milestone) * 2 repos
 
 
-@pytest.mark.unittest
 def test_categorize_results_handles_different_result_types():
     """Test that categorize_results properly categorizes different result types"""
     
@@ -183,7 +176,6 @@ def test_categorize_results_handles_different_result_types():
     assert "Unknown result type: unknown_result_type" in failures[2]
 
 
-@pytest.mark.unittest
 def test_categorize_results_handles_empty_list():
     """Test that categorize_results handles empty input"""
     successes, failures = categorize_results([])
@@ -192,7 +184,6 @@ def test_categorize_results_handles_empty_list():
     assert failures == []
 
 
-@pytest.mark.unittest
 def test_sync_result_creation_with_defaults():
     """Test SyncResult creation with default values"""
     result = SyncResult(command="test command", success=True)
@@ -205,7 +196,6 @@ def test_sync_result_creation_with_defaults():
     assert result.resource_name == ""
 
 
-@pytest.mark.unittest
 def test_sync_result_creation_with_all_fields():
     """Test SyncResult creation with all fields specified"""
     # Act
@@ -227,7 +217,6 @@ def test_sync_result_creation_with_all_fields():
     assert result.resource_name == "bug"
 
 
-@pytest.mark.unittest
 def test_sync_plan_creation():
     """Test SyncPlan creation"""
     # Arrange

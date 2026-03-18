@@ -3,7 +3,6 @@ import pytest
 from gh_tt.modules.tt_parser import tt_parse
 
 
-@pytest.mark.unittest
 def test_parser_semver_list_default():
     """Test that the parser defaults to 'all' filter for semver list"""
     args = ['semver', 'list']
@@ -14,7 +13,6 @@ def test_parser_semver_list_default():
     assert parsed.command == 'semver'
 
 
-@pytest.mark.unittest
 def test_parser_semver_list_with_filters():
     """Test that the parser accepts filter options for semver list"""
     filter_mapping = {
@@ -34,7 +32,6 @@ def test_parser_semver_list_with_filters():
         assert parsed.command == 'semver'
 
 
-@pytest.mark.unittest
 def test_parser_semver_list_filter_mutual_exclusivity():
     """Test that the filter options are mutually exclusive"""
     # Combining two filter options should fail

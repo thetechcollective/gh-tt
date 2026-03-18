@@ -5,7 +5,6 @@ import pytest
 from gh_tt.modules.tt_parser import tt_parse
 
 
-@pytest.mark.unittest
 @pytest.mark.parametrize('args', [['sync'], ['sync', '--gibberish']])
 def test_parser_sync_entity_required(args):
     """Parser raises when no entity to sync (e.g. --labels) is passed"""
@@ -13,14 +12,12 @@ def test_parser_sync_entity_required(args):
     with pytest.raises(SystemExit):
         tt_parse(args)
 
-@pytest.mark.unittest
 @pytest.mark.parametrize('entity', ['--labels', '--milestones'])
 def test_parser_sync_success(entity):
     args = ['sync', entity]
 
     tt_parse(args)
 
-@pytest.mark.unittest
 def test_parser_semver_bump_prerelease():
     """Test that the parser accepts the --pre option for prerelease bump"""
     args = ['semver', 'bump', '--pre']
@@ -30,7 +27,6 @@ def test_parser_semver_bump_prerelease():
     assert parsed.semver_command == 'bump'
     assert parsed.command == 'semver'
 
-@pytest.mark.unittest
 def test_parser_semver_bump_build():
     """Test that the parser accepts the --build option for build bump"""
     args = ['semver', 'bump', '--build']
@@ -41,7 +37,6 @@ def test_parser_semver_bump_build():
     assert parsed.command == 'semver'
     assert parsed.include_sha is True  # Default is to include SHA
 
-@pytest.mark.unittest
 def test_parser_semver_bump_build_no_sha():
     """Test that the parser accepts the --build option with --no-sha"""
     args = ['semver', 'bump', '--build', '--no-sha']
@@ -52,7 +47,6 @@ def test_parser_semver_bump_build_no_sha():
     assert parsed.semver_command == 'bump'
     assert parsed.command == 'semver'
 
-@pytest.mark.unittest
 def test_parser_semver_bump_with_prefix():
     """Test that the parser accepts the --prefix option with any bump level"""
     level_mapping = {
@@ -72,7 +66,6 @@ def test_parser_semver_bump_with_prefix():
         assert parsed.semver_command == 'bump'
         assert parsed.command == 'semver'
 
-@pytest.mark.unittest
 def test_parser_semver_bump_with_message():
     """Test that the parser accepts the -m/--message option with any bump level"""
     message = "Test release message"
@@ -84,7 +77,6 @@ def test_parser_semver_bump_with_message():
     assert parsed.semver_command == 'bump'
     assert parsed.command == 'semver'
 
-@pytest.mark.unittest
 def test_parser_semver_bump_with_run_options():
     """Test that the parser accepts --run and --no-run options"""
     # Default behavior (no run flag specified)
@@ -102,7 +94,6 @@ def test_parser_semver_bump_with_run_options():
     parsed = tt_parse(args)
     assert parsed.run is False
 
-@pytest.mark.unittest
 def test_parser_semver_bump_mutual_exclusivity():
     """Test that the level options are mutually exclusive"""
     # Combining two level options should fail
@@ -112,14 +103,12 @@ def test_parser_semver_bump_mutual_exclusivity():
     with pytest.raises(SystemExit):
         tt_parse(['semver', 'bump', '--pre', '--build'])
 
-@pytest.mark.unittest
 def test_parser_semver_bump_level_required():
     """Test that a level option is required"""
     # Missing required level argument
     with pytest.raises(SystemExit):
         tt_parse(['semver', 'bump'])
 
-@pytest.mark.unittest
 def test_parser_semver_bump_build_options():
     """Test that build-specific options work correctly"""
     # Test default (include SHA)
@@ -138,7 +127,6 @@ def test_parser_semver_bump_build_options():
     with pytest.raises(SystemExit):
         tt_parse(['semver', 'bump', '--major', '--no-sha'])
 
-@pytest.mark.unittest
 @pytest.mark.parametrize(
     ('delete_flag', 'pr_workflow_flag', 'expectation'),
     [
