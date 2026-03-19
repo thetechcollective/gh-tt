@@ -12,6 +12,8 @@ async def test_workon_deliver_flow_success():
     async with (
         IntegrationEnv().require_owner().create_repo().create_issue().create_local_clone().build()
     ) as env:
+        assert isinstance(env.local_repo, Path), f'Expected type Path, got {type(env.local_repo)}'
+
         # Arrange
         await shell.run(
             ['gh', 'tt', 'workon', '--pr-workflow', '-i', str(env.issue_number), '--no-assign'],
@@ -21,10 +23,12 @@ async def test_workon_deliver_flow_success():
         result = await shell.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=env.local_repo)
         branch_name = result.stdout
 
-        result = await shell.run(
+        result = await shell.poll_until(
             ['gh', 'pr', 'view', branch_name, '--json', 'number', '--jq', '.number'],
             cwd=env.local_repo,
+            predicate=lambda r: bool(r.stdout),
         )
+        assert result is not None, 'Expected PR to be created'
         pr_number = result.stdout
 
         # Act
@@ -38,7 +42,6 @@ async def test_workon_deliver_flow_success():
         )
         assert not result.stdout, f'Expected remote branch {branch_name} to be deleted'
 
-        assert isinstance(env.local_repo, Path), f'Expected type Path, got {type(env.local_repo)}'
         result = await shell.poll_until(
             ['gh', 'pr', 'view', str(pr_number), '--json', 'mergedAt', '--jq', '.mergedAt'],
             cwd=env.local_repo,
