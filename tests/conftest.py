@@ -7,7 +7,7 @@ from hypothesis import settings
 from gh_tt import shell
 
 # Hypothesis profiles
-# To run e.g. the "a_lot" profile --> `pytest --hypothesis-profile a_lot`
+# To run e.g. the "1000" profile --> `pytest --hypothesis-profile 1000`
 
 settings.register_profile('1000', max_examples=1000)
 settings.register_profile('10000', max_examples=10000)
