@@ -138,18 +138,15 @@ jobs:
               run: gh tt --help
 
     test_e2e:
-        needs: [python_versions, smoke_test]
-        strategy:
-            matrix:
-                python_version: ${{ fromJSON(needs.python_versions.outputs.python_versions) }}
+        needs: [smoke_test]
 
-        name: Test E2E - Python v${{ matrix.python_version }}
+        name: Test E2E
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
             - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
               with:
-                  python-version: ${{ matrix.python_version }}
+                  python-version-file: ".python-version"
             - uses: astral-sh/setup-uv@v7
               with:
                   # Latest uv compliant with the project's tool.uv required version
