@@ -11,7 +11,7 @@ updates:
       labels:
         - "type: deps"
       cooldown:
-          default-days: 5
+          default-days: 7
       groups:
           production-dependencies:
               dependency-type: "production"
@@ -29,4 +29,4 @@ updates:
       labels:
           - "type: deps"
       cooldown:
-          default-days: 5
+          default-days: 7

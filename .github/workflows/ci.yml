@@ -16,6 +16,10 @@ permissions:
 env:
     PYTHON_VERSIONS: "['3.12', '3.13', '3.14']"
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
+
 jobs:
     # It is not possible to pass an environment variable down to
     # a reusable workflow as an argument via _with_.
@@ -41,6 +45,8 @@ jobs:
 
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+              with:
+                persist-credentials: false
 
             - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
               with:
@@ -55,12 +61,14 @@ jobs:
               run: |
                   uv run --frozen -- pytest --cov=. --cov-config=.coveragerc --numprocesses=auto -m 'not gh_actions'
 
-    lint:
-        name: Lint
+    lint-python:
+        name: Lint Python
         runs-on: ubuntu-latest
 
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+              with:
+                persist-credentials: false
 
             - uses: astral-sh/setup-uv@6ee6290f1cbc4156c0bdd66691b2c144ef8df19a # v7.4.0
               with:
@@ -70,12 +78,39 @@ jobs:
               run: |
                   uv run --frozen -- ruff check --output-format=github
 
+    # We are running both actionlint and zizmor because they have many non-overlapping checks
+    # actionlint is focused on correctness (syntax, types, action inputs, shellcheck)
+    # zizmor is focused on security (permissions, pinning, dangerous triggers, injection)
+    lint-actions:
+        name: Lint GH Actions
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 
+              with:
+                persist-credentials: false
+            
+            - name: Run actionlint
+              run: |
+                bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.11
+                ./actionlint -color
+
+
+            - uses: astral-sh/setup-uv@6ee6290f1cbc4156c0bdd66691b2c144ef8df19a # v7.4.0
+              with:
+                  version-file: "pyproject.toml"
+
+            - name: Run zizmor
+              run: uvx zizmor ./.github/ --format github --pedantic --offline
+
     format:
         name: Format
         runs-on: ubuntu-latest
 
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+              with:
+                persist-credentials: false
 
             - uses: astral-sh/setup-uv@6ee6290f1cbc4156c0bdd66691b2c144ef8df19a # v7.4.0
               with:
@@ -91,6 +126,8 @@ jobs:
 
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+              with:
+                persist-credentials: false
 
             - uses: astral-sh/setup-uv@6ee6290f1cbc4156c0bdd66691b2c144ef8df19a # v7.4.0
               with:
@@ -106,11 +143,13 @@ jobs:
 
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+              with:
+                persist-credentials: false
 
             - run: npm install -g cspell
 
             - name: Check spelling
-              run: cspell lint --no-progress --config ./cspell.json &>> $GITHUB_STEP_SUMMARY
+              run: cspell lint --no-progress --config ./cspell.json &>> "$GITHUB_STEP_SUMMARY"
 
     smoke_test:
         needs: python_versions
@@ -122,6 +161,8 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+              with:
+                persist-credentials: false
             - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
               with:
                   python-version: ${{ matrix.python_version }}
@@ -142,12 +183,15 @@ jobs:
 
         name: Test E2E
         runs-on: ubuntu-latest
+        environment: qa
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+              with:
+                persist-credentials: false
             - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
               with:
                   python-version-file: ".python-version"
-            - uses: astral-sh/setup-uv@v7
+            - uses: astral-sh/setup-uv@6ee6290f1cbc4156c0bdd66691b2c144ef8df19a # v7.4.0
               with:
                   # Latest uv compliant with the project's tool.uv required version
                   version-file: "pyproject.toml"
@@ -157,7 +201,7 @@ jobs:
               id: app-token
               with:
                   app-id: ${{ vars.QA_RUNNER_APP_ID }}
-                  private-key: ${{ secrets.QA_RUNNER_SECRET }}
+                  private-key: ${{ secrets.QA_RUNNER_PRIVATE_KEY }}
                   owner: gh-tt-qa
                   permission-organization-projects: admin
                   permission-administration: write
@@ -173,15 +217,20 @@ jobs:
 
             - name: Get GitHub App User ID
               id: get-user-id
-              run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+              run: echo "user-id=$(gh api "/users/${STEPS_APP_TOKEN_OUTPUTS_APP_SLUG}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
               env:
                   GH_TOKEN: ${{ steps.app-token.outputs.token }}
+                  STEPS_APP_TOKEN_OUTPUTS_APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
 
             - name: Configure Git
               run: |
-                  git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
-                  git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token  .outputs.app-slug }}[bot]@users.noreply.github.com'
-                  git config --global url.'https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/'.insteadOf 'https://github.com/'
+                  git config --global user.name "${STEPS_APP_TOKEN_OUTPUTS_APP_SLUG}[bot]"
+                  git config --global user.email "${STEPS_GET_USER_ID_OUTPUTS_USER_ID}+${STEPS_APP_TOKEN_OUTPUTS_APP_SLUG}[bot]@users.noreply.github.com"
+                  git config --global url."https://x-access-token:${STEPS_APP_TOKEN_OUTPUTS_TOKEN}@github.com/".insteadOf 'https://github.com/'
+              env:
+                STEPS_APP_TOKEN_OUTPUTS_APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+                STEPS_GET_USER_ID_OUTPUTS_USER_ID: ${{ steps.get-user-id.outputs.user-id }}
+                STEPS_APP_TOKEN_OUTPUTS_TOKEN: ${{ steps.app-token.outputs.token }}
 
             - name: Run end to end tests
               env:
@@ -196,7 +245,8 @@ jobs:
         timeout-minutes: 1
         if: always()
         needs:
-            - lint
+            - lint-python
+            - lint-actions
             - format
             - type_check
             - spell_check
@@ -206,6 +256,6 @@ jobs:
 
         steps:
             - name: Decide whether the needed jobs succeeded or failed
-              uses: re-actors/alls-green@release/v1
+              uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
               with:
                   jobs: ${{ toJSON(needs) }}

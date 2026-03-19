@@ -17,6 +17,8 @@ uv venv
 . .venv/bin/activate
 uv sync
 
+uv tool install zizmor
+
 # Check if the GH CLI is required
 if [ -e $(dirname $0)/_temp.token ]; then
     echo "$PREFIX setting up GitHub CLI"
