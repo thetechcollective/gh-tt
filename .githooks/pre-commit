@@ -6,6 +6,7 @@ No check blocks the commit — this hook always exits 0.
 
 import subprocess
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 CHECKS = [
     {'name': 'Unit tests', 'cmd': ['just', 'check-test']},
@@ -34,16 +35,20 @@ def run_check(check: dict) -> tuple[str, bool, str, float]:
 
 def main() -> None:
     start = time.monotonic()
-    results = [run_check(c) for c in CHECKS]
-    elapsed = time.monotonic() - start
 
     print('Pre-commit checks:')
     failures = []
-    for name, passed, output, check_time in results:
-        icon = '✅' if passed else '⚠️'
-        print(f'  {icon}  {name} ({check_time:.1f}s)')
-        if not passed:
-            failures.append((name, output))
+
+    with ThreadPoolExecutor() as executor:
+        futures = {executor.submit(run_check, c): c for c in CHECKS}
+        for future in as_completed(futures):
+            name, passed, output, check_time = future.result()
+            icon = '✅' if passed else '⚠️'
+            print(f'  {icon}  {name} ({check_time:.1f}s)')
+            if not passed:
+                failures.append((name, output))
+
+    elapsed = time.monotonic() - start
 
     if failures:
         print()
