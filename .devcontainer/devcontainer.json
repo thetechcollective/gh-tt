@@ -12,7 +12,8 @@
 		"ghcr.io/devcontainers-extra/features/npm-packages:1": {
 			"packages": ["cspell", "markdownlint-cli2"]
 		},
-        "ghcr.io/devcontainers-extra/features/actionlint:1": {}
+        "ghcr.io/devcontainers-extra/features/actionlint:1": {},
+        "ghcr.io/devcontainers-extra/features/shellcheck:1": {}
 	},
 	"customizations": {
 		"vscode": {

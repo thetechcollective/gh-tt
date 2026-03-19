@@ -110,7 +110,7 @@ jobs:
             - run: npm install -g cspell
 
             - name: Check spelling
-              run: cspell lint --no-progress --config ./cspell.json &>> $GITHUB_STEP_SUMMARY
+              run: cspell lint --no-progress --config ./cspell.json &>> "$GITHUB_STEP_SUMMARY"
 
     smoke_test:
         needs: python_versions
