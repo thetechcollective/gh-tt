@@ -16,6 +16,10 @@ permissions:
 env:
     PYTHON_VERSIONS: "['3.12', '3.13', '3.14']"
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+    cancel-in-progress: true
+
 jobs:
     # It is not possible to pass an environment variable down to
     # a reusable workflow as an argument via _with_.
