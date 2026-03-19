@@ -55,8 +55,8 @@ jobs:
               run: |
                   uv run --frozen -- pytest --cov=. --cov-config=.coveragerc --numprocesses=auto -m 'not gh_actions'
 
-    lint:
-        name: Lint
+    lint-python:
+        name: Lint Python
         runs-on: ubuntu-latest
 
         steps:
@@ -69,6 +69,16 @@ jobs:
             - name: Run tests
               run: |
                   uv run --frozen -- ruff check --output-format=github
+
+    lint-actions:
+        name: Lint GH Actions
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 
+            - run: |
+                bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.11
+                ./actionlint -color
 
     format:
         name: Format
@@ -196,7 +206,8 @@ jobs:
         timeout-minutes: 1
         if: always()
         needs:
-            - lint
+            - lint-python
+            - lint-actions
             - format
             - type_check
             - spell_check
