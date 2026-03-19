@@ -53,6 +53,8 @@ exclude = [
     "tests/test_sync.py",
 ]
 
+include = ["src", "tests", ".githooks/pre-commit"]
+
 [tool.ruff]
 exclude = [
     ".bzr",
@@ -83,6 +85,8 @@ exclude = [
     "venv",
     "temp",
 ]
+
+extend-include = [".githooks/pre-commit"]
 
 # Generous line length for wide screens
 line-length = 100
