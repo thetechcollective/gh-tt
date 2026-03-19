@@ -9,7 +9,6 @@ from gh_tt.classes.devbranch import Devbranch
 from gh_tt.classes.gitter import Gitter
 
 
-@pytest.mark.unittest
 def test_constructor_success():
     devbranch = Devbranch()
     assert devbranch.get("unstaged_changes") is None
@@ -19,14 +18,12 @@ def test_constructor_success():
     assert devbranch._manifest_loaded
 
 
-@pytest.mark.unittest
 def test_load_issue_number_success():
     devbranch = Devbranch().from_json(file="gh_tt/tests/data/devbranch/.tt-config-set_issue.json")
     asyncio.run(devbranch._load_issue_number())
     assert devbranch.get("issue_number") == "95"
 
 
-@pytest.mark.unittest
 def test_load_issue_number_none():
     devbranch = Devbranch().from_json(file="gh_tt/tests/data/devbranch/main.json")
     asyncio.run(devbranch._load_issue_number())
@@ -34,7 +31,6 @@ def test_load_issue_number_none():
     assert devbranch.get("branch_name") == "main"
 
 
-@pytest.mark.unittest
 def test__reuse_issue_branch(mocker):
     mock_run = mocker.patch(
         "gh_tt.classes.devbranch.Devbranch._run",
@@ -65,7 +61,6 @@ def test__reuse_issue_branch(mocker):
     loop.close()
 
 
-@pytest.mark.unittest
 def test__compare_before_after_trees(mocker, capsys):
     mock_run = mocker.patch("gh_tt.classes.devbranch.Devbranch._run", new_callable=mocker.AsyncMock, side_effect=["", "somefile.txt"])
 
@@ -89,7 +84,6 @@ def test__compare_before_after_trees(mocker, capsys):
     mock_run.reset_mock()
 
 
-@pytest.mark.unittest
 def test__load_squeezed_commit_message():
     Gitter.verbose = True
     # Load the recorded instance of Devbranch
@@ -100,7 +94,6 @@ def test__load_squeezed_commit_message():
     assert re.search(r".*a201d0f.*", message)
 
 
-@pytest.mark.unittest
 def test__squeeze_exits(capsys):
     Gitter.verbose = True
     # Load the recorded instance of Devbranch
@@ -147,7 +140,6 @@ def test__squeeze_exits(capsys):
     loop.close()
 
 
-@pytest.mark.unittest
 def test__squeeze_success(mocker):
     mock_assert_props = mocker.patch("gh_tt.classes.devbranch.Devbranch._assert_props", new_callable=mocker.AsyncMock)
     mocker.patch("gh_tt.classes.devbranch.Devbranch._Devbranch__compare_before_after_trees", return_value=True)
@@ -168,7 +160,6 @@ def test__squeeze_success(mocker):
     mock_assert_props.assert_called_with(["squeeze_sha1"])
 
 
-@pytest.mark.unittest
 def test_load_status(mocker):
     mock_force_prop_reload = mocker.patch("gh_tt.classes.devbranch.Devbranch._force_prop_reload", new_callable=mocker.AsyncMock, return_value=None)
 
@@ -197,7 +188,6 @@ def test_load_status(mocker):
     devbranch._load_status(reload=True)
     mock_force_prop_reload.assert_called_once_with("status")
 
-@pytest.mark.unittest
 def test_wrapup_only_on_issue_branch(mocker: MockerFixture, capsys):
     devbranch = Devbranch()
 

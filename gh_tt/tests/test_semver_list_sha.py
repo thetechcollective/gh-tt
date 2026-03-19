@@ -1,11 +1,8 @@
 from unittest.mock import MagicMock
 
-import pytest
-
 from gh_tt.classes.semver import Semver, SemverTag
 
 
-@pytest.mark.unittest
 def test_semver_list_sha(capsys):
     """Test that list function shows SHA when show_sha is True"""
     # Setup
@@ -36,7 +33,6 @@ def test_semver_list_sha(capsys):
     assert "1.0.1 def456\n" in output
     assert "other-tag" in output  # other-tag doesn't have a SemverTag object with SHA property
 
-@pytest.mark.unittest
 def test_semver_tag_with_sha():
     """Test that SemverTag can store SHA information"""
     from gh_tt.classes.semver import SemverVersion

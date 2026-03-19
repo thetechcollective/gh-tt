@@ -5,7 +5,6 @@ import pytest
 from gh_tt.modules.tt_parser import tt_parse
 
 
-@pytest.mark.unittest
 def test_workon_reopen_flag_removed():
     """Test that --reopen flag has been removed from the workon parser"""
 
@@ -17,7 +16,6 @@ def test_workon_reopen_flag_removed():
     assert exc_info.value.code == 2
 
 
-@pytest.mark.unittest
 def test_workon_closed_issue_fails(mocker, capsys):
     """Test that working on a closed issue always fails"""
 

@@ -22,14 +22,12 @@ def _make_check(name: str, bucket: CheckBucket, workflow: str = 'CI') -> Check:
     )
 
 
-@pytest.mark.unittest
 def test_format_check_line_pass():
     check = _make_check('Build', CheckBucket.PASS)
     assert '✅' in _format_check_line(check)
     assert 'Build (CI)' in _format_check_line(check)
 
 
-@pytest.mark.unittest
 def test_format_check_line_fail_includes_link():
     check = _make_check('Build', CheckBucket.FAIL)
     line = _format_check_line(check)
@@ -37,19 +35,16 @@ def test_format_check_line_fail_includes_link():
     assert str(check.link) in line
 
 
-@pytest.mark.unittest
 def test_format_check_line_pending():
     check = _make_check('Build', CheckBucket.PENDING)
     assert '🔄' in _format_check_line(check)
 
 
-@pytest.mark.unittest
 def test_format_check_line_skipping():
     check = _make_check('Build', CheckBucket.SKIPPING)
     assert '⏭️' in _format_check_line(check)
 
 
-@pytest.mark.unittest
 def test_sort_checks_order():
     checks = [
         _make_check('pending', CheckBucket.PENDING),
@@ -61,7 +56,6 @@ def test_sort_checks_order():
     assert [c.name for c in sorted_checks] == ['pass', 'skip', 'fail', 'pending']
 
 
-@pytest.mark.unittest
 async def test_poll_checks_all_pass(mocker):
     checks = [
         _make_check('Build', CheckBucket.PASS),
@@ -74,7 +68,6 @@ async def test_poll_checks_all_pass(mocker):
     assert result is True
 
 
-@pytest.mark.unittest
 async def test_poll_checks_some_fail(mocker):
     checks = [
         _make_check('Build', CheckBucket.PASS),
@@ -87,7 +80,6 @@ async def test_poll_checks_some_fail(mocker):
     assert result is False
 
 
-@pytest.mark.unittest
 async def test_poll_checks_no_checks_returns_true(mocker):
     mocker.patch('gh_tt.deliver.gh.get_pr_checks', return_value=[])
 
@@ -96,7 +88,6 @@ async def test_poll_checks_no_checks_returns_true(mocker):
     assert result is True
 
 
-@pytest.mark.unittest
 async def test_poll_checks_retries_before_reporting_no_checks(mocker):
     checks = [_make_check('Build', CheckBucket.PASS)]
     mock = mocker.patch('gh_tt.deliver.gh.get_pr_checks', side_effect=[[], [], checks])
@@ -107,7 +98,6 @@ async def test_poll_checks_retries_before_reporting_no_checks(mocker):
     assert mock.call_count == 3
 
 
-@pytest.mark.unittest
 async def test_poll_checks_retries_gives_up(mocker):
     checks = [_make_check('Build', CheckBucket.PASS)]
     mocker.patch('gh_tt.deliver.gh.get_pr_checks', side_effect=[[], [], checks])
@@ -117,7 +107,6 @@ async def test_poll_checks_retries_gives_up(mocker):
     assert result is True
 
 
-@pytest.mark.unittest
 async def test_poll_checks_timeout_returns_false(mocker):
     checks = [_make_check('Build', CheckBucket.PENDING)]
     mocker.patch('gh_tt.deliver.gh.get_pr_checks', return_value=checks)
@@ -127,7 +116,6 @@ async def test_poll_checks_timeout_returns_false(mocker):
     assert result is False
 
 
-@pytest.mark.unittest
 async def test_poll_checks_polls_until_terminal(mocker):
     pending = [_make_check('Build', CheckBucket.PENDING)]
     done = [_make_check('Build', CheckBucket.PASS)]
@@ -139,7 +127,6 @@ async def test_poll_checks_polls_until_terminal(mocker):
     assert result is True
 
 
-@pytest.mark.unittest
 async def test_poll_checks_shell_error_raises_deliver_error(mocker):
     mocker.patch(
         'gh_tt.deliver.gh.get_pr_checks',
@@ -155,7 +142,6 @@ async def test_poll_checks_shell_error_raises_deliver_error(mocker):
         await poll_checks('dev', interval_seconds=0)
 
 
-@pytest.mark.unittest
 def test_render_status_contains_check_info():
     checks = [
         _make_check('Build', CheckBucket.PASS),
@@ -168,14 +154,12 @@ def test_render_status_contains_check_info():
     assert 'Lint' in plain
 
 
-@pytest.mark.unittest
 def test_render_final_all_passed():
     checks = [_make_check('Build', CheckBucket.PASS)]
     text = _render_final(checks)
     assert 'All 1 checks passed' in text.plain
 
 
-@pytest.mark.unittest
 def test_render_final_some_failed():
     checks = [
         _make_check('Build', CheckBucket.PASS),

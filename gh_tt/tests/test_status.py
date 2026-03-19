@@ -1,11 +1,8 @@
 import json
 
-import pytest
-
 from gh_tt.classes.status import _check_pending_workflows, _get_icon, _process_statuses
 
 
-@pytest.mark.unittest
 def test_check_pending_workflows_with_pending(mocker):
     """Test that pending workflows are detected correctly"""
 
@@ -37,7 +34,6 @@ def test_check_pending_workflows_with_pending(mocker):
     mock_gitter.assert_called_once()
 
 
-@pytest.mark.unittest
 def test_check_pending_workflows_all_complete(mocker):
     """Test that completed workflows return False"""
     
@@ -67,7 +63,6 @@ def test_check_pending_workflows_all_complete(mocker):
     
     assert not result
 
-@pytest.mark.unittest
 def test_check_pending_workflows_queued_status(mocker):
     """Test that queued workflows are detected as pending"""
     
@@ -89,7 +84,6 @@ def test_check_pending_workflows_queued_status(mocker):
     result = _check_pending_workflows("abc123")
     assert result
 
-@pytest.mark.unittest
 def test_check_pending_workflows_waiting_status(mocker):
     """Test that waiting workflows are detected as pending"""
     mock_workflows = [
@@ -110,7 +104,6 @@ def test_check_pending_workflows_waiting_status(mocker):
     result = _check_pending_workflows("abc123")
     assert result is True
 
-@pytest.mark.unittest
 def test_check_pending_workflows_no_workflows(mocker):
     """Test that empty workflow list returns False"""
     mocker.patch(
@@ -121,7 +114,6 @@ def test_check_pending_workflows_no_workflows(mocker):
     result = _check_pending_workflows("abc123")
     assert not result
 
-@pytest.mark.unittest
 def test_check_pending_workflows_empty_json(mocker):
     """Test that empty JSON array returns False"""
     
@@ -133,7 +125,6 @@ def test_check_pending_workflows_empty_json(mocker):
     result = _check_pending_workflows("abc123")
     assert not result
 
-@pytest.mark.unittest
 def test_check_pending_workflows_exception_handling(mocker):
     """Test that exceptions are handled gracefully"""
 
@@ -145,7 +136,6 @@ def test_check_pending_workflows_exception_handling(mocker):
     result = _check_pending_workflows("abc123")
     assert not result
 
-@pytest.mark.unittest
 def test_check_pending_workflows_invalid_json(mocker):
     """Test that invalid JSON is handled gracefully"""
     
@@ -157,7 +147,6 @@ def test_check_pending_workflows_invalid_json(mocker):
     result = _check_pending_workflows("abc123")
     assert not result
 
-@pytest.mark.unittest
 def test_check_pending_workflows_missing_status_field(mocker):
     """Test workflows with missing status field"""
     mock_workflows = [
@@ -179,38 +168,31 @@ def test_check_pending_workflows_missing_status_field(mocker):
     assert result is False
 
 
-@pytest.mark.unittest
 def test_get_icon_success():
     """Test success icon"""
     assert _get_icon('success') == "✅"
 
-@pytest.mark.unittest
 def test_get_icon_failure():
     """Test failure icon"""
     assert _get_icon('failure') == "❌"
 
-@pytest.mark.unittest
 def test_get_icon_error():
     """Test error icon"""
     assert _get_icon('error') == "💥"
 
-@pytest.mark.unittest
 def test_get_icon_pending():
     """Test pending icon"""
     assert _get_icon('pending') == "⏳"
 
-@pytest.mark.unittest
 def test_get_icon_unknown():
     """Test unknown state returns question mark"""
     assert _get_icon('unknown_state') == "❓"
 
-@pytest.mark.unittest
 def test_get_icon_empty_string():
     """Test empty string returns question mark"""
     assert _get_icon('') == "❓"
 
 
-@pytest.mark.unittest
 def test_process_statuses_all_success():
     """Test processing all successful statuses"""
     statuses = [
@@ -224,7 +206,6 @@ def test_process_statuses_all_success():
     assert all_success
     assert lines_printed == 2
 
-@pytest.mark.unittest
 def test_process_statuses_with_pending():
     """Test processing statuses with pending ones"""
     statuses = [
@@ -238,7 +219,6 @@ def test_process_statuses_with_pending():
     assert all_success  # pending doesn't affect success flag
     assert lines_printed == 2
 
-@pytest.mark.unittest
 def test_process_statuses_with_failure():
     """Test processing statuses with failures"""
     statuses = [
@@ -252,7 +232,6 @@ def test_process_statuses_with_failure():
     assert not all_success
     assert lines_printed == 2
 
-@pytest.mark.unittest
 def test_process_statuses_prints_sorted(capsys):
     """Test processing statuses with failures"""
     statuses = [
@@ -272,7 +251,6 @@ def test_process_statuses_prints_sorted(capsys):
     assert 'ci/a_test' in lines[2]
     assert 'ci/b_test' in lines[3]
 
-@pytest.mark.unittest
 def test_process_statuses_empty_list():
     """Test processing empty status list"""
     statuses = []
@@ -283,7 +261,6 @@ def test_process_statuses_empty_list():
     assert all_success is True
     assert lines_printed == 0
 
-@pytest.mark.unittest
 def test_process_statuses_missing_fields(capsys):
     """Test processing statuses with missing fields"""
     statuses = [
