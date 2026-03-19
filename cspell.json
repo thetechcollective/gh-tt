@@ -38,6 +38,7 @@
     "ignoreWords": [
         "cspell",
         "ffmerge",
+        "justfile",
         "cspellrc",
         "pytest",
         "coveragerc",

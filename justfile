@@ -26,13 +26,13 @@ typecheck:
 # Run unit tests with coverage
 [group('test')]
 test *args:
-    uv run --frozen -- pytest --cov=. --cov-config=pyproject.toml -m 'not gh_actions' {{ args }}
+    uv run --frozen -- pytest --cov=src/ --cov-config=pyproject.toml -m 'not end_to_end and not legacy' {{ args }} --numprocesses=auto
 
 # Run end-to-end tests (installs local gh-tt first)
 [group('test')]
 test-e2e *args:
     uv run --frozen -- python scripts/install_local_gh_tt.py
-    uv run --frozen -- pytest -m gh_actions {{ args }}
+    uv run --frozen -- pytest --numprocesses=auto -m end_to_end {{ args }}
 
 # Run the extension locally (e.g. just run deliver)
 [group('dev')]
