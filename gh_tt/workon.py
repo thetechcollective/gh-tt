@@ -9,11 +9,19 @@ from gh_tt.commands.gh import Issue, Repo
 logger = logging.getLogger(__name__)
 
 
+class WorkonError(Exception):
+    pass
+
+
 async def workon_issue(issue: int | Issue, *, assign: bool):
     logger.debug('workon_issue: issue=%s, assign=%s', issue, assign)
     config = Config().config()
 
-    await git.fetch()
+    _, is_safe_to_switch_branch = await asyncio.gather(git.fetch(), git.is_safe_to_switch_branch())
+    if not is_safe_to_switch_branch:
+        raise WorkonError(
+            'You have uncommitted changes to tracked files. Please commit or stash them before running this command.'
+        )
 
     match issue:
         case int():
