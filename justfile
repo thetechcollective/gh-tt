@@ -4,6 +4,8 @@
 @_default:
     just --list --unsorted
 
+
+
 # Run all checks
 [group('check')]
 check: check-test check-format check-lint check-types check-spelling check-actionlint check-zizmor
@@ -41,7 +43,7 @@ check-actionlint:
 # Check GitHub Actions with zizmor
 [group('check')]
 check-zizmor:
-    uvx zizmor ./.github/ --pedantic --offline
+    zizmor ./.github/ --pedantic --offline
 
 # Fix all auto-fixable issues
 [group('fix')]
@@ -56,6 +58,10 @@ format:
 [group('fix')]
 lint:
     uv run --frozen -- ruff check --fix
+
+[group('fix')]
+lint-actions:
+    zizmor ./.github/ --pedantic --offline --fix=safe
 
 # Run unit tests with coverage
 [group('test')]
