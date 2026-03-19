@@ -179,6 +179,7 @@ jobs:
 
         name: Test E2E
         runs-on: ubuntu-latest
+        environment: qa
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
               with:
@@ -196,7 +197,7 @@ jobs:
               id: app-token
               with:
                   app-id: ${{ vars.QA_RUNNER_APP_ID }}
-                  private-key: ${{ secrets.QA_RUNNER_SECRET }}
+                  private-key: ${{ secrets.QA_RUNNER_PRIVATE_KEY }}
                   owner: gh-tt-qa
                   permission-organization-projects: admin
                   permission-administration: write
