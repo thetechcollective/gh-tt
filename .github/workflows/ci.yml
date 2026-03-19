@@ -186,7 +186,7 @@ jobs:
             - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
               with:
                   python-version-file: ".python-version"
-            - uses: astral-sh/setup-uv@v7
+            - uses: astral-sh/setup-uv@6ee6290f1cbc4156c0bdd66691b2c144ef8df19a # v7.4.0
               with:
                   # Latest uv compliant with the project's tool.uv required version
                   version-file: "pyproject.toml"
@@ -251,6 +251,6 @@ jobs:
 
         steps:
             - name: Decide whether the needed jobs succeeded or failed
-              uses: re-actors/alls-green@release/v1
+              uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
               with:
                   jobs: ${{ toJSON(needs) }}
