@@ -19,13 +19,13 @@ def test_constructor_success():
 
 
 def test_load_issue_number_success():
-    devbranch = Devbranch().from_json(file="gh_tt/tests/data/devbranch/.tt-config-set_issue.json")
+    devbranch = Devbranch().from_json(file="tests/data/devbranch/.tt-config-set_issue.json")
     asyncio.run(devbranch._load_issue_number())
     assert devbranch.get("issue_number") == "95"
 
 
 def test_load_issue_number_none():
-    devbranch = Devbranch().from_json(file="gh_tt/tests/data/devbranch/main.json")
+    devbranch = Devbranch().from_json(file="tests/data/devbranch/main.json")
     asyncio.run(devbranch._load_issue_number())
     assert devbranch.get("issue_number") is None
     assert devbranch.get("branch_name") == "main"
@@ -40,7 +40,7 @@ def test__reuse_issue_branch(mocker):
 
     Gitter.verbose = True
     # Load the recorded instance of Devbranch
-    devbranch = Devbranch().from_json(file="gh_tt/tests/data/devbranch/workon_reuse_issue_branch.json")
+    devbranch = Devbranch().from_json(file="tests/data/devbranch/workon_reuse_issue_branch.json")
 
     # Create a single loop for all test cases
     loop = asyncio.new_event_loop()
@@ -66,7 +66,7 @@ def test__compare_before_after_trees(mocker, capsys):
 
     Gitter.verbose = True
     # Load the recorded instance of Devbranch
-    devbranch = Devbranch().from_json(file="gh_tt/tests/data/devbranch/devbranch-squeeze.json")
+    devbranch = Devbranch().from_json(file="tests/data/devbranch/devbranch-squeeze.json")
 
     # no diffs
     diff = devbranch._Devbranch__compare_before_after_trees()
@@ -87,7 +87,7 @@ def test__compare_before_after_trees(mocker, capsys):
 def test__load_squeezed_commit_message():
     Gitter.verbose = True
     # Load the recorded instance of Devbranch
-    devbranch = Devbranch().from_json(file="gh_tt/tests/data/devbranch/devbranch-squeeze.json")
+    devbranch = Devbranch().from_json(file="tests/data/devbranch/devbranch-squeeze.json")
 
     message = devbranch._Devbranch__load_squeezed_commit_message()
     assert re.search(r"^Add support for .*ready.*resolves #91", message)
@@ -97,7 +97,7 @@ def test__load_squeezed_commit_message():
 def test__squeeze_exits(capsys):
     Gitter.verbose = True
     # Load the recorded instance of Devbranch
-    devbranch = Devbranch().from_json(file="gh_tt/tests/data/devbranch/devbranch-squeeze.json")
+    devbranch = Devbranch().from_json(file="tests/data/devbranch/devbranch-squeeze.json")
 
     # Create a single loop for all test cases
     loop = asyncio.new_event_loop()
@@ -146,7 +146,7 @@ def test__squeeze_success(mocker):
 
     Gitter.verbose = True
     # Load the recorded instance of Devbranch
-    devbranch = Devbranch().from_json(file="gh_tt/tests/data/devbranch/devbranch-squeeze.json")
+    devbranch = Devbranch().from_json(file="tests/data/devbranch/devbranch-squeeze.json")
 
     Config._config_dict["squeeze"]["policies"]["abort_for_rebase"] = False
     Config._config_dict["squeeze"]["policies"]["allow-dirty"] = True
@@ -165,7 +165,7 @@ def test_load_status(mocker):
 
     Gitter.verbose = True
     # Load the recorded instance of Devbranch
-    devbranch = Devbranch().from_json(file="gh_tt/tests/data/devbranch/devbranch-squeeze.json")
+    devbranch = Devbranch().from_json(file="tests/data/devbranch/devbranch-squeeze.json")
 
     # no diffs
     assert devbranch.get("unstaged_changes") is None

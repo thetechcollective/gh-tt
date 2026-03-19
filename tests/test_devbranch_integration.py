@@ -9,7 +9,7 @@ import pytest
 
 from gh_tt.classes.config import Config, LoadStrategy
 from gh_tt.classes.gitter import Gitter
-from gh_tt.tests.testbed import Testbed
+from tests.testbed import Testbed
 
 
 class FixtureReturn(NamedTuple):
