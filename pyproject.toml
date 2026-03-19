@@ -176,7 +176,7 @@ exclude = [
 
 [tool.pytest.ini_options]
 markers = [
-    "gh_actions: tests intended for GitHub Actions runs"
+    "end_to_end: tests intended for GitHub Actions runs"
 ]
 
 asyncio_mode = "auto"

@@ -20,8 +20,8 @@ def is_gh_actions() -> bool:
 
 @pytest.fixture(
     scope='session',
-    # Abuse fixture parametrization to apply the gh_actions mark to all tests that require this fixture
-    params=[pytest.param('', marks=pytest.mark.gh_actions)],
+    # Abuse fixture parametrization to apply the end_to_end mark to all tests that require this fixture
+    params=[pytest.param('', marks=pytest.mark.end_to_end)],
 )
 async def check_end_to_end_env():
     if is_gh_actions():
