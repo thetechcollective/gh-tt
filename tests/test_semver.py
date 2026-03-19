@@ -7,7 +7,7 @@ from hypothesis import strategies as st
 
 from gh_tt.classes.gitter import Gitter
 from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver, SemverVersion
-from gh_tt.tests.testbed import Testbed
+from tests.testbed import Testbed
 
 
 def test_semver_init(capsys):
@@ -36,7 +36,7 @@ def test_semver_init(capsys):
 
 def test_semver_list(capsys):
     # Setup
-    semver = Semver().from_json("gh_tt/tests/data/semver/semver_loaded_release_and_prerelease.json")
+    semver = Semver().from_json("tests/data/semver/semver_loaded_release_and_prerelease.json")
     semver.set('semver_tags', semver._parse_tags(semver.get('tags'), prefix=None))
 
     assert isinstance(semver, Semver)
@@ -53,7 +53,7 @@ def test_semver_list(capsys):
     assert "0.6.1\n" in output
 
 def test_semver_get_current():
-    semver = Semver().from_json('gh_tt/tests/data/semver/semver_loaded_release_and_prerelease.json')
+    semver = Semver().from_json('tests/data/semver/semver_loaded_release_and_prerelease.json')
     semver.set('semver_tags', semver._parse_tags(semver.get('tags'), prefix=None))
 
     release = semver.get_current_semver()
@@ -63,7 +63,7 @@ def test_semver_get_current():
     assert str(prerelease) == "1.0.11-rc1"
 
 def test_semver_bump(capsys):
-    semver = Semver().from_json('gh_tt/tests/data/semver/semver_loaded_release_and_prerelease.json')
+    semver = Semver().from_json('tests/data/semver/semver_loaded_release_and_prerelease.json')
     semver.set('semver_tags', semver._parse_tags(semver.get('tags'), prefix=semver.get('prefix')))
 
     semver.bump("patch", message="Test patch bump", release_type=ReleaseType.PRERELEASE, execution_mode=ExecutionMode.DRY_RUN)
@@ -75,7 +75,7 @@ def test_semver_bump(capsys):
 
 def test_semver_first_prerelease(capsys):
     # Setup
-    semver = Semver().from_json("gh_tt/tests/data/semver/semver_loaded_release.json")
+    semver = Semver().from_json("tests/data/semver/semver_loaded_release.json")
     semver.set('semver_tags', semver._parse_tags(semver.get('tags'), prefix=semver.get('prefix')))
 
     assert isinstance(semver, Semver)
@@ -96,7 +96,7 @@ def test_semver_first_prerelease(capsys):
 
 
 def test_semver_first_prerelease_bump(capsys):
-    semver = Semver().from_json('gh_tt/tests/data/semver/semver_loaded_release.json')
+    semver = Semver().from_json('tests/data/semver/semver_loaded_release.json')
     semver.set('semver_tags', semver._parse_tags(semver.get('tags'), prefix=semver.get('prefix')))
 
     semver.bump("patch", message="Test patch bump", release_type=ReleaseType.PRERELEASE, execution_mode=ExecutionMode.DRY_RUN)
@@ -309,7 +309,7 @@ def test_semver_get_next_semvers(current_release, current_prerelease):
 
 @pytest.mark.parametrize(('prefix', 'expected'), [('v', 'v3.0.0'), ('', '3.0.0'), (' ', '3.0.0'), ('123', '1233.0.0')])
 def test_bump_user_passed_prefix_included_over_config(prefix, expected):
-    semver = Semver.from_json('gh_tt/tests/data/semver/semver_loaded_prefix.json')
+    semver = Semver.from_json('tests/data/semver/semver_loaded_prefix.json')
     semver.set('semver_tags', semver._parse_tags(semver.get('tags'), prefix=None))
     
     result = semver.bump(level='major', message=None, prefix=prefix, execution_mode=ExecutionMode.DRY_RUN)

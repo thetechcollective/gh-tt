@@ -3,20 +3,6 @@ name = "gh-tt"
 version = "0.0.1"
 description = "GitHub extension automating trunk-based development"
 requires-python = ">=3.12"
-authors = [
-    {name = "Lars Kruse", email = "lars@lakruzz.com"}
-]
-license = "GPL-3.0-or-later"
-readme = "README.md"
-keywords = ["github", "trunk-based-development", "automation"]
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "Natural Language :: English",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
-    "Operating System :: OS Independent",
-]
 
 dependencies = [
     "async-lru>=2.1.0",
@@ -40,35 +26,31 @@ dev = [
 requires = ["uv_build>=0.9.0,<0.10.0"]
 build-backend = "uv_build"
 
-[tool.uv.build-backend]
-module-root = ""
-
 [tool.uv]
 required-version = '>=0.10, <0.11'
 
 [tool.ty.src]
 exclude = [
-    "gh_tt/classes/*.py",
-    "gh_tt/modules/*.py",
-    "gh_tt/tests/testbed.py",
-    "gh_tt/tests/test_config.py",
-    "gh_tt/tests/test_devbranch_integration.py",
-    "gh_tt/tests/test_devbranch.py",
-    "gh_tt/tests/test_gitter.py",
-    "gh_tt/tests/test_handlers.py",
-    "gh_tt/tests/test_issue.py",
-    "gh_tt/tests/test_label.py",
-    "gh_tt/tests/test_parser.py",
-    "gh_tt/tests/test_parser_semver_list_filters.py",
-    "gh_tt/tests/test_parser_semver_list_sha.py",
-    "gh_tt/tests/test_parser_semver_top_level.py",
-    "gh_tt/tests/test_semver_list_sha.py",
-    "gh_tt/tests/test_semver_note_with_from_to.py",
-    "gh_tt/tests/test_semver_prerelease.py",
-    "gh_tt/tests/test_semver.py",
-    "gh_tt/tests/test_status.py",
-    "gh_tt/tests/test_sync.py",
-    "helpers/**"
+    "src/gh_tt/classes/*.py",
+    "src/gh_tt/modules/*.py",
+    "tests/testbed.py",
+    "tests/test_config.py",
+    "tests/test_devbranch_integration.py",
+    "tests/test_devbranch.py",
+    "tests/test_gitter.py",
+    "tests/test_handlers.py",
+    "tests/test_issue.py",
+    "tests/test_label.py",
+    "tests/test_parser.py",
+    "tests/test_parser_semver_list_filters.py",
+    "tests/test_parser_semver_list_sha.py",
+    "tests/test_parser_semver_top_level.py",
+    "tests/test_semver_list_sha.py",
+    "tests/test_semver_note_with_from_to.py",
+    "tests/test_semver_prerelease.py",
+    "tests/test_semver.py",
+    "tests/test_status.py",
+    "tests/test_sync.py",
 ]
 
 [tool.ruff]
@@ -170,27 +152,26 @@ quote-style = "single"
 indent-style = "space"
 docstring-code-format = true
 exclude = [
-    "gh_tt/classes/*.py",
-    "gh_tt/modules/*.py",
-    "gh_tt/tests/testbed.py",
-    "gh_tt/tests/test_config.py",
-    "gh_tt/tests/test_devbranch_integration.py",
-    "gh_tt/tests/test_devbranch.py",
-    "gh_tt/tests/test_gitter.py",
-    "gh_tt/tests/test_handlers.py",
-    "gh_tt/tests/test_issue.py",
-    "gh_tt/tests/test_label.py",
-    "gh_tt/tests/test_parser.py",
-    "gh_tt/tests/test_parser_semver_list_filters.py",
-    "gh_tt/tests/test_parser_semver_list_sha.py",
-    "gh_tt/tests/test_parser_semver_top_level.py",
-    "gh_tt/tests/test_semver_list_sha.py",
-    "gh_tt/tests/test_semver_note_with_from_to.py",
-    "gh_tt/tests/test_semver_prerelease.py",
-    "gh_tt/tests/test_semver.py",
-    "gh_tt/tests/test_status.py",
-    "gh_tt/tests/test_sync.py",
-    "helpers/**"
+    "src/gh_tt/classes/*.py",
+    "src/gh_tt/modules/*.py",
+    "tests/testbed.py",
+    "tests/test_config.py",
+    "tests/test_devbranch_integration.py",
+    "tests/test_devbranch.py",
+    "tests/test_gitter.py",
+    "tests/test_handlers.py",
+    "tests/test_issue.py",
+    "tests/test_label.py",
+    "tests/test_parser.py",
+    "tests/test_parser_semver_list_filters.py",
+    "tests/test_parser_semver_list_sha.py",
+    "tests/test_parser_semver_top_level.py",
+    "tests/test_semver_list_sha.py",
+    "tests/test_semver_note_with_from_to.py",
+    "tests/test_semver_prerelease.py",
+    "tests/test_semver.py",
+    "tests/test_status.py",
+    "tests/test_sync.py",
 ]
 
 [tool.pytest.ini_options]
@@ -202,7 +183,7 @@ asyncio_mode = "auto"
 
 # Ignore the temp directory during test collection
 testpaths = [
-    "gh_tt/tests"
+    "tests"
 ]
 norecursedirs = [
     "temp",
@@ -221,18 +202,14 @@ log_format = "%(asctime)s - %(levelname)s - %(name)s - %(funcName)s - %(module)s
 log_date_format = "%Y-%m-%d %H:%M:%S"
 
 [tool.coverage.run]
-# Include the main CLI script and the classes directory
+# Include the main CLI script
 source = [
-    "gh_tt/"
+    "src/"
 ]
 
 # Exclude test files
 omit = [
-    "*/tests/*",
-    "gh_tt/modules/*",
-    "setup.py",
-    "gh_*.py",
-    "temp/*"
+    "tests/*",
 ]
 
 [tool.coverage.report]

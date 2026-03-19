@@ -6,7 +6,7 @@ from pydantic import HttpUrl
 
 from gh_tt import shell
 from gh_tt.shell import ShellError
-from gh_tt.tests.env_builder import IntegrationEnv
+from tests.env_builder import IntegrationEnv
 
 
 @pytest.mark.usefixtures('check_end_to_end_env')
