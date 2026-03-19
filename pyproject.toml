@@ -197,7 +197,7 @@ asyncio_mode = "auto"
 
 # Ignore the temp directory during test collection
 testpaths = [
-    "gh_tt/tests"
+    "tests"
 ]
 norecursedirs = [
     "temp",
@@ -216,18 +216,14 @@ log_format = "%(asctime)s - %(levelname)s - %(name)s - %(funcName)s - %(module)s
 log_date_format = "%Y-%m-%d %H:%M:%S"
 
 [tool.coverage.run]
-# Include the main CLI script and the classes directory
+# Include the main CLI script
 source = [
-    "gh_tt/"
+    "src/"
 ]
 
 # Exclude test files
 omit = [
-    "*/tests/*",
-    "gh_tt/modules/*",
-    "setup.py",
-    "gh_*.py",
-    "temp/*"
+    "tests/*",
 ]
 
 [tool.coverage.report]
