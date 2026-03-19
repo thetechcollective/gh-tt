@@ -323,7 +323,7 @@ async def test_workon_title_success():
 async def test_workon_aborts_on_uncommitted_local_changes():
     async with IntegrationEnv().require_owner().create_repo().create_local_clone().build() as env:
         assert env.local_repo is not None, f'Expected local repo Path, got {type(env.local_repo)}'
-        
+
         # Arrange
         (env.local_repo / 'EXAMPLE.md').write_text('original')
         await shell.run(['git', 'add', 'EXAMPLE.md'], cwd=env.local_repo)
@@ -335,8 +335,12 @@ async def test_workon_aborts_on_uncommitted_local_changes():
         workon_result = await shell.run(
             ['gh', 'tt', 'workon', '--pr-workflow', '-t', 'title of the issue', '--no-assign'],
             cwd=env.local_repo,
-            die_on_error=False
+            die_on_error=False,
         )
 
         # Assert
         assert workon_result.return_code == 1
+        assert (
+            'You have uncommitted changes to tracked files. Please commit or stash them before running this command.'
+            in workon_result.stderr
+        )

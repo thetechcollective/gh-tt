@@ -14,6 +14,13 @@ from gh_tt import shell
 logger = logging.getLogger(__name__)
 
 
+async def is_safe_to_switch_branch() -> bool:
+    result = await shell.run(['git', 'status', '--porcelain'])
+
+    # ?? marks untracked files - we can safely switch branches with those
+    return all(line.startswith('??') for line in result.stdout.splitlines())
+
+
 async def fetch():
     await shell.run(['git', 'fetch', '--tags', '--all'])
 
