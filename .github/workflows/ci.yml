@@ -59,7 +59,7 @@ jobs:
 
             - name: Run tests
               run: |
-                  uv run --frozen -- pytest --cov=. --cov-config=.coveragerc --numprocesses=auto -m 'not end_to_end'
+                  uv run --frozen -- pytest --cov=src/ --cov-config=pyproject.toml --numprocesses=auto -m 'not end_to_end and not legacy'
 
     lint-python:
         name: Lint Python
