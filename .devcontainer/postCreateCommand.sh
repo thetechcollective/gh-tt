@@ -18,6 +18,7 @@ uv venv
 uv sync
 
 uv tool install zizmor
+uv tool install rust-just
 
 # Check if the GH CLI is required
 if [ -e $(dirname $0)/_temp.token ]; then
