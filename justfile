@@ -4,24 +4,48 @@
 @_default:
     just --list --unsorted
 
-# Format, lint, and type check (run after making changes)
-[group('qa')]
-check: format lint typecheck
+# Run all checks
+[group('check')]
+check: check-test check-format check-lint check-types check-spelling
+
+# Check unit tests
+[group('check')]
+check-test *args:
+    uv run --frozen -- pytest -m 'not end_to_end and not legacy' --cov=src/ --cov-config=pyproject.toml --tb=no -q --no-header --numprocesses=auto {{ args }}
+
+# Check ruff formatting
+[group('check')]
+check-format:
+    uv run --frozen -- ruff format --check --output-format=concise
+
+# Check ruff linting
+[group('check')]
+check-lint:
+    uv run --frozen -- ruff check --output-format=concise
+
+# Check ty types
+[group('check')]
+check-types:
+    uv run --frozen -- ty check --output-format=concise
+
+# Check cspell spelling
+[group('check')]
+check-spelling:
+    cspell lint --no-progress
+
+# Fix all auto-fixable issues
+[group('fix')]
+fix: format lint
 
 # Run ruff formatter
-[group('qa')]
+[group('fix')]
 format:
     uv run --frozen -- ruff format
 
 # Run ruff linter with auto-fix
-[group('qa')]
+[group('fix')]
 lint:
     uv run --frozen -- ruff check --fix
-
-# Run ty type checker
-[group('qa')]
-typecheck:
-    uv run --frozen -- ty check
 
 # Run unit tests with coverage
 [group('test')]
