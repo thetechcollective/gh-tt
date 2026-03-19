@@ -105,7 +105,7 @@ def test_semver_first_prerelease_bump(capsys):
     assert "Bumped patch from version '0.7.3' to '0.7.4-alpha1'" in output
     assert "Test patch bump\"" in output
 
-@pytest.mark.gh_actions
+@pytest.mark.legacy
 def test_note_with_one_release():
     [extension_list, _] = Testbed.gitter_run(cmd='gh extension list')
     if 'thetechcollective/gh-tt' in extension_list:

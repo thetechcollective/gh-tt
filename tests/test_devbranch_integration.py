@@ -81,7 +81,7 @@ def workon_success_env() -> Generator[FixtureReturn]:
     Testbed.clean_up(repository_html_url=repo_url, project_number=project_number, project_owner=owner)
 
 
-@pytest.mark.gh_actions
+@pytest.mark.legacy
 def test_workon_success(workon_success_env):
     env = workon_success_env
 
