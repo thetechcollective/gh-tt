@@ -53,6 +53,8 @@ exclude = [
     "tests/test_sync.py",
 ]
 
+include = ["src", "tests", ".githooks/pre-commit"]
+
 [tool.ruff]
 exclude = [
     ".bzr",
