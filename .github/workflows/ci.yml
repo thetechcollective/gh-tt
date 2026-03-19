@@ -70,15 +70,28 @@ jobs:
               run: |
                   uv run --frozen -- ruff check --output-format=github
 
+    # We are running both actionlint and zizmor because they have many non-overlapping checks
+    # actionlint is focused on correctness (syntax, types, action inputs, shellcheck)
+    # zizmor is focused on security (permissions, pinning, dangerous triggers, injection)
     lint-actions:
         name: Lint GH Actions
         runs-on: ubuntu-latest
 
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 
-            - run: |
+            
+            - name: Run actionlint
+              run: |
                 bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.11
                 ./actionlint -color
+
+
+            - uses: astral-sh/setup-uv@6ee6290f1cbc4156c0bdd66691b2c144ef8df19a # v7.4.0
+              with:
+                  version-file: "pyproject.toml"
+
+            - name: Run zizmor
+              run: uvx zizmor ./.github/ --format=github
 
     format:
         name: Format
