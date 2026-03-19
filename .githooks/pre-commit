@@ -22,9 +22,8 @@ else
 fi
 
 # Pytest with coverage
-# Run the default/local subset and exclude CI-only gh_actions tests.
 # Capture only STDERR (errors and summary), discard STDOUT (individual test progress)
-PYTEST_OUT=$(uv run --frozen -- pytest --cov=. --cov-report= -m "not gh_actions" --tb=no -q 2>&1)
+PYTEST_OUT=$(uv run --frozen -- pytest --cov=src/ --cov-config=pyproject.toml -m "not end_to_end and not legacy" --tb=no -q 2>&1)
 
 if [ $? -eq 0 ]; then
     echo "   ✅ Pytest with coverage"

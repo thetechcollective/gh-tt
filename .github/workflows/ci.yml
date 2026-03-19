@@ -59,7 +59,7 @@ jobs:
 
             - name: Run tests
               run: |
-                  uv run --frozen -- pytest --cov=. --cov-config=.coveragerc --numprocesses=auto -m 'not gh_actions'
+                  uv run --frozen -- pytest --cov=src/ --cov-config=pyproject.toml --numprocesses=auto -m 'not end_to_end and not legacy'
 
     lint-python:
         name: Lint Python
@@ -237,7 +237,7 @@ jobs:
                   GH_TOKEN: ${{ steps.app-token.outputs.token }}
                   QA_ORGANIZATION_ID: ${{ vars.QA_ORG_ID }}
               run: |
-                  uv run --frozen -- pytest --numprocesses=auto -m gh_actions
+                  uv run --frozen -- pytest --numprocesses=auto -m end_to_end
 
     check: # This job acts as 'the mother of all jobs' and is the only required check to enter main
         name: ✅ All required checks passed

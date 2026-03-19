@@ -82,7 +82,12 @@ async def poll_until(
     try:
         async with asyncio.timeout(timeout_seconds):
             while True:
-                result = await run(cmd, cwd=cwd)
+                try:
+                    result = await run(cmd, cwd=cwd)
+                except ShellError:
+                    logger.debug('poll_until: command failed, retrying in %ds', interval)
+                    await asyncio.sleep(interval)
+                    continue
                 if predicate(result):
                     logger.debug('poll_until: predicate satisfied')
                     return result
