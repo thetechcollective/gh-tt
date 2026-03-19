@@ -13,6 +13,8 @@ CHECKS = [
     {'name': 'Ruff lint', 'cmd': ['just', 'check-lint']},
     {'name': 'ty type check', 'cmd': ['just', 'check-types']},
     {'name': 'cspell spell check', 'cmd': ['just', 'check-spelling']},
+    {'name': 'actionlint', 'cmd': ['just', 'check-actionlint']},
+    {'name': 'zizmor', 'cmd': ['just', 'check-zizmor']},
 ]
 
 

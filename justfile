@@ -6,7 +6,7 @@
 
 # Run all checks
 [group('check')]
-check: check-test check-format check-lint check-types check-spelling
+check: check-test check-format check-lint check-types check-spelling check-actionlint check-zizmor
 
 # Check unit tests
 [group('check')]
@@ -32,6 +32,16 @@ check-types:
 [group('check')]
 check-spelling:
     cspell lint --no-progress
+
+# Check GitHub Actions with actionlint
+[group('check')]
+check-actionlint:
+    actionlint -oneline
+
+# Check GitHub Actions with zizmor
+[group('check')]
+check-zizmor:
+    uvx zizmor ./.github/ --pedantic --offline
 
 # Fix all auto-fixable issues
 [group('fix')]
