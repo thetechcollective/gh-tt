@@ -4,26 +4,37 @@ import logging
 
 from gh_tt.classes.config import Config
 from gh_tt.commands import gh, git
+from gh_tt.commands.gh import Issue
 
 logger = logging.getLogger(__name__)
 
 
-async def workon_issue(issue_number: int, *, assign: bool):
-    logger.debug('workon_issue: issue_number=%d, assign=%s', issue_number, assign)
+async def workon_issue(issue: int | Issue, *, assign: bool):
+    logger.debug('workon_issue: issue=%s, assign=%s', issue, assign)
     config = Config().config()
 
     await git.fetch()
-    issue, repo, remote = await asyncio.gather(
-        gh.get_issue(issue_number), gh.get_repo(), git.get_remote()
-    )
-    logger.debug('fetched issue=%s, repo=%s, remote=%s', issue.title, repo.name, remote)
+
+    match issue:
+        case int():
+            issue, repo, remote = await asyncio.gather(
+                gh.get_issue(issue), gh.get_repo(), git.get_remote()
+            )
+            logger.debug('fetched issue=%s, repo=%s, remote=%s', issue.title, repo.name, remote)
+        case Issue():
+            repo, remote = await asyncio.gather(
+                gh.get_repo(), git.get_remote()
+            )
+            logger.debug('fetched repo=%s, remote=%s', repo.name, remote)
+
+    assert isinstance(issue, Issue), 'Expected issue to be an Issue object after the fetch step'
 
     if issue.closed:
         raise RuntimeError(
             'Issue is closed. Working on closed issues is not supported. Please open a new issue in favor of reopening issues.'
         )
 
-    existing_branch = await git.check_branch_exists(issue_number)
+    existing_branch = await git.check_branch_exists(issue.number)
     logger.debug('existing branch check result: %s', existing_branch)
 
     match existing_branch:
@@ -107,4 +118,4 @@ async def workon_issue(issue_number: int, *, assign: bool):
 async def workon_title(issue_title: str, issue_body: str | None, *, assign: bool):
     logger.debug('workon_title: title=%s, assign=%s', issue_title, assign)
     issue = await gh.create_issue(title=issue_title, body=issue_body)
-    await workon_issue(issue_number=issue.number, assign=assign)
+    await workon_issue(issue=issue, assign=assign)
