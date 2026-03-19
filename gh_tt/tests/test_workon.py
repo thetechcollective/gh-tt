@@ -14,6 +14,8 @@ async def test_workon_basic_success():
     async with (
         IntegrationEnv().require_owner().create_repo().create_issue().create_local_clone().build()
     ) as env:
+        assert env.local_repo is not None, f'Expected local repo Path, got {type(env.local_repo)}'
+
         workon_result = await shell.run(
             ['gh', 'tt', 'workon', '--pr-workflow', '-i', str(env.issue_number), '--no-assign'],
             cwd=env.local_repo,
@@ -31,7 +33,7 @@ async def test_workon_basic_success():
         assert HttpUrl(output), 'Expected output to be a valid url'
 
         # Verify a draft PR was created for this branch
-        pr_data = await shell.run(
+        pr_data = await shell.poll_until(
             [
                 'gh',
                 'pr',
@@ -41,8 +43,11 @@ async def test_workon_basic_success():
                 str(env.repo_url),
                 '--json',
                 'number,isDraft,body',
-            ]
+            ],
+            cwd=env.local_repo,
+            predicate=lambda r: bool(r.stdout),
         )
+        assert pr_data is not None, 'Expected PR to be created'
         pr = json.loads(pr_data.stdout)
 
         assert pr['isDraft'], 'Expected PR to be a draft'
