@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 
-from gh_tt.classes.gitter import Gitter
+from gh_tt import shell
 from gh_tt.commands import gh
 from gh_tt.modules.tt_handlers import COMMAND_HANDLERS
 from gh_tt.modules.tt_parser import tt_parse
@@ -48,7 +48,19 @@ def main():
 
     if args.version:
         logger.debug('printing version and exiting')
-        Gitter.version()
+
+        async def version_context() -> str:
+            cmds = [
+                ['pwd'],
+                ['python3', '--version'],
+                ['git', '--version'],
+                ['gh', '--version'],
+                ['gh', 'extension', 'list'],
+            ]
+            results = await asyncio.gather(*(shell.run(cmd) for cmd in cmds))
+            return '\n'.join(r.stdout for r in results)
+
+        print(asyncio.run(version_context()))
         sys.exit(0)
 
     gh_scopes = asyncio.run(gh.get_gh_auth_scopes())
