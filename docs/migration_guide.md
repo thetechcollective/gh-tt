@@ -142,7 +142,6 @@ If you'd like to _not_ type `--pr-workflow` all the time, you can change your al
 wrapup:  '!gh tt wrapup "$@"'
 - deliver: '!gh tt deliver "$@"'
 + deliver: '!gh tt deliver --pr-workflow "$@"'
-responsibles: '!gh tt responsibles "$@"'
 semver: '!gh tt semver "$@"'
 ```
 
