@@ -14,6 +14,7 @@ from gh_tt.classes.label import Label
 from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver
 from gh_tt.classes.status import Status
 from gh_tt.deliver import DeliverError, deliver
+from gh_tt.modules import configuration
 from gh_tt.workon import workon_issue, workon_title
 
 logger = logging.getLogger(__name__)
@@ -77,10 +78,8 @@ def _resolve_poll_flag(args) -> bool:
     if args.poll is not None:
         return args.poll
 
-    with contextlib.suppress(KeyError):
-        return Config.config()['deliver']['policies']['poll']
-
-    return False
+    config = configuration.load_config()
+    return config.deliver.policies.poll
 
 
 def handle_deliver(args):
