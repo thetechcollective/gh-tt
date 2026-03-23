@@ -13,6 +13,7 @@ from gh_tt.classes.issue import Issue
 from gh_tt.classes.label import Label
 from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver
 from gh_tt.classes.status import Status
+from gh_tt.commands import git
 from gh_tt.deliver import DeliverError, deliver
 from gh_tt.modules import configuration
 from gh_tt.workon import workon_issue, workon_title
@@ -23,7 +24,8 @@ logger = logging.getLogger(__name__)
 def handle_workon(args):
     """Handle the workon command"""
     if args.pr_workflow:
-        config = configuration.load_config()
+        git_root = asyncio.run(git.get_root())
+        config = configuration.load_config(git_root)
 
         if args.title:
             logger.debug("handle_workon: pr_workflow with title=%s", args.title)
@@ -80,7 +82,8 @@ def _resolve_poll_flag(args) -> bool:
     if args.poll is not None:
         return args.poll
 
-    config = configuration.load_config()
+    git_root = asyncio.run(git.get_root())
+    config = configuration.load_config(git_root)
     return config.deliver.policies.poll
 
 
