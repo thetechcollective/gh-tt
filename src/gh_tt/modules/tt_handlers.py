@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 
 import asyncio
-import contextlib
 import logging
 import sys
 
 from gh_tt.classes import sync
-from gh_tt.classes.config import Config
 from gh_tt.classes.devbranch import Devbranch
 from gh_tt.classes.gitter import Gitter
-from gh_tt.classes.issue import Issue
-from gh_tt.classes.label import Label
 from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver
 from gh_tt.commands import git
 from gh_tt.deliver import DeliverError, deliver
@@ -40,26 +36,6 @@ def handle_workon(args):
         return
 
     _abort_on_legacy_path(args)
-
-    devbranch = Devbranch()
-    label = None
-
-    if args.type is not None:
-        Label.validate(args.type, "type")
-
-    if args.issue:
-        if label is None:
-            with contextlib.suppress(KeyError, AttributeError):
-                label = Config().config()['workon']['default_type_labels']['issue']
-
-        devbranch.set_issue(issue_number=args.issue, assign=args.assignee, msg=args.body, label=label)
-        
-    elif args.title:
-        if label is None:
-            with contextlib.suppress(KeyError, AttributeError):
-                label = Config().config()['workon']['default_type_labels']['title']
-        issue = Issue.create_new(title=args.title, body=args.body)
-        devbranch.set_issue(issue_number=issue.get('number'), assign=args.assignee, label=label)
 
 
 def _resolve_poll_flag(args) -> bool:

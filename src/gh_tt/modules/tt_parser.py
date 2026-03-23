@@ -38,7 +38,6 @@ def tt_parse(args=None):
     workon_group = workon_parser.add_mutually_exclusive_group()
     workon_group.add_argument('-i', '--issue', type=int, help='Issue number')
     workon_group.add_argument('-t', '--title', type=str, help='Title for the new issue')
-    workon_parser.add_argument('--type', type=str, help='Set an issue type label', default=None)
     workon_parser.add_argument('-b', '--body', dest='body', type=str, help='Optional body (issue comment) for the new issue')
 
     assign_group = workon_parser.add_mutually_exclusive_group()

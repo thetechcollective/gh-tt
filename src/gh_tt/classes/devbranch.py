@@ -134,12 +134,6 @@ class Devbranch(Lazyload):
         
         return True
 
-    def __develop(self):
-        """Develop on the issue branch, creating a new branch if needed"""
-        
-        asyncio.run(self._assert_props(['issue_number', 'default_branch', 'branch_name']))
-        asyncio.run(self._run("develop_on_branch"))
-
     async def __reuse_issue_branch(self, issue_number=int):
         """Check if there is a local or remote branch with the issue number and switch to it
         Args:
@@ -213,61 +207,6 @@ class Devbranch(Lazyload):
         self.set('is_dirty',  len(self.props['unstaged_changes']) > 0 or len(
             self.props['staged_changes']) > 0)
 
-
-    def set_issue(
-            self,
-            issue_number: int,
-            label:str | None = None,
-            msg:str | None = None,
-            *, assign = True
-        ):
-        """Set the issue number context to work on"""
-
-        asyncio.run(self._assert_props(['remote', 'default_branch']))
-
-        self.set('issue_number', issue_number)
-        self.set('assign', assign)
-
-        issue = Issue.load(number=issue_number)
-
-        if issue.get('closed'):
-            print(f"⛔️ ERROR: Issue '{issue_number}' is closed. Create a new issue to work on.", file=sys.stderr)
-            sys.exit(1)
-
-        reuse = asyncio.run(self.__reuse_issue_branch(issue_number=issue_number))
-        if not reuse:
-            # Construct a valid branch name based on the issue number, and the title, replacing spaces with underscores and weed out any chars that aren't allowind in branch names
-            issue_title = issue.get('title')
-            branch_valid_title = re.sub(
-                '[^a-zA-Z0-9_-]', '', re.sub(' ', '_', issue_title))
-            branch_name = f"{issue_number}-{branch_valid_title}"
-            self.set('branch_name', branch_name)
-            self.__develop()
-
-        # at this point the branch should exist and is checked out - either through a local branch, a remote branch or a new branch
-
-        # TODO Update the data used for metrics: 1) assignee, 2) add to project 3) update project field
-
-        # assign the issue to the current user
-        if self.get('assign'):
-            issue.assign(assignee='@me')
-
-        issue.label(label=label)
-
-
-        if msg:
-            # add the body to the issue
-            issue.comment(msg=msg)
-
-        # add the issue to the project and set the Status
-        project = Project()
-        if project.get('project_owner') and project.get('project_number'): # empty stings are 'falsy' too in python
-            workon_field = "Status"
-            workon_field_value = project.get('workon_action')
-
-            # TODO get the values from the config
-            project.update_field(url=issue.get(
-                'url'), field=workon_field, field_value=workon_field_value)
 
     def deliver(self):
         """Mapped to the 'deliver' subcommand."""
