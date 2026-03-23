@@ -139,7 +139,6 @@ If you'd like to _not_ type `--pr-workflow` all the time, you can change your al
 ```diff
 - workon:  '!gh tt workon "$@"'
 + workon:  '!gh tt workon --pr-workflow "$@"'
-wrapup:  '!gh tt wrapup "$@"'
 - deliver: '!gh tt deliver "$@"'
 + deliver: '!gh tt deliver --pr-workflow "$@"'
 semver: '!gh tt semver "$@"'
