@@ -50,8 +50,3 @@ class Gitter(Lazyload):
     @classmethod
     def version(cls):
         print(asyncio.run(cls()._run("version_context")))
-
-    @classmethod
-    def get_commit_sha(cls):
-        """Get current commit SHA"""
-        return asyncio.run(cls()._run("get_commit_sha"))

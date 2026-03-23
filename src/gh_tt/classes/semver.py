@@ -10,6 +10,7 @@ from pathlib import Path
 from gh_tt.classes.config import Config
 from gh_tt.classes.gitter import Gitter
 from gh_tt.classes.lazyload import Lazyload
+from gh_tt.commands import git
 
 
 class ReleaseType(StrEnum):
@@ -229,7 +230,7 @@ class SemverVersion:
             import contextlib
             with contextlib.suppress(Exception):
                 # Get the current commit SHA and take first 7 characters
-                full_sha = Gitter.get_commit_sha()
+                full_sha = asyncio.run(git.get_branch_tip_hash(branch='HEAD'))
                 if full_sha:
                     short_sha = full_sha[:7]  # Use first 7 chars for short SHA
                 
