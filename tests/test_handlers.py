@@ -4,7 +4,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from gh_tt.classes.config import Config
-from gh_tt.modules.tt_handlers import handle_wrapup
+from gh_tt.modules.tt_handlers import handle_deliver, handle_workon, handle_wrapup
 
 
 @pytest.mark.parametrize("config_value", [True, False])
@@ -43,3 +43,17 @@ def test_handlers_wrapup_poll_config_true(mocker: MockerFixture):
     handle_wrapup(args)
 
     mocked_poll.assert_called_once()
+
+
+def test_workon_aborts_without_pr_workflow():
+    args = argparse.Namespace(command="workon", pr_workflow=False)
+
+    with pytest.raises(SystemExit):
+        handle_workon(args)
+
+
+def test_deliver_aborts_without_pr_workflow():
+    args = argparse.Namespace(command="deliver", pr_workflow=False)
+
+    with pytest.raises(SystemExit):
+        handle_deliver(args)
