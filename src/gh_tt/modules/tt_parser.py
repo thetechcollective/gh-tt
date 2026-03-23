@@ -65,18 +65,6 @@ def tt_parse(args=None):
             in 'thetechcollective/gh-tt' for details.
             """)
     deliver_parser.add_argument('-d,', '--delete-branch', action='store_true', dest='delete_branch', default=False, help='Delete branch after the PR is merged. Only supported with the --pr-workflow flag.')
-    
-    #Add the responsibles subcommand
-    responsibles_parser = subparsers.add_parser(
-        'responsibles', 
-        parents=[parent_parser], 
-        help="List the responsibles for the current issue branch",
-        description="""
-            Lists the responsibles for the current change set""")
-    responsibles_parser.add_argument('--unstaged', action='store_true', help='Get the list of responsibles for all dirty, but unstaged changes', required=False, default=False)
-    responsibles_parser.add_argument('--staged',  action='store_true', help='Get the list of responsibles for staged changes', required=False, default=False)
-    responsibles_parser.add_argument('--exclude', type=str, help="Comma separated list of handles to exclude '@me' is supported too", required=False, default=None)
-    responsibles_parser.set_defaults(command='responsibles')
 
     # Add the semver subcommand
     semver_parser = subparsers.add_parser(
@@ -168,9 +156,6 @@ def tt_parse(args=None):
     if not args.command and not args.version:
         parser.print_help()
         parser.exit(0)
-
-    if args.command == 'responsibles' and not (args.unstaged or args.staged):
-        parser.error("You must specify either --unstaged or --staged  or both for the responsibles command")
 
     if args.command == 'sync' and not (args.labels or args.milestones):
         sync_parser.error("🛑 You must specify at least one entity (e.g. labels) to sync")
