@@ -2,7 +2,6 @@ import asyncio
 import logging
 
 from gh_tt.commands import gh, git
-from gh_tt.commands.gh import Issue, Repo
 from gh_tt.modules import configuration
 
 logger = logging.getLogger(__name__)
@@ -12,7 +11,7 @@ class WorkonError(Exception):
     pass
 
 
-async def workon_issue(issue: int | Issue, config: configuration.TtConfig, *, assign: bool):
+async def workon_issue(issue: int | gh.Issue, config: configuration.TtConfig, *, assign: bool):
     logger.debug('workon_issue: issue=%s, assign=%s', issue, assign)
 
     _, is_safe_to_switch_branch = await asyncio.gather(git.fetch(), git.is_safe_to_switch_branch())
@@ -27,11 +26,11 @@ async def workon_issue(issue: int | Issue, config: configuration.TtConfig, *, as
                 gh.get_issue(issue), gh.get_repo(), git.get_remote()
             )
             logger.debug('fetched issue=%s, repo=%s, remote=%s', issue.title, repo.name, remote)
-        case Issue():
+        case gh.Issue():
             repo, remote = await asyncio.gather(gh.get_repo(), git.get_remote())
             logger.debug('fetched repo=%s, remote=%s', repo.name, remote)
 
-    assert isinstance(issue, Issue), 'Expected issue to be an Issue object after the fetch step'
+    assert isinstance(issue, gh.Issue), 'Expected issue to be an Issue object after the fetch step'
 
     if issue.closed:
         raise RuntimeError(
@@ -85,7 +84,7 @@ async def workon_title(
     await workon_issue(issue=issue, assign=assign, config=config)
 
 
-async def _create_or_reuse_branch(issue: Issue, repo: Repo, remote: str) -> str:
+async def _create_or_reuse_branch(issue: gh.Issue, repo: gh.Repo, remote: str) -> str:
     existing_branch = await git.check_branch_exists(issue.number)
     logger.debug('existing branch check result: %s', existing_branch)
 

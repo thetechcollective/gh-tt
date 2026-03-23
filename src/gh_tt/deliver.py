@@ -8,7 +8,6 @@ from rich.live import Live
 from rich.text import Text
 
 from gh_tt.commands import gh, git
-from gh_tt.commands.gh import TERMINAL_BUCKETS, CheckBucket
 from gh_tt.shell import ShellError
 
 logger = logging.getLogger(__name__)
@@ -20,13 +19,13 @@ class DeliverError(Exception):
 
 def _format_check_line(check: gh.Check) -> str:
     match check.bucket:
-        case CheckBucket.FAIL:
+        case gh.CheckBucket.FAIL:
             return f'  ❌ {check.name} ({check.workflow}) — {check.link}'
-        case CheckBucket.PASS:
+        case gh.CheckBucket.PASS:
             return f'  ✅ {check.name} ({check.workflow})'
-        case CheckBucket.SKIPPING:
+        case gh.CheckBucket.SKIPPING:
             return f'  ⏭️ {check.name} ({check.workflow})'
-        case CheckBucket.PENDING:
+        case gh.CheckBucket.PENDING:
             return f'  🔄 {check.name} ({check.workflow})'
         case _:
             raise AssertionError(f'Unexpected check bucket: {check.bucket}')
@@ -34,10 +33,10 @@ def _format_check_line(check: gh.Check) -> str:
 
 def _sort_checks(checks: list[gh.Check]) -> list[gh.Check]:
     order = {
-        CheckBucket.PASS: 0,
-        CheckBucket.SKIPPING: 1,
-        CheckBucket.FAIL: 2,
-        CheckBucket.PENDING: 3,
+        gh.CheckBucket.PASS: 0,
+        gh.CheckBucket.SKIPPING: 1,
+        gh.CheckBucket.FAIL: 2,
+        gh.CheckBucket.PENDING: 3,
     }
     return sorted(checks, key=lambda c: order[c.bucket])
 
@@ -45,7 +44,7 @@ def _sort_checks(checks: list[gh.Check]) -> list[gh.Check]:
 def _render_status(checks: list[gh.Check]) -> Text:
     now = datetime.now(tz=UTC).astimezone()
     timestamp = now.strftime('%H:%M:%S')
-    terminal = [c for c in checks if c.bucket in TERMINAL_BUCKETS]
+    terminal = [c for c in checks if c.bucket in gh.TERMINAL_BUCKETS]
     total = len(checks)
 
     lines = [f'[{timestamp}] ⏳ {len(terminal)}/{total} checks completed']
@@ -57,7 +56,7 @@ def _render_final(checks: list[gh.Check]) -> Text:
     now = datetime.now(tz=UTC).astimezone()
     timestamp = now.strftime('%H:%M:%S')
     total = len(checks)
-    failed = [c for c in checks if c.bucket == CheckBucket.FAIL]
+    failed = [c for c in checks if c.bucket == gh.CheckBucket.FAIL]
 
     if failed:
         header = f'[{timestamp}] ❌ {len(failed)}/{total} checks failed'
@@ -117,7 +116,7 @@ async def poll_checks(
                         await asyncio.sleep(1)
                         continue
 
-                    pending = [c for c in checks if c.bucket not in TERMINAL_BUCKETS]
+                    pending = [c for c in checks if c.bucket not in gh.TERMINAL_BUCKETS]
                     logger.debug(
                         'poll_checks: %d pending, %d terminal',
                         len(pending),
@@ -125,7 +124,7 @@ async def poll_checks(
                     )
 
                     if not pending:
-                        all_passed = all(c.bucket != CheckBucket.FAIL for c in checks)
+                        all_passed = all(c.bucket != gh.CheckBucket.FAIL for c in checks)
                         logger.debug('poll_checks: all terminal, all_passed=%s', all_passed)
                         live.update(_render_final(checks))
                         return all_passed
@@ -143,7 +142,7 @@ async def poll_checks(
             return False
         except KeyboardInterrupt:
             logger.debug('poll_checks: interrupted by user')
-            failed = [c for c in checks if c.bucket == CheckBucket.FAIL]
+            failed = [c for c in checks if c.bucket == gh.CheckBucket.FAIL]
             for c in failed:
                 print(c.link, file=sys.stderr)
             return True
