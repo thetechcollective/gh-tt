@@ -12,7 +12,6 @@ class Gitter(Lazyload):
         It supports using cached data from previous runs.
     """
     required_version = '2.55.0'
-    verbose = False
     die_on_error = True
     workdir = Path.cwd()
     use_cache = False
@@ -31,18 +30,40 @@ class Gitter(Lazyload):
         raise RuntimeError("Could not determine the git root directory")
     class_cache_file = Path(git_root) / ".tt_cache"
 
-    def __init__(self, cmd=str, die_on_error=None, msg=None, verbose=None, workdir=None):
+    def __init__(self, cmd=str, die_on_error=None, msg=None, workdir=None):
         super().__init__()
         # se class defaults if not set
         if workdir is None:
             workdir = self.workdir
         if die_on_error is None:
             die_on_error = self.die_on_error
-        if verbose is None:
-            verbose = self.verbose
+        
         self.set('cmd', cmd)
         self.set('msg', msg)
         self.set('die_on_error', die_on_error)
-        self.set('verbose', verbose)
         self.set('workdir', workdir)
         self.set('cache', self.use_cache)
+
+    async def run(self):            
+        process = await asyncio.create_subprocess_shell(
+            cmd=self.get('cmd'),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=self.get('workdir')
+        )
+
+        stdout, stderr = await process.communicate()
+
+        stdout = stdout.decode().rstrip()
+        stderr = stderr.decode().rstrip()
+
+        if self.get('die_on_error') and process.returncode != 0:
+            raise RuntimeError(f"{stderr}")
+        
+        result = {
+            'stdout': stdout,
+            'stderr': stderr,
+            'returncode': process.returncode
+        }
+
+        return stdout, result
