@@ -93,18 +93,17 @@ Commands `wrapup`, `status` and `sync` are deprecated and will be removed in the
 
 For an overview, run `gh tt -h`
 ```sh
-usage: gh tt [-h] [-v] [--pr-workflow] [--version] {workon,wrapup,deliver,semver,status,sync} ...
+usage: gh tt [-h] [-v] [--pr-workflow] [--version] {workon,deliver,semver,status,sync} ...
 
 A command-line tool to support a consistent team workflow. It supports a number of subcommands which define the entire
-process: `workon`, `wrapup`, `deliver`. Use the `-h|--help` switch on each to learn more. The extension utilizes the GitHub
+process: `workon`, `deliver`. Use the `-h|--help` switch on each to learn more. The extension utilizes the GitHub
 CLI tool `gh` to interact with GitHub and therefore it's provided as a gh extension. GitHub Projects integration is supported.
 It enables issues to automatically propagate through the columns in the (kanban) board. Please consult the README.md file in
 'thetechcollective/gh-tt' for more information on how to enable this feature - and many more neat tricks.
 
 positional arguments:
-  {workon,wrapup,deliver,semver,status,sync}
+  {workon,deliver,semver,status,sync}
     workon              Set the issue number context to work on
-    wrapup              Commit the status of the current issue branch and push it to the remote
     deliver             Create a collapsed 'ready' branch for the current issue branch and push it to the remote
     semver              Reads and sets the current version of the repo in semantic versioning format
     status              Set or get the status of a commit

@@ -116,14 +116,6 @@ class Devbranch(Lazyload):
 
         return self.get('squeeze_sha1')
 
-    def _push(self, *, force=False):
-        # push the branch to the remote
-
-        _ = asyncio.run(self._run("git_push", {
-            "force_switch": "--force-with-lease" if force else ""
-        }))
-
-        return True
 
     def __compare_before_after_trees(self):
         """
@@ -186,57 +178,6 @@ class Devbranch(Lazyload):
                     break
         return match
 
-    def wrapup(self, message: str):
-        """Mapped to the 'wrapup' subcommand in the main program"""
-
-        asyncio.run(self._load_issue_number())
-
-        if self.get('issue_number') is None:
-            print('⛔️ Wrapup is supported only on branches named <issue number>-<branch_name>', file=sys.stderr)
-            sys.exit(1)
-
-        self._load_status()
-        asyncio.run(self._assert_props(['me', 'merge_base', 'remote_sha1', 'default_sha1' ]))
-
-        if Config.config()['wrapup']['policies']['warn_about_rebase'] and self.get('merge_base') != self.get('default_sha1'):
-            print(
-                f"⚠️  WARNING: The '{self.get('default_branch')}' branch has commits your branch has never seen. A Rebase is required before you can deliver.", file=sys.stderr)
-            print(f"💡 Run: git rebase {self.get('remote')}/{self.get('default_branch')}")                  
-            if self.get('is_dirty'):
-                print("⚠️  Psst: Your workspace is dirty you must stash or commit your changes first)", file=sys.stderr)
-
-
-        if not self.get('is_dirty'):
-            print("☝️  Nothing to commit. The working directory is clean.")
-
-            if self.get('sha1') != self.get('remote_sha1'):                
-                print("👉 The branch is ahead of its remote; ...pushing")
-                self._push(force=True)
-            return None
-
-        # If nothing is staged, stage all changes
-        if not len(self.get('staged_changes')) > 0:
-            # Stage all changes if nothing is staged
-            asyncio.run(self._run('add_all'))
-            self._load_status(reload=True)
-
-        self.set('commit_msg',f"\"{message} - #{self.get('issue_number')}\"")
-
-        # the commit may fire pre-commit hook that may fail - wrap this in a try catch and print a nice error instead of a stack dump
-        try:
-            asyncio.run(self._run('commit_changes') )
-        except Exception as e:
-            print(f"⛔️ Aaaargh!:\n {e}", file=sys.stderr)
-            sys.exit(1)
-
-        self._push(force=True)
-
-
-        print(f"👍 SUCCESS: Branch has got a new commit that mentions issue '#{self.get('issue_number')}' and it's pushed")
-        print("💡 Run: gh workflow view wrapup")      
-        print(f"💡 Run: gh browse {self.get('issue_number')}")
-        return True
-
 
     def _load_status(self, *, reload: bool = False):
         """Load the status of the current branch sets the following properties:
@@ -271,28 +212,7 @@ class Devbranch(Lazyload):
                 self.props['unstaged_changes'].append(line)
         self.set('is_dirty',  len(self.props['unstaged_changes']) > 0 or len(
             self.props['staged_changes']) > 0)
-        
-    def _get_pretty_changes(self, *, staged: bool = True, unstaged: bool = False):
-        """Get a pretty formatted list of changes
-        
-        Args:
-            staged (bool): If True, include staged changes
-            unstaged (bool): If True, include unstaged changes
-        Returns:
-            list: A list of changes with the tailing ' M', 'MM', 'A ' or '??' removed
-        """
-        asyncio.run(self._assert_props(['status']))
-        self._load_status()
-        changes = []
-        if staged:
-            changes.extend(self.get('staged_changes'))
-        if unstaged:
-            changes.extend(self.get('unstaged_changes'))
 
-        ## Go through all items and remove the tailing ' M', 'MM', 'A ' or '??' 
-        changes = [re.sub(r'^\s*([?M]+|A\s+)', '', change) for change in changes]
-        # Remove leading whitespace
-        return [change.lstrip() for change in changes]
 
     def set_issue(
             self,
