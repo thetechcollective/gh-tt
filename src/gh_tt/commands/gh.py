@@ -323,3 +323,15 @@ async def update_project_item_status(
             status_option_id,
         ]
     )
+
+
+async def get_gh_cli_version() -> str:
+    """Returns the version of the GH CLI in a semver style, e.g. 2.88.1"""
+
+    result = await shell.run(['gh', '--version'])
+    version = result.stdout.split()[2]
+
+    assert version.count('.') == 2
+    assert len(version.split('.')) == 3
+
+    return version

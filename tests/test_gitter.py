@@ -5,33 +5,6 @@ import pytest
 from gh_tt.classes.gitter import Gitter
 
 
-def test_gitter_validate_gh_version_success(mocker):
-    stdout = "gh version 2.65.0 (2025-01-06)\nhttps://github.com/cli/cli/releases/tag/v2.65.0"
-
-    mocker.patch(
-        'gh_tt.classes.gitter.Gitter.run',
-        return_value=(stdout, mocker.Mock()),
-        new_callable=mocker.AsyncMock
-    )
-
-    assert Gitter.validate_gh_version()
-
-
-def test_gitter_validate_gh_version_failure(mocker, capsys):
-    stdout = "gh version 2.54.0 (2025-01-06)\nhttps://github.com/cli/cli/releases/tag/v2.54.0"
-
-    mocker.patch(
-        'gh_tt.classes.gitter.Gitter.run',
-        return_value=(stdout, mocker.Mock()),
-        new_callable=mocker.AsyncMock
-    )
-
-    with pytest.raises(SystemExit) as cm:
-        Gitter.validate_gh_version()
-
-    assert cm.value.code == 1
-    assert f"gh version 2.54.0 is not supported. Please upgrade to version {Gitter.required_version} or higher\n" in capsys.readouterr().err
-
 def test_gitter_validate_gh_scope_success(mocker):
     stdout = """github.com
 ✓ Logged in to github.com account lakruzz (/home/vscode/.config/gh/hosts.yml)

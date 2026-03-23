@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
+import asyncio
 import logging
 import sys
 
 from gh_tt.classes.gitter import Gitter
+from gh_tt.commands import gh
 from gh_tt.modules.tt_handlers import COMMAND_HANDLERS
 from gh_tt.modules.tt_parser import tt_parse
 
@@ -37,7 +39,15 @@ def main():
     legacy_gitter_verbose = args.verbose >= 1
 
     Gitter.set_verbose(value=legacy_gitter_verbose)
-    Gitter.validate_gh_version()
+
+    gh_version = asyncio.run(gh.get_gh_cli_version())
+    required_gh_version = '2.55.0'
+    if gh_version < required_gh_version:
+        print(
+            f'gh version {gh_version} is not supported. Please upgrade to version {required_gh_version} or higher',
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     if args.version:
         logger.debug('printing version and exiting')

@@ -147,29 +147,6 @@ class Gitter(Lazyload):
                 f"WARNING: Could not save cache {cls.class_cache_file}", file=sys.stderr)
 
     @classmethod
-    def validate_gh_version(cls):
-        """Check if the user has sufficient access to the github cli
-
-        Returns:
-            [result (bool), status (str)] : True/'' if the validation is OK, False/Error message if the validation fails
-        """
-
-        stdout = asyncio.run(cls()._run("validate_gh_version"))
-
-        # Validate that the version is => 2.55.0
-        # The command returns something like this:
-        #    gh version 2.65.0 (2025-01-06)
-        #    https://github.com/cli/cli/releases/tag/v2.65.0
-
-        version = stdout.split()[2]
-        if version < cls.required_version:
-            print(
-                f"gh version {version} is not supported. Please upgrade to version {cls.required_version} or higher", file=sys.stderr)
-            exit(1)
-
-        return True
-
-    @classmethod
     def validate_gh_scope(cls, scope: str):
         """Check if the user has sufficient access to the github cli"""
 
