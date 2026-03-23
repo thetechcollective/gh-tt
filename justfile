@@ -47,7 +47,7 @@ check-zizmor:
 
 # Fix all auto-fixable issues
 [group('fix')]
-fix: format lint
+fix: format lint lint-actions
 
 # Run ruff formatter
 [group('fix')]

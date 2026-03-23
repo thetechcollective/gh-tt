@@ -1,10 +1,8 @@
 import asyncio
-import contextlib
 import logging
 
-from gh_tt.classes.config import Config
 from gh_tt.commands import gh, git
-from gh_tt.commands.gh import Issue, Repo
+from gh_tt.modules import configuration
 
 logger = logging.getLogger(__name__)
 
@@ -13,9 +11,8 @@ class WorkonError(Exception):
     pass
 
 
-async def workon_issue(issue: int | Issue, *, assign: bool):
+async def workon_issue(issue: int | gh.Issue, config: configuration.TtConfig, *, assign: bool):
     logger.debug('workon_issue: issue=%s, assign=%s', issue, assign)
-    config = Config().config()
 
     _, is_safe_to_switch_branch = await asyncio.gather(git.fetch(), git.is_safe_to_switch_branch())
     if not is_safe_to_switch_branch:
@@ -29,11 +26,11 @@ async def workon_issue(issue: int | Issue, *, assign: bool):
                 gh.get_issue(issue), gh.get_repo(), git.get_remote()
             )
             logger.debug('fetched issue=%s, repo=%s, remote=%s', issue.title, repo.name, remote)
-        case Issue():
+        case gh.Issue():
             repo, remote = await asyncio.gather(gh.get_repo(), git.get_remote())
             logger.debug('fetched repo=%s, remote=%s', repo.name, remote)
 
-    assert isinstance(issue, Issue), 'Expected issue to be an Issue object after the fetch step'
+    assert isinstance(issue, gh.Issue), 'Expected issue to be an Issue object after the fetch step'
 
     if issue.closed:
         raise RuntimeError(
@@ -49,22 +46,20 @@ async def workon_issue(issue: int | Issue, *, assign: bool):
             gh.assign_pr(dev_branch=dev_branch, assignee='@me'),
         )
 
-    project_owner = None
-    project_number = None
-    status_value = None
-    with contextlib.suppress(KeyError):
-        project_owner = config['project']['owner']
-        project_number = config['project']['number']
-        status_value = config['workon']['status']
-
-    if project_number is not None and project_owner is not None and status_value is not None:
+    if (
+        config.project.number is not None
+        and config.project.owner is not None
+        and config.workon.status
+    ):
         logger.debug(
             'updating project status: owner=%s, number=%s, status=%s',
-            project_owner,
-            project_number,
-            status_value,
+            config.project.owner,
+            config.project.number,
+            config.workon.status,
         )
-        project = await gh.get_project(project_owner=project_owner, project_number=project_number)
+        project = await gh.get_project(
+            project_owner=config.project.owner, project_number=config.project.number
+        )
         project_item = await gh.add_item_to_project(
             project_number=project.number, project_owner=project.owner, item_url=str(issue.url)
         )
@@ -73,7 +68,7 @@ async def workon_issue(issue: int | Issue, *, assign: bool):
             project_number=project.number,
             project_owner=project.owner,
             item_id=project_item.identifier,
-            status_value=status_value,
+            status_value=config.workon.status,
         )
     else:
         logger.debug('skipping project status update (project config not fully set)')
@@ -81,13 +76,15 @@ async def workon_issue(issue: int | Issue, *, assign: bool):
     print(str(issue.url))
 
 
-async def workon_title(issue_title: str, issue_body: str | None, *, assign: bool):
+async def workon_title(
+    issue_title: str, issue_body: str | None, config: configuration.TtConfig, *, assign: bool
+):
     logger.debug('workon_title: title=%s, assign=%s', issue_title, assign)
     issue = await gh.create_issue(title=issue_title, body=issue_body)
-    await workon_issue(issue=issue, assign=assign)
+    await workon_issue(issue=issue, assign=assign, config=config)
 
 
-async def _create_or_reuse_branch(issue: Issue, repo: Repo, remote: str) -> str:
+async def _create_or_reuse_branch(issue: gh.Issue, repo: gh.Repo, remote: str) -> str:
     existing_branch = await git.check_branch_exists(issue.number)
     logger.debug('existing branch check result: %s', existing_branch)
 

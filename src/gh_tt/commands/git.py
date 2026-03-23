@@ -5,6 +5,7 @@ Contains functions that execute command-line git commands
 import asyncio
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal
 
 from async_lru import alru_cache
@@ -12,6 +13,11 @@ from async_lru import alru_cache
 from gh_tt import shell
 
 logger = logging.getLogger(__name__)
+
+
+async def get_root() -> Path:
+    result = await shell.run(['git', 'rev-parse', '--show-toplevel'])
+    return Path(result.stdout)
 
 
 async def is_safe_to_switch_branch() -> bool:
