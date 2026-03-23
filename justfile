@@ -13,7 +13,7 @@ check: check-test check-format check-lint check-types check-spelling check-actio
 # Check unit tests
 [group('check')]
 check-test *args:
-    uv run --frozen -- pytest -m 'not end_to_end and not legacy' --cov=src/ --cov-config=pyproject.toml --tb=no -q --no-header --numprocesses=auto {{ args }}
+    uv run --frozen -- pytest -m 'not end_to_end and not legacy' --tb=no -q --no-header --numprocesses=auto {{ args }}
 
 # Check ruff formatting
 [group('check')]
@@ -63,9 +63,14 @@ lint:
 lint-actions:
     zizmor ./.github/ --pedantic --offline --fix=safe
 
-# Run unit tests with coverage
+# Run unit tests
 [group('test')]
 test *args:
+    uv run --frozen -- pytest -m 'not end_to_end and not legacy' {{ args }} --numprocesses=auto
+
+# Run unit tests with coverage
+[group('test')]
+test-cov *args:
     uv run --frozen -- pytest --cov=src/ --cov-config=pyproject.toml -m 'not end_to_end and not legacy' {{ args }} --numprocesses=auto
 
 # Run end-to-end tests (installs local gh-tt first)
