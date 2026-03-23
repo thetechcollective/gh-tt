@@ -86,14 +86,12 @@ Run `gh tt -h` to see the syntax.
 
 The extension supports four subcommands: `workon`, `deliver`, and `semver`. See the [workflow](docs/workflow.md) for details. Each subcommand supports the `-h, --help` option to display in-detail guidance for the specific subcommand, e.g. `gh tt workon -h`.
 
-Commands `wrapup`, `status` and `sync` are deprecated and will be removed in the future.
-
 > [!WARNING]
 > The extension is migrating to a PR-flavored workflow. Run this by passing the --pr-workflow flag to `workon` or `deliver`.
 
 For an overview, run `gh tt -h`
 ```sh
-usage: gh tt [-h] [-v] [--pr-workflow] [--version] {workon,deliver,semver,status,sync} ...
+usage: gh tt [-h] [-v] [--pr-workflow] [--version] {workon,deliver,semver,status} ...
 
 A command-line tool to support a consistent team workflow. It supports a number of subcommands which define the entire
 process: `workon`, `deliver`. Use the `-h|--help` switch on each to learn more. The extension utilizes the GitHub
@@ -106,8 +104,6 @@ positional arguments:
     workon              Set the issue number context to work on
     deliver             Create a collapsed 'ready' branch for the current issue branch and push it to the remote
     semver              Reads and sets the current version of the repo in semantic versioning format
-    status              Set or get the status of a commit
-    sync                Sync GitHub items from a template repository to all sibling repositories
 
 options:
   -h, --help            show this help message and exit

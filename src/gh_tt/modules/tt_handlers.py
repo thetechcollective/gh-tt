@@ -4,7 +4,6 @@ import asyncio
 import logging
 import sys
 
-from gh_tt.classes import sync
 from gh_tt.classes.gitter import Gitter
 from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver
 from gh_tt.commands import git
@@ -139,15 +138,9 @@ def handle_semver(args):
         print(f"{current_semver}")
 
 
-def handle_sync(args):
-    assert args.labels or args.milestones
-    
-    sync.sync(labels=args.labels, milestones=args.milestones)
-
 # Command handler mapping - exported for use by main
 COMMAND_HANDLERS = {
     'workon': handle_workon,
     'deliver': handle_deliver,
     'semver': handle_semver,
-    'sync': handle_sync,
 }
