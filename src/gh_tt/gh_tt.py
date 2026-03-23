@@ -63,16 +63,17 @@ def main():
         print(asyncio.run(version_context()))
         sys.exit(0)
 
-    gh_scopes = asyncio.run(gh.get_gh_auth_scopes())
-
     # Needed for end to end testing in GH workflows. When running in a GitHub action,
     # we use a GitHub App which is authorized in the workflow and does not have auth tokens.
-    if not os.getenv('GITHUB_ACTIONS') and 'project' not in gh_scopes:
-        print(
-            "gh token does not have the required scope 'project'\nfix it by running:\n   gh auth refresh --scopes 'project'",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+    if not os.getenv('GITHUB_ACTIONS'):
+        gh_scopes = asyncio.run(gh.get_gh_auth_scopes())
+
+        if 'project' not in gh_scopes:
+            print(
+                "gh token does not have the required scope 'project'\nfix it by running:\n   gh auth refresh --scopes 'project'",
+                file=sys.stderr,
+            )
+            sys.exit(1)
 
     if args.command in COMMAND_HANDLERS:
         logger.debug('dispatching command: %s', args.command)
