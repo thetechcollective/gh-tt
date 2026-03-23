@@ -5,7 +5,6 @@ import logging
 import sys
 
 from gh_tt.classes import sync
-from gh_tt.classes.devbranch import Devbranch
 from gh_tt.classes.gitter import Gitter
 from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver
 from gh_tt.commands import git
@@ -61,9 +60,6 @@ def handle_deliver(args):
         return
 
     _abort_on_legacy_path(args)
-
-    devbranch = Devbranch()
-    devbranch.deliver()
 
 
 def _handle_semver_bump_build(args, semver):

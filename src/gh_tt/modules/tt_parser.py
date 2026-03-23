@@ -48,12 +48,11 @@ def tt_parse(args=None):
     # Add deliver subcommand
     deliver_parser = subparsers.add_parser(
         'deliver', 
-        parents=[parent_parser, poll_parser], help="Create a collapsed 'ready' branch for the current issue branch and push it to the remote",
+        parents=[parent_parser, poll_parser], help="Enable auto merge on the PR",
         description="""
-            Squeezes the issue branch into one commit and pushes it to the remote on separate "ready/*" branch.
-            A seperate workflow should be defined for ready branches. The command takes no parameters.
-            Policies for the delivery can be set in the configuration file '.tt-config.json'. Consult the README
-            in 'thetechcollective/gh-tt' for details.
+            Enables auto merge on the PR connected to the current branch. Should be used
+            in combination with a branch protection check which will merge only PRs
+            that passing the integration pipeline.
             """)
     deliver_parser.add_argument('-d,', '--delete-branch', action='store_true', dest='delete_branch', default=False, help='Delete branch after the PR is merged. Only supported with the --pr-workflow flag.')
 
