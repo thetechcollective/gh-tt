@@ -1,10 +1,9 @@
 import asyncio
-import contextlib
 import logging
 
-from gh_tt.classes.config import Config
 from gh_tt.commands import gh, git
 from gh_tt.commands.gh import Issue, Repo
+from gh_tt.modules import configuration
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +14,7 @@ class WorkonError(Exception):
 
 async def workon_issue(issue: int | Issue, *, assign: bool):
     logger.debug('workon_issue: issue=%s, assign=%s', issue, assign)
-    config = Config().config()
+    config = configuration.load_config()
 
     _, is_safe_to_switch_branch = await asyncio.gather(git.fetch(), git.is_safe_to_switch_branch())
     if not is_safe_to_switch_branch:
@@ -49,22 +48,20 @@ async def workon_issue(issue: int | Issue, *, assign: bool):
             gh.assign_pr(dev_branch=dev_branch, assignee='@me'),
         )
 
-    project_owner = None
-    project_number = None
-    status_value = None
-    with contextlib.suppress(KeyError):
-        project_owner = config['project']['owner']
-        project_number = config['project']['number']
-        status_value = config['workon']['status']
-
-    if project_number is not None and project_owner is not None and status_value is not None:
+    if (
+        config.project.number is not None
+        and config.project.owner is not None
+        and config.workon.status is not None
+    ):
         logger.debug(
             'updating project status: owner=%s, number=%s, status=%s',
-            project_owner,
-            project_number,
-            status_value,
+            config.project.owner,
+            config.project.number,
+            config.workon.status,
         )
-        project = await gh.get_project(project_owner=project_owner, project_number=project_number)
+        project = await gh.get_project(
+            project_owner=config.project.owner, project_number=config.project.number
+        )
         project_item = await gh.add_item_to_project(
             project_number=project.number, project_owner=project.owner, item_url=str(issue.url)
         )
@@ -73,7 +70,7 @@ async def workon_issue(issue: int | Issue, *, assign: bool):
             project_number=project.number,
             project_owner=project.owner,
             item_id=project_item.identifier,
-            status_value=status_value,
+            status_value=config.workon.status,
         )
     else:
         logger.debug('skipping project status update (project config not fully set)')
