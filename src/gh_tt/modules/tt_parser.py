@@ -101,24 +101,11 @@ def tt_parse(args=None):
     semver_note_parser.add_argument('--from', dest='from_ref', type=str, help='Starting reference for the release note. Defaults to the previous release tag.', required=False, default=None)
     semver_note_parser.add_argument('--to', dest='to_ref', type=str, help='Ending reference for the release note. Defaults to the current release tag or HEAD.', required=False, default=None)
 
-    # Sync subcommand
-    sync_parser = subparsers.add_parser(
-        'sync', 
-        parents=[parent_parser],
-        help="Sync GitHub items from a template repository to all sibling repositories"
-    )
-
-    sync_parser.add_argument('--labels', action='store_true', help='Read labels from the template repo and create them in all sibling repos')
-    sync_parser.add_argument('--milestones', action='store_true', help='Read milestones from the template repo and create them in all sibling repos')
-
     args = parser.parse_args(args)
 
     if not args.command and not args.version:
         parser.print_help()
         parser.exit(0)
-
-    if args.command == 'sync' and not (args.labels or args.milestones):
-        sync_parser.error("🛑 You must specify at least one entity (e.g. labels) to sync")
         
     # Validate that --no-sha is only used with --build
     if hasattr(args, 'include_sha') and args.include_sha is False and (not hasattr(args, 'level') or args.level != 'build'):
