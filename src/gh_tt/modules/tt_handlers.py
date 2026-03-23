@@ -20,6 +20,11 @@ from gh_tt.workon import workon_issue, workon_title
 
 logger = logging.getLogger(__name__)
 
+def _abort_on_legacy_path(args):
+    print('This feature is no longer supported. Refer to the README on github.com/thetechcollective/gh-tt for supported features.', file=sys.stderr)
+    print(f'Passed arguments: {args}')
+    sys.exit(1)
+
 
 def handle_workon(args):
     """Handle the workon command"""
@@ -34,6 +39,8 @@ def handle_workon(args):
             logger.debug("handle_workon: pr_workflow with issue=%s", args.issue)
             asyncio.run(workon_issue(args.issue, assign=args.assignee, config=config))
         return
+
+    _abort_on_legacy_path(args)
 
     devbranch = Devbranch()
     label = None
@@ -98,6 +105,8 @@ def handle_deliver(args):
             print(e, file=sys.stderr)
             sys.exit(1)
         return
+
+    _abort_on_legacy_path(args)
 
     devbranch = Devbranch()
     squeeze_sha = devbranch.deliver()
