@@ -48,83 +48,11 @@ class Gitter(Lazyload):
         self.set('verbose', verbose)
         self.set('workdir', workdir)
         self.set('cache', self.use_cache)
-
-    def __verbose_print(self):
-
-        if self.get('verbose'):
-            # print an empty line
-            print()
-            if self.get('msg'):
-                print(f"# {self.get('msg')}")
-            print(f"$ {self.get('cmd')}")
-
-    async def run(self, *, cache=False):
-
-        self.__verbose_print()
-
-        if cache:
-            cached_value = self.get_cache(self.get('workdir'), self.get('cmd'))
-            if cached_value:
-                if self.get('verbose'):
-                    print("# NOTE! Returning cached value from previous run")
-                    print(f"{cached_value}")
-                return cached_value, None
-            
-        process = await asyncio.create_subprocess_shell(
-            cmd=self.get('cmd'),
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-            cwd=self.get('workdir')
-        )
-
-        stdout, stderr = await process.communicate()
-
-        stdout = stdout.decode().rstrip()
-        stderr = stderr.decode().rstrip()
-
-        if self.get('verbose'):
-            print(f"{stdout}{stderr}")
-
-        if self.get('die_on_error') and process.returncode != 0:
-            raise RuntimeError(f"{stderr}")
-
-        if cache:
-            self.set_cache(self.get('workdir'), self.get('cmd'), stdout)
-        
-        result = {
-            'stdout': stdout,
-            'stderr': stderr,
-            'returncode': process.returncode
-        }
-
-        return stdout, result
     
     @classmethod
     def set_verbose(cls, *, value: bool):
         cls.verbose = value
 
-    @classmethod
-    def get_cache(cls, workdir, cmd):
-        workdir_str = str(workdir)
-        
-        if workdir_str not in cls.class_cache:
-            return None
-        if cmd not in cls.class_cache[workdir_str]:
-            return None
-        return cls.class_cache[workdir_str][cmd]
-
-    @classmethod
-    def set_cache(cls, workdir, cmd, value):
-        workdir_str = str(workdir)
-
-        if workdir_str not in cls.class_cache:
-            cls.class_cache[workdir_str] = {}
-        cls.class_cache[workdir_str][cmd] = value
-        return cls.class_cache[workdir_str][cmd]
-
-    @classmethod
-    def print_cache(cls):
-        print(json.dumps(cls.class_cache, indent=4))
 
     @classmethod
     # read the cache from a file in the root of the repository `.tt_cache`
@@ -146,38 +74,6 @@ class Gitter(Lazyload):
             print(
                 f"WARNING: Could not save cache {cls.class_cache_file}", file=sys.stderr)
 
-    @classmethod
-    def validate_gh_scope(cls, scope: str):
-        """Check if the user has sufficient access to the github cli"""
-
-        stdout = asyncio.run(cls()._run("validate_gh_scope"))
-
-        # The command returns something like this:
-        #  github.com
-        #    ✓ Logged in to github.com account lakruzz (/home/vscode/.config/gh/hosts.yml)
-        #    - Active account: true
-        #    - Git operations protocol: https
-        #    - Token: gho_************************************
-        #    - Token scopes: 'gist', 'read:org', 'project', 'repo', 'workflow'
-        
-        if "Token: ghs" in stdout:
-            # When authenticated with a ghs (server-to-server) token
-            # (for example, a GitHub App Installation Token),
-            # `gh auth status` does not output token scopes. Thus,
-            # the function always fails. As permissions for GitHub apps
-            # are managed in the App installation or in GitHub Actions,
-            # we want this function to return True for ghs tokens.
-            # See https://github.blog/engineering/platform-security/behind-githubs-new-authentication-token-formats/#identifiable-prefixes
-            # for other token prefixes.
-            return True
-
-
-        if f"'{scope}'" not in stdout:
-            print(
-                f"gh token does not have the required scope '{scope}'\nfix it by running:\n   gh auth refresh --scopes '{scope}'", file=sys.stderr)
-            exit(1)
-
-        return True
     
     @classmethod
     def version(cls):
@@ -187,25 +83,3 @@ class Gitter(Lazyload):
     def get_commit_sha(cls):
         """Get current commit SHA"""
         return asyncio.run(cls()._run("get_commit_sha"))
-
-    @classmethod
-    async def fetch(cls, *, prune=False, again=False):
-        """Fetch """
-
-        async with cls._fetch_lock:
-            if cls.fetched and not again:
-                return True
-
-            msg = "Fetch all branches and tags from all remotes"
-
-            prune_switch = "--prune --prune-tags" if prune else ""
-            if prune:
-                msg += " and prune local branches and tags)"
-
-            [_, _] = await Gitter(
-                cmd=f"git fetch --tags --all -f {prune_switch}",
-                msg=f"{msg}").run()
-
-            cls.fetched = True
-
-            return True
