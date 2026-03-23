@@ -1,6 +1,5 @@
 import asyncio
 import shutil
-import subprocess
 from pathlib import Path
 from typing import ClassVar
 
@@ -23,12 +22,6 @@ class Gitter(Lazyload):
     git_path = shutil.which('git')
     assert git_path is not None, "Git not found on PATH. Git is required for gh-tt to work. To proceed, install git."
 
-    result = subprocess.run(
-        [git_path, "rev-parse", "--show-toplevel"], capture_output=True, text=True)
-    git_root = result.stdout.strip()
-    if not git_root or result.returncode != 0:
-        raise RuntimeError("Could not determine the git root directory")
-    class_cache_file = Path(git_root) / ".tt_cache"
 
     def __init__(self, cmd=str, die_on_error=None, msg=None, workdir=None):
         super().__init__()

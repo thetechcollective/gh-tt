@@ -6,8 +6,8 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import ClassVar
 
-from gh_tt.classes.gitter import Gitter
 from gh_tt.classes.lazyload import Lazyload
+from gh_tt.commands import git
 
 CONFIG_FILE_NAME = '.tt-config.json'
 
@@ -90,7 +90,7 @@ class Config(Lazyload):
         if load_only_default is LoadStrategy.ONLY_DEFAULT_CONFIG:
             return cls._config_dict
         
-        _project_config_file = Path(Gitter.git_root) / CONFIG_FILE_NAME
+        _project_config_file = asyncio.run(git.get_root()) / CONFIG_FILE_NAME
 
         if Path.exists(_project_config_file):
             cls._config_dict = add_config(_project_config_file, cls._config_dict)
@@ -160,7 +160,8 @@ class Config(Lazyload):
     @classmethod
     def __assert_required(cls, config_path: str):
         props_set_from_gitconfig = []
-        gitconfig_file = f"{Gitter.git_root}/.gitconfig"
+        git_root = asyncio.run(git.get_root())
+        gitconfig_file = f"{git_root}/.gitconfig"
 
         project_owner = None
         project_number = None
