@@ -57,18 +57,7 @@ class Label(Lazyload):
         Label._loaded = False
 
         return Label(name=name)
-    
-    @classmethod
-    def validate(cls, name: str, category: str) -> bool:
-        config = Config().config()
-        
-        for label_name, label_data in config["labels"].items():
-            if label_data["category"] == category and label_name == name:
-                return True
 
-        valid_labels = [label_name for label_name, label_data in Config()._config_dict['labels'].items() if label_data["category"] == category]
-        print(f"🛑  ERROR: \"{name}\" passed in --type is not matching any label with category '{category}' defined in the config. Choose one of the labels defined: {valid_labels}")
-        sys.exit(1)
 
     def _reload(self):
         """Reload the labels from the current repository"""

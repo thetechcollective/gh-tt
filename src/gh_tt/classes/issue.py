@@ -1,6 +1,5 @@
 import asyncio
 import json
-import re
 import sys
 
 from gh_tt.classes.config import Config
@@ -34,44 +33,6 @@ class Issue(Lazyload):
             issue.set(key, value)
 
         return issue
-
-    @classmethod
-    def create_new(cls, title=str, body=None, assign=None):
-        """Create a new issue on the current repository
-        Works as an alternative to the constructor, call it on the class and it will return a new Issue object
-
-        Args:
-            title (str): The title of the issue (required)
-            body (str): The body of the issue  (defaults to None)
-            assign: Assign to the issue (defaults to the current user)
-        """
-
-        issue = Issue()
-        output = asyncio.run(issue._run('create_new_issue', {
-            "title": title,
-            "body": f"{body}" if body else "''",
-            "assignee_switch": f"--assignee {assign}" if assign else ""
-        }))
-
-        # The output is a multitiline string like this:
-        #
-        #   Creating issue in lakruzz/gitsquash_lab
-        #
-        #   https://github.com/lakruzz/gitsquash_lab/issues/15
-
-        # Capture the url of the issue and set it on the object
-        # and capture the issue number from the tail of the url and set it on the object
-
-        issue_url = re.search(r'(https://github.com/.*/issues/\d+)', output)
-        if issue_url:
-            issue_number = issue_url.group(1).split('/')[-1]
-            print(f"{issue_url.group(1)}")
-        else:
-            print(
-                f"ERROR: Could not capture the issue URL from the output:\n{output}", file=sys.stderr)
-            exit(1)
-
-        return cls().load(number=issue_number)
 
     def assign(self, assignee=str):
         """Assign the issue to a user"""
