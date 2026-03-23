@@ -1,8 +1,6 @@
 import asyncio
-import json
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 from typing import ClassVar
 
@@ -52,28 +50,6 @@ class Gitter(Lazyload):
     @classmethod
     def set_verbose(cls, *, value: bool):
         cls.verbose = value
-
-
-    @classmethod
-    # read the cache from a file in the root of the repository `.tt_cache`
-    # and load it into the class_cache
-    def read_cache(cls):
-        try:
-            with Path.open(cls.class_cache_file) as f:
-                cls.class_cache = json.load(f)
-        except FileNotFoundError:
-            pass
-
-    @classmethod
-    # write the class_cache to a file in the root of the repository `.tt_cache`
-    def write_cache(cls):
-        try:
-            with Path.open(cls.class_cache_file, 'w') as f:
-                json.dump(cls.class_cache, f, indent=4)
-        except FileNotFoundError:
-            print(
-                f"WARNING: Could not save cache {cls.class_cache_file}", file=sys.stderr)
-
     
     @classmethod
     def version(cls):

@@ -55,8 +55,6 @@ def main():
         Gitter.version()
         sys.exit(0)
 
-    Gitter.read_cache()
-
     gh_scopes = asyncio.run(gh.get_gh_auth_scopes())
 
     # Needed for end to end testing in GH workflows. When running in a GitHub action,
@@ -74,5 +72,4 @@ def main():
     else:
         logger.debug('no command handler found for: %s', args.command)
 
-    Gitter.write_cache()
     sys.exit(0)
