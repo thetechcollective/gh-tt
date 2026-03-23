@@ -7,7 +7,6 @@ from gh_tt.classes.config import Config
 from gh_tt.classes.issue import Issue
 from gh_tt.classes.lazyload import Lazyload
 from gh_tt.classes.project import Project
-from gh_tt.classes.responsibles import Responsibles
 
 
 class Devbranch(Lazyload):
@@ -232,45 +231,12 @@ class Devbranch(Lazyload):
 
         self._push(force=True)
 
-        issue_comments = Issue().load(number=self.get('issue_number')).get("comments")
-        self.set('responsibles_comment_content', self._get_responsibles(issue_comments=issue_comments))
 
-        responsibles_alert = ''
-        if self.get('responsibles_comment_content'):
-            asyncio.run(self._run("add_responsibles_comment"))
-
-            responsibles_alert = f"\n☝️ You touched on files that have named responsibles {self.get('responsibles_comment_content')}\nThey are now mentioned in the issue."
-
-
-        print(f"👍 SUCCESS: Branch has got a new commit that mentions issue '#{self.get('issue_number')}' and it's pushed\n{responsibles_alert}")
+        print(f"👍 SUCCESS: Branch has got a new commit that mentions issue '#{self.get('issue_number')}' and it's pushed")
         print("💡 Run: gh workflow view wrapup")      
         print(f"💡 Run: gh browse {self.get('issue_number')}")
         return True
-    
-    def _get_responsibles(self, issue_comments: list[str]):
-        change_list = self._get_pretty_changes()
-        changed_past = self._past_responsible_file_paths(issue_comments=issue_comments)
-        changed_new = set(change_list) - set(changed_past)
 
-        return Responsibles().responsibles_as_markdown(
-            changeset=changed_new,
-            exclude=[f"@{self.get('me')}", *changed_new]
-        )
-
-    def _past_responsible_file_paths(self, issue_comments: list[dict]):
-        """
-        Returns:
-            set: All file paths that responsibles have been previously notified about
-        """
-
-        comment_bodies = [comment["body"] for comment in issue_comments]
-
-        file_paths = set()
-        for body in comment_bodies:
-            if body.startswith(Responsibles.responsibles_markdown_prefix()):
-                matches = re.findall(r'`([^`]*)`', body)
-                file_paths = file_paths.union(set(matches))
-        return file_paths
 
     def _load_status(self, *, reload: bool = False):
         """Load the status of the current branch sets the following properties:
@@ -409,35 +375,6 @@ class Devbranch(Lazyload):
         print("💡 Run: gh workflow view ready")
 
         return self.get('squeeze_sha1')
-
-    def responsibles(self, exclude:str, *, unstaged: bool, staged: bool, ):
-
-        asyncio.run(self._assert_props(['me']))
-
-        exclude_list = []
-        if exclude is not None:
-            exclude_list = exclude.split(',')
-
-        # replace @me with the current user
-        exclude_list = [item.replace('@me', f"@{self.get('me')}") for item in exclude_list]
-
-        asyncio.run(self._load_issue_number())
-        self._load_status()
-        change_list = self._get_pretty_changes(staged=staged, unstaged=unstaged)
-        responsibles = Responsibles().responsibles_parse(
-            changeset=change_list,
-            exclude=exclude_list
-        )
-
-        if not responsibles:
-            return
-        # print each line of responsibles
-        for item in responsibles:
-            # Split the item into file path and responsibles
-            file_path, responsibles = item.split(' (', 1)
-            responsibles = responsibles.rstrip(')')
-            # Format the item as a markdown list item
-            print(f"{file_path} ({responsibles})")
 
 
     def get_sync(self, key: str):
