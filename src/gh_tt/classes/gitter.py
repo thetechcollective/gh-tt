@@ -48,10 +48,6 @@ class Gitter(Lazyload):
         self.set('cache', self.use_cache)
     
     @classmethod
-    def set_verbose(cls, *, value: bool):
-        cls.verbose = value
-    
-    @classmethod
     def version(cls):
         print(asyncio.run(cls()._run("version_context")))
 

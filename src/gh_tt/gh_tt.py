@@ -37,10 +37,6 @@ def main():
     setup_logging(args.verbose)
     logger.debug('parsed args: %s', args)
 
-    legacy_gitter_verbose = args.verbose >= 1
-
-    Gitter.set_verbose(value=legacy_gitter_verbose)
-
     gh_version = asyncio.run(gh.get_gh_cli_version())
     required_gh_version = '2.55.0'
     if gh_version < required_gh_version:
