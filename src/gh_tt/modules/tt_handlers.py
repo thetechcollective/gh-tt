@@ -12,7 +12,6 @@ from gh_tt.classes.gitter import Gitter
 from gh_tt.classes.issue import Issue
 from gh_tt.classes.label import Label
 from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver
-from gh_tt.classes.status import Status
 from gh_tt.commands import git
 from gh_tt.deliver import DeliverError, deliver
 from gh_tt.modules import configuration
@@ -88,21 +87,7 @@ def handle_deliver(args):
     _abort_on_legacy_path(args)
 
     devbranch = Devbranch()
-    squeeze_sha = devbranch.deliver()
-    
-    if args.poll is not None:
-        if args.poll:
-            Status.poll(sha=squeeze_sha)
-
-        return
-
-    config_poll = False
-    # If the config value is not set, proceed with False
-    with contextlib.suppress(KeyError):
-        config_poll = Config.config()['deliver']['policies']['poll']
-
-    if config_poll:
-        Status.poll(sha=squeeze_sha)
+    devbranch.deliver()
 
 
 def _handle_semver_bump_build(args, semver):
@@ -182,19 +167,6 @@ def handle_semver(args):
         print(f"{current_semver}")
 
 
-def handle_status(args):
-    """Handle the status command"""
-    if args.status_command == 'get':
-         Status.poll(sha=args.sha)
-    elif args.status_command == 'set':
-        Status.set_status_sync(
-            state=args.state, 
-            description=args.description, 
-            context=args.context, 
-            target_url=args.target_url, 
-            sha=args.sha
-        )
-
 def handle_sync(args):
     assert args.labels or args.milestones
     
@@ -205,6 +177,5 @@ COMMAND_HANDLERS = {
     'workon': handle_workon,
     'deliver': handle_deliver,
     'semver': handle_semver,
-    'status': handle_status,
     'sync': handle_sync,
 }

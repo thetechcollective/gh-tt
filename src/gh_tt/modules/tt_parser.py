@@ -103,36 +103,6 @@ def tt_parse(args=None):
     semver_note_parser.add_argument('--from', dest='from_ref', type=str, help='Starting reference for the release note. Defaults to the previous release tag.', required=False, default=None)
     semver_note_parser.add_argument('--to', dest='to_ref', type=str, help='Ending reference for the release note. Defaults to the current release tag or HEAD.', required=False, default=None)
 
-    # Add a status subcommand
-    status_parser = subparsers.add_parser(
-        'status', 
-        parents=[parent_parser], 
-        help="Set or get the status of a commit",
-        description="""
-            Set or get the status of a commit. The command supports setting the status with a state, description, context, and target URL.
-            It also supports polling the status of a commit by its SHA.
-            """)
-
-    # Define a parent parser both set and get can use, that defines an optional --sha SHA
-    status_parent_parser = argparse.ArgumentParser(add_help=False)
-    status_parent_parser.add_argument('--sha', type=str, help='SHA of the commit. Default is HEAD', default=None)
-
-    # Add two status sub commands; set and get    
-    status_sub_parser = status_parser.add_subparsers(dest='status_command')
-    status_set_parser = status_sub_parser.add_parser('set', help="Set the status of a commit", parents=[status_parent_parser])
-    status_sub_parser.add_parser('get', help="Get the status of a commit", parents=[status_parent_parser])
-
-    def valid_status_states(value):
-        valid_states = ['success', 'failure', 'pending', 'queued']
-        if value not in valid_states:
-            raise argparse.ArgumentTypeError(f"Invalid state: {value}. Must be one of {', '.join(valid_states)}.")
-        return value
-
-    status_set_parser.add_argument('--state', type=valid_status_states, help='State of the commit status (success, failure, pending or queued)', required=True)
-    status_set_parser.add_argument('--description', type=str, help='Description of the commit status', required=True)
-    status_set_parser.add_argument('--context', type=str, help='Context (name) of the commit status. Can be omitted in context of a GitHub Action in which case it will default to the Action ID', default=None)
-    status_set_parser.add_argument('--target-url', type=str, help='Target URL for the commit status. Can be omitted in context of a GitHub Action in which case it will default to the URL to the action run', default=None)
-
     # Sync subcommand
     sync_parser = subparsers.add_parser(
         'sync', 
