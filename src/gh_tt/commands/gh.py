@@ -323,3 +323,33 @@ async def update_project_item_status(
             status_option_id,
         ]
     )
+
+
+async def get_gh_cli_version() -> str:
+    """Returns the version of the GH CLI in a semver style, e.g. 2.88.1"""
+
+    result = await shell.run(['gh', '--version'])
+    version = result.stdout.split()[2]
+
+    assert version.count('.') == 2
+    assert len(version.split('.')) == 3
+
+    return version
+
+
+async def get_gh_auth_scopes() -> list[str]:
+    """Returns the scopes the gh cli is authenticated for"""
+
+    result = await shell.run(['gh', 'auth', 'status', '--json', 'hosts'])
+    raw = result.stdout
+    parsed = json.loads(raw)
+
+    # Assume one authenticated instance for github it is proven we
+    # need to be smarter about this
+    first_host = parsed['hosts']['github.com'][0]
+
+    assert 'github.com' in parsed['hosts']
+    assert first_host['active'] is True
+    assert 'scopes' in first_host
+
+    return first_host['scopes'].split(', ')
