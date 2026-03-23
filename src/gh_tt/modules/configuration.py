@@ -24,7 +24,7 @@ class ProjectConfig(ConfigModel):
 
 
 class WorkonConfig(ConfigModel):
-    status: str | None = None
+    status: str = 'In Progress'
 
 
 class DeliverPolicies(ConfigModel):

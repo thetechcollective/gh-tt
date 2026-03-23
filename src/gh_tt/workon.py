@@ -49,7 +49,7 @@ async def workon_issue(issue: int | gh.Issue, config: configuration.TtConfig, *,
     if (
         config.project.number is not None
         and config.project.owner is not None
-        and config.workon.status is not None
+        and config.workon.status
     ):
         logger.debug(
             'updating project status: owner=%s, number=%s, status=%s',

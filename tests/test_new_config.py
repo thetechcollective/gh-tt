@@ -19,7 +19,7 @@ def test_default_values():
     assert config.project.owner is None
     assert config.project.number is None
 
-    assert config.workon.status is None
+    assert config.workon.status == 'In Progress'
 
     assert config.deliver.policies.poll is True
 
