@@ -12,9 +12,8 @@ class WorkonError(Exception):
     pass
 
 
-async def workon_issue(issue: int | Issue, *, assign: bool):
+async def workon_issue(issue: int | Issue, config: configuration.TtConfig, *, assign: bool):
     logger.debug('workon_issue: issue=%s, assign=%s', issue, assign)
-    config = configuration.load_config()
 
     _, is_safe_to_switch_branch = await asyncio.gather(git.fetch(), git.is_safe_to_switch_branch())
     if not is_safe_to_switch_branch:
@@ -78,10 +77,12 @@ async def workon_issue(issue: int | Issue, *, assign: bool):
     print(str(issue.url))
 
 
-async def workon_title(issue_title: str, issue_body: str | None, *, assign: bool):
+async def workon_title(
+    issue_title: str, issue_body: str | None, config: configuration.TtConfig, *, assign: bool
+):
     logger.debug('workon_title: title=%s, assign=%s', issue_title, assign)
     issue = await gh.create_issue(title=issue_title, body=issue_body)
-    await workon_issue(issue=issue, assign=assign)
+    await workon_issue(issue=issue, assign=assign, config=config)
 
 
 async def _create_or_reuse_branch(issue: Issue, repo: Repo, remote: str) -> str:

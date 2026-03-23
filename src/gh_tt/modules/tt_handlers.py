@@ -23,12 +23,14 @@ logger = logging.getLogger(__name__)
 def handle_workon(args):
     """Handle the workon command"""
     if args.pr_workflow:
+        config = configuration.load_config()
+
         if args.title:
             logger.debug("handle_workon: pr_workflow with title=%s", args.title)
-            asyncio.run(workon_title(issue_title=args.title, issue_body=args.body, assign=args.assignee))
+            asyncio.run(workon_title(issue_title=args.title, issue_body=args.body, assign=args.assignee, config=config))
         else:
             logger.debug("handle_workon: pr_workflow with issue=%s", args.issue)
-            asyncio.run(workon_issue(args.issue, assign=args.assignee))
+            asyncio.run(workon_issue(args.issue, assign=args.assignee, config=config))
         return
 
     devbranch = Devbranch()
