@@ -125,11 +125,6 @@ def handle_deliver(args):
     if config_poll:
         Status.poll(sha=squeeze_sha)
 
-def handle_responsibles(args):
-    """Handle the responsibles command"""
-    devbranch = Devbranch()
-    devbranch.responsibles(unstaged=args.unstaged, staged=args.staged, exclude=args.exclude)
-
 
 def _handle_semver_bump_build(args, semver):
     """Handle the semver bump build subcommand"""
@@ -231,7 +226,6 @@ COMMAND_HANDLERS = {
     'workon': handle_workon,
     'wrapup': handle_wrapup,
     'deliver': handle_deliver,
-    'responsibles': handle_responsibles,
     'semver': handle_semver,
     'status': handle_status,
     'sync': handle_sync,
