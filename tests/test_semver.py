@@ -5,8 +5,8 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from gh_tt.classes.gitter import Gitter
-from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver, SemverTag, SemverVersion
+from gh_tt.legacy.gitter import Gitter
+from gh_tt.legacy.semver import ExecutionMode, ReleaseType, Semver, SemverTag, SemverVersion
 
 
 def test_semver_init(capsys):

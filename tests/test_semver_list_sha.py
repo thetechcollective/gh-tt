@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from gh_tt.classes.semver import Semver, SemverTag
+from gh_tt.legacy.semver import Semver, SemverTag
 
 
 def test_semver_list_sha(capsys):
@@ -35,7 +35,7 @@ def test_semver_list_sha(capsys):
 
 def test_semver_tag_with_sha():
     """Test that SemverTag can store SHA information"""
-    from gh_tt.classes.semver import SemverVersion
+    from gh_tt.legacy.semver import SemverVersion
     
     # Create a tag with SHA information
     version = SemverVersion(1, 0, 0)

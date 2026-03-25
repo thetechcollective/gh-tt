@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 from typing import ClassVar
 
-from gh_tt.classes.lazyload import Lazyload
+from gh_tt.legacy.lazyload import Lazyload
 
 
 class Gitter(Lazyload):

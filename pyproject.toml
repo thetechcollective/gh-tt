@@ -31,7 +31,7 @@ required-version = '>=0.11.1, <0.12'
 
 [tool.ty.src]
 exclude = [
-    "src/gh_tt/classes/*.py",
+    "src/gh_tt/legacy/*.py",
     "src/gh_tt/modules/*.py",
     "!src/gh_tt/modules/configuration.py",
     "tests/test_handlers.py",
@@ -148,7 +148,7 @@ quote-style = "single"
 indent-style = "space"
 docstring-code-format = true
 exclude = [
-    "src/gh_tt/classes/*.py",
+    "src/gh_tt/legacy/*.py",
     "src/gh_tt/modules/*.py",
     "tests/test_config.py",
     "tests/test_handlers.py",
