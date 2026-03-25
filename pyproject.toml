@@ -33,15 +33,9 @@ required-version = '>=0.11.1, <0.12'
 exclude = [
     "src/gh_tt/legacy/*.py",
     "!src/gh_tt/modules/configuration.py",
+    "tests/legacy/*.py",
     "tests/test_handlers.py",
     "tests/test_parser.py",
-    "tests/test_parser_semver_list_filters.py",
-    "tests/test_parser_semver_list_sha.py",
-    "tests/test_parser_semver_top_level.py",
-    "tests/test_semver_list_sha.py",
-    "tests/test_semver_note_with_from_to.py",
-    "tests/test_semver_prerelease.py",
-    "tests/test_semver.py",
 ]
 
 include = ["src", "tests", ".githooks/pre-commit"]
@@ -150,16 +144,9 @@ exclude = [
     "src/gh_tt/legacy/*.py",
     "src/gh_tt/tt_parser.py",
     "src/gh_tt/tt_handlers.py",
-    "tests/test_config.py",
+    "tests/legacy/*.py",
     "tests/test_handlers.py",
     "tests/test_parser.py",
-    "tests/test_parser_semver_list_filters.py",
-    "tests/test_parser_semver_list_sha.py",
-    "tests/test_parser_semver_top_level.py",
-    "tests/test_semver_list_sha.py",
-    "tests/test_semver_note_with_from_to.py",
-    "tests/test_semver_prerelease.py",
-    "tests/test_semver.py",
 ]
 
 [tool.pytest.ini_options]
