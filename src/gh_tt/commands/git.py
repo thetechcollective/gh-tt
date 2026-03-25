@@ -134,7 +134,7 @@ async def push_empty_commit(dev_branch: str):
                 '--allow-empty',
                 '--no-verify',
                 '-m',
-                '[skip ci] PR start commit',
+                'PR start commit',
                 '-m',
                 'This commit serves no other purpose than to allow creation of a PR when executing `gh tt workon`. Because creating a PR without a commit is not possible. This commit should be squashed or removed before merging this PR.',
             ]

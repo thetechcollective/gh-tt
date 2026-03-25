@@ -47,7 +47,7 @@ async def create_draft_pr(issue_number: int, issue_title: str, default_branch: s
     # The PR would close the issue even without this reference, but mentioning the issue
     # is nice for quick access
     body = f'Closes #{issue_number}'
-    title = f'Issue {issue_number}: {issue_title}'
+    title = f'Issue #{issue_number}: {issue_title}'
 
     await shell.run(
         [
