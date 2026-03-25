@@ -272,9 +272,12 @@ jobs:
             - test_e2e
             - smoke_test
             - test
+            - should-run-e2e-tests
 
         steps:
             - name: Decide whether the needed jobs succeeded or failed
               uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
               with:
                   jobs: ${{ toJSON(needs) }}
+                  allowed-skips: test_e2e
+                  
