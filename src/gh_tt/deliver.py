@@ -8,7 +8,7 @@ from rich.live import Live
 from rich.text import Text
 
 from gh_tt.commands import gh, git
-from gh_tt.shell import ShellError
+from gh_tt.commands.shell import ShellError
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,7 @@
 from pytest_mock import MockerFixture
 
 from gh_tt.commands import gh
-from gh_tt.shell import ShellResult
+from gh_tt.commands.shell import ShellResult
 
 
 async def test_get_gh_auth_scopes_success(mocker: MockerFixture):
@@ -24,7 +24,7 @@ async def test_get_gh_auth_scopes_success(mocker: MockerFixture):
     """
 
     mocker.patch(
-        'gh_tt.shell.run',
+        'gh_tt.commands.shell.run',
         return_value=(ShellResult(result, mocker.Mock(), return_code=0)),
         new_callable=mocker.AsyncMock,
     )

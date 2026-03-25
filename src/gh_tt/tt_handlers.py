@@ -4,8 +4,8 @@ import asyncio
 import logging
 import sys
 
-from gh_tt import configuration, shell
-from gh_tt.commands import git
+from gh_tt import configuration
+from gh_tt.commands import git, shell
 from gh_tt.deliver import DeliverError, deliver
 from gh_tt.legacy.semver import ExecutionMode, ReleaseType, Semver
 from gh_tt.workon import workon_issue, workon_title

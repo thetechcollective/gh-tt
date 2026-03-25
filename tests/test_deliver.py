@@ -6,8 +6,7 @@ from hypothesis import provisional as hypothesis_provisional
 from hypothesis import strategies as st
 from pydantic import HttpUrl
 
-from gh_tt import shell
-from gh_tt.commands import gh
+from gh_tt.commands import gh, shell
 from gh_tt.commands.gh import Commit
 from gh_tt.commands.git import PR_START_COMMIT_HEADLINE
 from gh_tt.deliver import _build_merge_body

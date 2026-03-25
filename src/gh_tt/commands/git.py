@@ -10,7 +10,7 @@ from typing import Literal
 
 from async_lru import alru_cache
 
-from gh_tt import shell
+from gh_tt.commands import shell
 
 logger = logging.getLogger(__name__)
 
