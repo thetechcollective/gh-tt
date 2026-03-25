@@ -1,7 +1,8 @@
 import json
+import re
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 CONFIG_FILE_NAME = '.tt-config.json'
 
@@ -35,10 +36,20 @@ class DeliverConfig(ConfigModel):
     policies: DeliverPolicies = DeliverPolicies()
 
 
+SEMVER_PATTERN = re.compile(r'^\d+\.\d+\.\d+$')
+
+
+class SemverConfig(ConfigModel):
+    prerelease_suffix: str = 'rc'
+    prefix: str = ''
+    initial: str = Field(pattern=SEMVER_PATTERN, default='0.0.0')
+
+
 class TtConfig(ConfigModel):
     project: ProjectConfig = ProjectConfig()
     workon: WorkonConfig = WorkonConfig()
     deliver: DeliverConfig = DeliverConfig()
+    semver: SemverConfig = SemverConfig()
 
 
 def _load_user_config(config_path: Path) -> dict:

@@ -6,10 +6,10 @@ import sys
 from dataclasses import dataclass
 from enum import Enum, StrEnum, auto
 
-from gh_tt.classes.config import Config
 from gh_tt.classes.gitter import Gitter
 from gh_tt.classes.lazyload import Lazyload
 from gh_tt.commands import git
+from gh_tt.modules import configuration
 
 
 class ReleaseType(StrEnum):
@@ -309,6 +309,9 @@ class Semver(Lazyload):
     def __init__(self, prefix: str | None = None, initial: str | None = None, tag_string: str | None = None):
         super().__init__()
 
+        git_root = asyncio.run(git.get_root())
+        config = configuration.load_config(git_root=git_root)
+
         if initial is not None and initial != '':
             try:
                 assert re.match(r'^\d+\.\d+\.\d+$', initial), "Initial version must be in the format 'X.Y.Z' where X, Y, Z are integers."
@@ -317,12 +320,12 @@ class Semver(Lazyload):
                 sys.exit(1)
             self.set('initial', initial)
         else:
-            self.set('initial', Config.config()['semver']['initial'])
+            self.set('initial', config.semver.initial)
 
         if prefix is not None and prefix != '':
             self.set('prefix', prefix)
         else:
-            self.set('prefix', Config.config()['semver']['prefix'])
+            self.set('prefix', config.semver.prefix)
 
         if tag_string is not None:
             self.set('tags', tag_string)
