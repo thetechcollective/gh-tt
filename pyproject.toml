@@ -33,6 +33,7 @@ required-version = '>=0.10, <0.11'
 exclude = [
     "src/gh_tt/classes/*.py",
     "src/gh_tt/modules/*.py",
+    "!src/gh_tt/modules/configuration.py",
     "tests/test_config.py",
     "tests/test_handlers.py",
     "tests/test_parser.py",
