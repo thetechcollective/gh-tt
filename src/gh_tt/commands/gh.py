@@ -131,7 +131,7 @@ async def mark_pr_ready(dev_branch: str):
 
 async def is_pr_open(dev_branch: str) -> bool:
     result = await shell.run(
-        ['gh', 'pr', 'view', dev_branch, '--json', 'url,state'], die_on_error=False
+        ['gh', 'pr', 'view', dev_branch, '--json', 'url,state,body,commits'], die_on_error=False
     )
 
     if result.return_code == 1:
