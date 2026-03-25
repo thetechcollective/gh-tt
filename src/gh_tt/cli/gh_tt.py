@@ -4,9 +4,10 @@ import logging
 import os
 import sys
 
+from gh_tt import configuration
 from gh_tt.cli.tt_handlers import COMMAND_HANDLERS
 from gh_tt.cli.tt_parser import tt_parse
-from gh_tt.commands import gh, shell
+from gh_tt.commands import gh, git, shell
 
 logger = logging.getLogger(__name__)
 
@@ -66,8 +67,13 @@ def main():
     # we use a GitHub App which is authorized in the workflow and does not have auth tokens.
     if not os.getenv('GITHUB_ACTIONS'):
         gh_scopes = asyncio.run(gh.get_gh_auth_scopes())
+        config = configuration.load_config(asyncio.run(git.get_root()))
 
-        if 'project' not in gh_scopes:
+        if (
+            config.project.owner is not None
+            and config.project.number is not None
+            and 'project' not in gh_scopes
+        ):
             print(
                 "gh token does not have the required scope 'project'\nfix it by running:\n   gh auth refresh --scopes 'project'",
                 file=sys.stderr,
