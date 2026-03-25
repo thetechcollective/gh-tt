@@ -141,11 +141,7 @@ indent-style = "space"
 docstring-code-format = true
 exclude = [
     "src/gh_tt/legacy/*.py",
-    "src/gh_tt/cli/tt_parser.py",
-    "src/gh_tt/cli/tt_handlers.py",
     "tests/legacy/*.py",
-    "tests/test_handlers.py",
-    "tests/test_parser.py",
 ]
 
 [tool.pytest.ini_options]
