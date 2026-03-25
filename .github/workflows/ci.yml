@@ -178,11 +178,31 @@ jobs:
             - name: Verify extension runs
               run: gh tt --help
 
+    should-run-e2e-tests:
+        runs-on: ubuntu-latest
+        name: Check changed paths
+        permissions:
+            contents: read
+            pull-requests: read # Reading files changed in the pull request
+        outputs:
+            changed: ${{ steps.filter.outputs.changed }}
+        steps:
+            - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+              id: filter
+              with:
+                filters: |
+                    changed:
+                        - 'src/gh_tt/**'
+                        - 'tests/**'
+                        - '.github/workflows/ci.yml'
+
     test_e2e:
-        needs: [smoke_test]
+        needs: [smoke_test, should-run-e2e-tests]
 
         name: Test E2E
         runs-on: ubuntu-latest
+        if: ${{ needs.should-run-e2e-tests.outputs.changed == 'true' }}
+
         steps:
             - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
               with:
