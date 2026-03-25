@@ -120,7 +120,7 @@ async def switch_branch(switch_input: LocalBranchName | SwitchRemoteInput) -> Br
 PR_START_COMMIT_HEADLINE = '[skip ci] PR start commit'
 
 
-async def push_empty_commit(dev_branch: str):
+async def push_pr_start_commit(dev_branch: str):
     logger.debug('pushing empty commit on branch %s', dev_branch)
     status = await shell.run(['git', 'status', '--porcelain'])
     has_changes = bool(status.stdout)
