@@ -2,7 +2,7 @@ from contextlib import nullcontext as does_not_raise
 
 import pytest
 
-from gh_tt.modules.tt_parser import tt_parse
+from gh_tt.tt_parser import tt_parse
 
 
 def test_parser_semver_bump_prerelease():
