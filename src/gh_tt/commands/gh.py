@@ -216,7 +216,32 @@ async def create_issue(title: str, body: str | None = None) -> Issue:
     # https://github.com/thetechcollective/gh-tt/issues/462
     issue_number = int(result.stdout.split('/')[-1])
 
-    return await get_issue(issue_number=issue_number)
+    issue_view_cmd = [
+        'gh',
+        'issue',
+        'view',
+        str(issue_number),
+        '--json',
+        'url,title,number,labels,assignees,closed',
+    ]
+
+    # GitHub API has eventual consistency — the issue may not be queryable immediately after creation
+    issue_result = await shell.poll_until(
+        cmd=issue_view_cmd,
+        predicate=lambda r: bool(r.stdout),
+        timeout_seconds=15,
+        interval=1,
+    )
+
+    if issue_result is None:
+        raise shell.ShellError(
+            cmd=issue_view_cmd,
+            stdout='',
+            stderr=f'Timed out waiting for issue #{issue_number} to become available',
+            return_code=1,
+        )
+
+    return Issue(**json.loads(issue_result.stdout))
 
 
 class Repo(BaseModel):
