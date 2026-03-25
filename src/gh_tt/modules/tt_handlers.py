@@ -4,7 +4,7 @@ import asyncio
 import logging
 import sys
 
-from gh_tt.classes.gitter import Gitter
+from gh_tt import shell
 from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver
 from gh_tt.commands import git
 from gh_tt.deliver import DeliverError, deliver
@@ -79,15 +79,14 @@ def _handle_semver_bump_build(args, semver):
     if args.message:
         message += f"\n{args.message}"
     
-    cmd = f"git tag -a -m \"{tag_str}\n{message}\" {tag_str}"
+    cmd = ["git", "tag", "-a", "-m", f"{tag_str}\n{message}", tag_str]
     
     if args.run:
-        import asyncio
-        asyncio.run(Gitter(cmd=cmd, msg=message).run())
+        asyncio.run(shell.run(cmd))
         # Print the new tag when in --run mode
         print(f"{tag_str}")
     else:
-        print(cmd)
+        print(" ".join(cmd))
 
 
 def _handle_semver_bump(args, semver, release_type):
