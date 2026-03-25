@@ -5,7 +5,7 @@ description = "GitHub extension automating trunk-based development"
 requires-python = ">=3.12"
 
 dependencies = [
-    "async-lru>=2.1.0",
+    "async-lru==2.3.0",
     "pydantic>=2.12.5",
     "rich>=14.3.3",
 ]
