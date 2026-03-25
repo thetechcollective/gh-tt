@@ -42,7 +42,7 @@ async def test_workon_basic_success():
                 '-R',
                 str(env.repo_url),
                 '--json',
-                'number,isDraft,body',
+                'number,isDraft,body,commits',
             ],
             cwd=env.local_repo,
             predicate=lambda r: bool(r.stdout),
@@ -52,6 +52,12 @@ async def test_workon_basic_success():
 
         assert pr['isDraft'], 'Expected PR to be a draft'
         assert f'#{env.issue_number}' in pr['body'], 'Expected PR body to reference the issue'
+
+        first_commit_message_headline = pr['commits'][0]['messageHeadline']
+        expected_first_commit_message_headline = '[skip ci] PR start commit'
+        assert first_commit_message_headline == expected_first_commit_message_headline, (
+            f'Expected first commit headline to be {expected_first_commit_message_headline}, but got {first_commit_message_headline}'
+        )
 
 
 @pytest.mark.usefixtures('check_end_to_end_env')
