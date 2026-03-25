@@ -4,9 +4,9 @@ import logging
 import os
 import sys
 
+from gh_tt.cli.tt_handlers import COMMAND_HANDLERS
+from gh_tt.cli.tt_parser import tt_parse
 from gh_tt.commands import gh, shell
-from gh_tt.tt_handlers import COMMAND_HANDLERS
-from gh_tt.tt_parser import tt_parse
 
 logger = logging.getLogger(__name__)
 

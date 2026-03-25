@@ -2,7 +2,7 @@ import argparse
 
 import pytest
 
-from gh_tt.tt_handlers import handle_deliver, handle_workon
+from gh_tt.cli.tt_handlers import handle_deliver, handle_workon
 
 
 def test_workon_aborts_without_pr_workflow():

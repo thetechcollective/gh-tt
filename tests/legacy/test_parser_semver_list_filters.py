@@ -1,6 +1,6 @@
 import pytest
 
-from gh_tt.tt_parser import tt_parse
+from gh_tt.cli.tt_parser import tt_parse
 
 
 def test_parser_semver_list_default():
