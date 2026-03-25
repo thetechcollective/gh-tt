@@ -32,7 +32,6 @@ required-version = '>=0.11.1, <0.12'
 [tool.ty.src]
 exclude = [
     "src/gh_tt/legacy/*.py",
-    "!src/gh_tt/modules/configuration.py",
     "tests/legacy/*.py",
     "tests/test_handlers.py",
     "tests/test_parser.py",
