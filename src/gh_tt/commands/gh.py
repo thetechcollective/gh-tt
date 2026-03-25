@@ -31,13 +31,20 @@ class PullRequestState(Enum):
     Merged = 'MERGED'
 
 
+class Commit(BaseModel):
+    message_headline: str = Field(alias='messageHeadline')
+    message_body: str = Field(alias='messageBody')
+
+
 class PullRequest(BaseModel):
     url: HttpUrl
     state: PullRequestState
+    body: str
+    commits: list[Commit]
 
 
 async def get_pr() -> PullRequest:
-    result = await shell.run(['gh', 'pr', 'view', '--json', 'url,state'])
+    result = await shell.run(['gh', 'pr', 'view', '--json', 'url,state,body,commits'])
 
     return PullRequest(**json.loads(result.stdout))
 
@@ -109,9 +116,9 @@ async def get_pr_checks(branch: str) -> list[Check]:
     return [Check(**item) for item in json.loads(result.stdout)]
 
 
-async def merge_pr(dev_branch: str, *, delete_branch: bool):
+async def merge_pr(dev_branch: str, *, delete_branch: bool, body: str):
     logger.debug('merging PR on branch %s (delete_branch=%s)', dev_branch, delete_branch)
-    cmd = ['gh', 'pr', 'merge', dev_branch, '--auto', '--squash']
+    cmd = ['gh', 'pr', 'merge', dev_branch, '--auto', '--squash', '--body', body]
     if delete_branch:
         cmd.append('--delete-branch')
 
