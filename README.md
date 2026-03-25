@@ -38,7 +38,7 @@ gh extension install thetechcollective/gh-tt
 The extension requires write access to GitHub Projects (scope `project`). If you don't have it, you'll be prompted with instructions.
 
 ### Configuration
-Configuration is possible via `.tt-config.json` in the root of your repository. You can take inspiration from the default configuration file, [classes/tt-config.json](classes/tt-config.json).
+Configuration is possible via `.tt-config.json` in the root of your repository. You can take inspiration from the default configuration file, [legacy/tt-config.json](legacy/tt-config.json).
 
 To add issues you work on to a GitHub Project:
 ```jsonc
@@ -65,7 +65,7 @@ The defaults are
 ```
 
 > [!TIP]
-> There's many more configuration options laid out in [`classes/tt-config.json`](classes/tt-config.json). 
+> There's many more configuration options laid out in [`legacy/tt-config.json`](legacy/tt-config.json). 
 
 
 ### Add files to `.gitignore`

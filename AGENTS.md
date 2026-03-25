@@ -25,4 +25,4 @@ uv run --frozen -- pytest --numprocesses=auto -m end_to_end {{ args }}
 ```
 
 ### Deprecated code
-`src/gh_tt/classes/` are largely deprecated. They are excluded from `ruff format`, `ty` type checking, and several test files within are excluded from tooling. Do not extend or refactor code in these directories unless explicitly asked.
+Files in `src/gh_tt/legacy/` are largely deprecated. They are excluded from `ruff format`, `ty` type checking, and several test files within are excluded from tooling. Do not extend or refactor code in these directories unless explicitly asked.

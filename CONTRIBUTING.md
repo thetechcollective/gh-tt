@@ -16,16 +16,16 @@ If you do not want to work in a devcontainer, check out what's happening in `pos
 ├── scripts/ # helpers and utilities for working on the project
 ├── src/
 │   └── gh_tt/
-│       ├── classes/ # contains deprecated files
-│       ├── commands/ # calls to external dependencies (non-pure functions)
-│       │   ├── gh.py # calls to the GitHub CLI
-│       │   └── git.py # calls to git
-│       ├── deliver.py # main orchestrator for the `deliver` CLI command
-│       ├── gh_tt.py # entrypoint of the application
-│       ├── modules/
+│       ├── cli/
+│       │   ├── gh_tt.py # entrypoint of the application
 │       │   ├── tt_handlers.py # dispatching commands depending on args
 │       │   └── tt_parser.py # CLI argument parsing
-│       ├── shell.py # utility module for executing external processes
+│       ├── commands/ # calls to external dependencies (non-pure functions)
+│       │   ├── gh.py # calls to the GitHub CLI
+│       │   ├── git.py # calls to git
+│       │   └── shell.py # utility module for executing external processes
+│       ├── deliver.py # main orchestrator for the `deliver` CLI command
+│       ├── legacy/ # contains deprecated files
 │       └── workon.py # main orchestrator for the `workon` CLI command
 ├── tests/
 └── uv.lock # lockfile
@@ -38,6 +38,12 @@ To see available commands, execute `just`.
 
 ## Testing
 `pytest` is used as the test framework. `hypothesis` is used for property-based testing. For other testing dependencies, look at the `dev` dependency group in `pyproject.toml`.
+
+`workon` and `deliver` are covered predominantly via end to end testing that runs against live GitHub APIs. This is because the vast majority of those commands are calls to git or gh cli, which makes function-level tests difficult without heavy mocking. Instead of risking that we do not test the underlying implementation when using mocks, there is the end to end tests that _actually_ run the code under test. 
+
+Generally, you should feel confident that `workon` and `deliver` end to end testing will catch your mistakes. However, pay attention when changing polling for PR checks in `deliver` which does not have end to end tests.
+
+`semver` is relatively well tested as well. However, more could be done to test semver at the boundary (as in end to end). You should confirm that your changes do the expected thing manually by running with the `--no-run` option.
 
 ```sh
 # Run unit tests with coverage
