@@ -68,6 +68,18 @@ def _render_final(checks: list[gh.Check]) -> Text:
     return Text('\n'.join(lines))
 
 
+def _build_merge_body(pr: gh.PullRequest) -> str:
+    parts: list[str] = [pr.body]
+    for i, commit in enumerate(pr.commits):
+        headline = commit.message_headline
+        body = commit.message_body
+        if i == 0 and headline == git.PR_START_COMMIT_HEADLINE:
+            headline = headline.replace('[skip ci] ', '')
+        message = f'* {headline}\n\n{body}' if body else f'* {headline}'
+        parts.append(message)
+    return '\n\n'.join(parts)
+
+
 FIFTEEN_MINUTES_IN_SECONDS = 15 * 60
 
 
@@ -203,7 +215,9 @@ async def deliver(*, delete_branch: bool, poll: bool = False):
     )
     pr, _ = await asyncio.gather(gh.get_pr(), gh.mark_pr_ready(dev_branch=current_branch))
     logger.debug('merging PR on branch %s', current_branch)
-    await gh.merge_pr(dev_branch=current_branch, delete_branch=delete_branch)
+    await gh.merge_pr(
+        dev_branch=current_branch, delete_branch=delete_branch, body=_build_merge_body(pr)
+    )
     logger.debug('PR merged successfully: %s', pr.url)
 
     print(str(pr.url))
