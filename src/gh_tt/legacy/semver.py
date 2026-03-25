@@ -6,10 +6,9 @@ import sys
 from dataclasses import dataclass
 from enum import Enum, StrEnum, auto
 
-from gh_tt import shell
-from gh_tt.classes.lazyload import Lazyload
-from gh_tt.commands import git
-from gh_tt.modules import configuration
+from gh_tt import configuration
+from gh_tt.commands import git, shell
+from gh_tt.legacy.lazyload import Lazyload
 
 
 class ReleaseType(StrEnum):

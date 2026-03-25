@@ -1,8 +1,8 @@
 import asyncio
 import logging
 
+from gh_tt import configuration
 from gh_tt.commands import gh, git
-from gh_tt.modules import configuration
 
 logger = logging.getLogger(__name__)
 

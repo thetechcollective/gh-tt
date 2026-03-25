@@ -4,7 +4,7 @@ import os
 import pytest
 from hypothesis import settings
 
-from gh_tt import shell
+from gh_tt.commands import shell
 
 # Hypothesis profiles
 # To run e.g. the "1000" profile --> `pytest --hypothesis-profile 1000`

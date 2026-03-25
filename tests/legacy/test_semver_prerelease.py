@@ -1,4 +1,4 @@
-from gh_tt.classes.semver import SemverVersion
+from gh_tt.legacy.semver import SemverVersion
 
 
 def test_prerelease_version_comparison():

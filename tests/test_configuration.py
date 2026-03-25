@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from gh_tt.modules.configuration import (
+from gh_tt.configuration import (
     ConfigParseError,
     ConfigValidationError,
     ProjectConfig,

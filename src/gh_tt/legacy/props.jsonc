@@ -1,0 +1,31 @@
+// This file contains the recipes for retrieveing properties in classes that inherit from the LazyLoad class.
+// Elements are listed under the class name that they belong to.
+// Elements are named with the property name that they represent.
+// Each element define the command that will be executed to retrieve the property value.
+// The commands are passed to Gitter.run() this implies anything that will run in the terminal 
+// including `git` `gh` which Gitter guarantees to support 
+// supported tuples are:
+//    "cmd": str, the command to run (required)
+// The "cmd"  value can contain placeholders for other properties that are defined in the same class.
+// e.g. "cmd": "git rev-parse {remote}/{default_branch}", This implies an dependency that doesn't need 
+// to be defined explicitly. But the har rule is that placerholders can only be used for properties that 
+// from different dependency groups.
+//    "msg": str, the note to display in verbose mode (optional, default: "")
+// Each element can have a optional group descriptor:
+//    "group": "remote" 
+// I it does not have one, it will be placed in the basic group "init". An element can only belong to one 
+// group. And it may have an implicit dependency - as described above
+{
+  "semver": {
+    "tags": {
+      "cmd": "git tag --list --format='%(refname:short)'",
+      "msg": "List all tags in the repository",
+      "group": "init"
+    },
+    "tag_shas": {
+      "cmd": "git for-each-ref --format='%(if:equals=tag)%(objecttype)%(then)%(object)%(else)%(objectname)%(end) %(refname:short)' refs/tags/",
+      "msg": "List all tags with their commit SHA in the repository (resolving through annotated tags)",
+      "group": "init"
+    }
+  }
+}

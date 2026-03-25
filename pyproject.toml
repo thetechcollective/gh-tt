@@ -31,18 +31,10 @@ required-version = '>=0.11.1, <0.12'
 
 [tool.ty.src]
 exclude = [
-    "src/gh_tt/classes/*.py",
-    "src/gh_tt/modules/*.py",
-    "!src/gh_tt/modules/configuration.py",
+    "src/gh_tt/legacy/*.py",
+    "tests/legacy/*.py",
     "tests/test_handlers.py",
     "tests/test_parser.py",
-    "tests/test_parser_semver_list_filters.py",
-    "tests/test_parser_semver_list_sha.py",
-    "tests/test_parser_semver_top_level.py",
-    "tests/test_semver_list_sha.py",
-    "tests/test_semver_note_with_from_to.py",
-    "tests/test_semver_prerelease.py",
-    "tests/test_semver.py",
 ]
 
 include = ["src", "tests", ".githooks/pre-commit"]
@@ -148,18 +140,12 @@ quote-style = "single"
 indent-style = "space"
 docstring-code-format = true
 exclude = [
-    "src/gh_tt/classes/*.py",
-    "src/gh_tt/modules/*.py",
-    "tests/test_config.py",
+    "src/gh_tt/legacy/*.py",
+    "src/gh_tt/cli/tt_parser.py",
+    "src/gh_tt/cli/tt_handlers.py",
+    "tests/legacy/*.py",
     "tests/test_handlers.py",
     "tests/test_parser.py",
-    "tests/test_parser_semver_list_filters.py",
-    "tests/test_parser_semver_list_sha.py",
-    "tests/test_parser_semver_top_level.py",
-    "tests/test_semver_list_sha.py",
-    "tests/test_semver_note_with_from_to.py",
-    "tests/test_semver_prerelease.py",
-    "tests/test_semver.py",
 ]
 
 [tool.pytest.ini_options]

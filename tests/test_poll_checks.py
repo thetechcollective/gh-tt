@@ -2,6 +2,7 @@ import pytest
 from pydantic import HttpUrl
 
 from gh_tt.commands.gh import Check, CheckBucket
+from gh_tt.commands.shell import ShellError
 from gh_tt.deliver import (
     DeliverError,
     _format_check_line,
@@ -10,7 +11,6 @@ from gh_tt.deliver import (
     _sort_checks,
     poll_checks,
 )
-from gh_tt.shell import ShellError
 
 
 def _make_check(name: str, bucket: CheckBucket, workflow: str = 'CI') -> Check:

@@ -4,9 +4,8 @@ from pathlib import Path
 import pytest
 from pydantic import HttpUrl
 
-from gh_tt import shell
-from gh_tt.commands import git
-from gh_tt.shell import ShellError
+from gh_tt.commands import git, shell
+from gh_tt.commands.shell import ShellError
 from tests.env_builder import IntegrationEnv
 
 

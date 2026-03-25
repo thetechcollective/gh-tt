@@ -15,8 +15,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Self
 
-from gh_tt import shell
-from gh_tt.modules import configuration
+from gh_tt import configuration
+from gh_tt.commands import shell
 
 QA_ORG_NAME = 'gh-tt-qa'
 
