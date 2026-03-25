@@ -117,6 +117,9 @@ async def switch_branch(switch_input: LocalBranchName | SwitchRemoteInput) -> Br
             return branch
 
 
+PR_START_COMMIT_HEADLINE = '[skip ci] PR start commit'
+
+
 async def push_empty_commit(dev_branch: str):
     logger.debug('pushing empty commit on branch %s', dev_branch)
     status = await shell.run(['git', 'status', '--porcelain'])
@@ -134,7 +137,7 @@ async def push_empty_commit(dev_branch: str):
                 '--allow-empty',
                 '--no-verify',
                 '-m',
-                '[skip ci] PR start commit',
+                PR_START_COMMIT_HEADLINE,
                 '-m',
                 'This commit serves no other purpose than to allow creation of a PR when executing `gh tt workon`. Because creating a PR without a commit is not possible. This commit should be squashed or removed before merging this PR.',
             ]
