@@ -262,7 +262,7 @@ async def test_workon_with_project():
         if result is None:
             pytest.fail('Polling for project item timed out')
 
-        project_item_data = json.loads(result.stdout)  # ty:ignore[possibly-missing-attribute] - we check the result above
+        project_item_data = json.loads(result.stdout)
 
         assert project_item_data is not None, 'Expected the project to have an item in progress'
         assert project_item_data['content']['number'] == env.issue_number
