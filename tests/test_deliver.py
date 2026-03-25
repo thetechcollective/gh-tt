@@ -87,6 +87,31 @@ async def test_workon_deliver_flow_success():
         )
         assert HttpUrl(output), 'Expected output to be a valid url'
 
+        merge_commit = await shell.run(
+            [
+                'gh',
+                'pr',
+                'view',
+                str(pr_number),
+                '--json',
+                'mergeCommit',
+                '--jq',
+                '.mergeCommit.oid',
+            ],
+            cwd=env.local_repo,
+        )
+        await shell.run(
+            ['git', 'fetch', 'origin', 'main'],
+            cwd=env.local_repo,
+        )
+        commit_body = await shell.run(
+            ['git', 'log', '-1', '--format=%b', merge_commit.stdout],
+            cwd=env.local_repo,
+        )
+        assert '[skip ci]' not in commit_body.stdout, (
+            'Expected merge commit body to not contain [skip ci]'
+        )
+
 
 @pytest.mark.usefixtures('check_end_to_end_env')
 async def test_workon_deliver_fails_when_not_up_to_date_with_default_branch():
