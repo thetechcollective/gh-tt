@@ -49,8 +49,8 @@ async def run(cmd: list[str], *, cwd: Path | None = None, die_on_error: bool = T
 
 async def poll_until(
     cmd: list[str],
-    cwd: Path,
     predicate: Callable[[ShellResult], bool],
+    cwd: Path | None = None,
     timeout_seconds: int = 30,
     interval: int = 3,
 ) -> ShellResult | None:
