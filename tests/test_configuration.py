@@ -35,6 +35,9 @@ def test_config_models_are_immutable():
     with pytest.raises(Exception, match='frozen'):
         config.workon.status = 'Test'
 
+    with pytest.raises(Exception, match='frozen'):
+        config.semver.prefix = 'Test'
+
 
 def test_no_git_root_returns_defaults():
     config = load_config(git_root=None)

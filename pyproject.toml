@@ -34,7 +34,6 @@ exclude = [
     "src/gh_tt/classes/*.py",
     "src/gh_tt/modules/*.py",
     "!src/gh_tt/modules/configuration.py",
-    "tests/test_config.py",
     "tests/test_handlers.py",
     "tests/test_parser.py",
     "tests/test_parser_semver_list_filters.py",
