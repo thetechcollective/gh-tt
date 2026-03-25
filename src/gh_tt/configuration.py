@@ -1,3 +1,9 @@
+"""
+Manages configuration defaults and parsing.
+
+Exposes the configuration through load_config().
+"""
+
 import json
 import re
 from pathlib import Path
