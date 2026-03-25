@@ -31,13 +31,20 @@ class PullRequestState(Enum):
     Merged = 'MERGED'
 
 
+class Commit(BaseModel):
+    message_headline: str = Field(alias='messageHeadline')
+    message_body: str = Field(alias='messageBody')
+
+
 class PullRequest(BaseModel):
     url: HttpUrl
     state: PullRequestState
+    body: str
+    commits: list[Commit]
 
 
 async def get_pr() -> PullRequest:
-    result = await shell.run(['gh', 'pr', 'view', '--json', 'url,state'])
+    result = await shell.run(['gh', 'pr', 'view', '--json', 'url,state,body,commits'])
 
     return PullRequest(**json.loads(result.stdout))
 
@@ -109,9 +116,9 @@ async def get_pr_checks(branch: str) -> list[Check]:
     return [Check(**item) for item in json.loads(result.stdout)]
 
 
-async def merge_pr(dev_branch: str, *, delete_branch: bool):
+async def merge_pr(dev_branch: str, *, delete_branch: bool, body: str):
     logger.debug('merging PR on branch %s (delete_branch=%s)', dev_branch, delete_branch)
-    cmd = ['gh', 'pr', 'merge', dev_branch, '--auto', '--squash']
+    cmd = ['gh', 'pr', 'merge', dev_branch, '--auto', '--squash', '--body', body]
     if delete_branch:
         cmd.append('--delete-branch')
 
@@ -124,7 +131,7 @@ async def mark_pr_ready(dev_branch: str):
 
 async def is_pr_open(dev_branch: str) -> bool:
     result = await shell.run(
-        ['gh', 'pr', 'view', dev_branch, '--json', 'url,state'], die_on_error=False
+        ['gh', 'pr', 'view', dev_branch, '--json', 'url,state,body,commits'], die_on_error=False
     )
 
     if result.return_code == 1:
@@ -209,7 +216,32 @@ async def create_issue(title: str, body: str | None = None) -> Issue:
     # https://github.com/thetechcollective/gh-tt/issues/462
     issue_number = int(result.stdout.split('/')[-1])
 
-    return await get_issue(issue_number=issue_number)
+    issue_view_cmd = [
+        'gh',
+        'issue',
+        'view',
+        str(issue_number),
+        '--json',
+        'url,title,number,labels,assignees,closed',
+    ]
+
+    # GitHub API has eventual consistency — the issue may not be queryable immediately after creation
+    issue_result = await shell.poll_until(
+        cmd=issue_view_cmd,
+        predicate=lambda r: bool(r.stdout),
+        timeout_seconds=15,
+        interval=1,
+    )
+
+    if issue_result is None:
+        raise shell.ShellError(
+            cmd=issue_view_cmd,
+            stdout='',
+            stderr=f'Timed out waiting for issue #{issue_number} to become available',
+            return_code=1,
+        )
+
+    return Issue(**json.loads(issue_result.stdout))
 
 
 class Repo(BaseModel):

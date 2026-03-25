@@ -1,10 +1,40 @@
 from pathlib import Path
 
 import pytest
+from hypothesis import given
+from hypothesis import provisional as hypothesis_provisional
+from hypothesis import strategies as st
 from pydantic import HttpUrl
 
 from gh_tt import shell
+from gh_tt.commands import gh
+from gh_tt.commands.gh import Commit
+from gh_tt.commands.git import PR_START_COMMIT_HEADLINE
+from gh_tt.deliver import _build_merge_body
 from tests.env_builder import IntegrationEnv
+
+st.register_type_strategy(HttpUrl, hypothesis_provisional.urls().map(HttpUrl))
+
+
+@given(pr=st.from_type(gh.PullRequest))
+def test_merge_body_no_crash(pr: gh.PullRequest):
+    _build_merge_body(pr)
+
+
+@given(pr=st.from_type(gh.PullRequest))
+def test_merge_body_does_not_include_skip_ci_in_first_commit(pr: gh.PullRequest):
+    pr.commits = [gh.Commit(messageHeadline=PR_START_COMMIT_HEADLINE, messageBody='')]
+    body = _build_merge_body(pr)
+
+    assert '[skip ci]' not in body
+
+
+@given(pr=st.from_type(gh.PullRequest).filter(lambda pr: len(pr.commits) > 1))
+def test_merge_body_includes_skip_ci_outside_of_first_commit(pr: gh.PullRequest):
+    pr.commits[1] = Commit(messageHeadline=PR_START_COMMIT_HEADLINE, messageBody='')
+
+    body = _build_merge_body(pr)
+    assert '[skip ci]' in body
 
 
 @pytest.mark.usefixtures('check_end_to_end_env')
@@ -46,8 +76,6 @@ async def test_workon_deliver_flow_success():
             ['gh', 'pr', 'view', str(pr_number), '--json', 'mergedAt', '--jq', '.mergedAt'],
             cwd=env.local_repo,
             predicate=lambda r: bool(r.stdout),
-            timeout_seconds=15,
-            interval=3,
         )
         assert result is not None, 'Expected PR to be merged'
 
@@ -56,6 +84,31 @@ async def test_workon_deliver_flow_success():
             'Expected output url to end with the PR number'
         )
         assert HttpUrl(output), 'Expected output to be a valid url'
+
+        merge_commit = await shell.run(
+            [
+                'gh',
+                'pr',
+                'view',
+                str(pr_number),
+                '--json',
+                'mergeCommit',
+                '--jq',
+                '.mergeCommit.oid',
+            ],
+            cwd=env.local_repo,
+        )
+        await shell.run(
+            ['git', 'fetch', 'origin', 'main'],
+            cwd=env.local_repo,
+        )
+        commit_body = await shell.run(
+            ['git', 'log', '-1', '--format=%b', merge_commit.stdout],
+            cwd=env.local_repo,
+        )
+        assert '[skip ci]' not in commit_body.stdout, (
+            'Expected merge commit body to not contain [skip ci]'
+        )
 
 
 @pytest.mark.usefixtures('check_end_to_end_env')

@@ -96,7 +96,7 @@ async def _create_or_reuse_branch(issue: gh.Issue, repo: gh.Repo, remote: str) -
                 issue_number=issue.number,
                 default_branch=repo.default_branch,
             )
-            await git.push_empty_commit(dev_branch=dev_branch)
+            await git.push_pr_start_commit(dev_branch=dev_branch)
             await gh.create_draft_pr(
                 issue_number=issue.number,
                 issue_title=issue.title,
