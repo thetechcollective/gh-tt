@@ -111,6 +111,8 @@ async def test_workon_given_existing_local_branch_workon_exits_when_pr_does_not_
         .create_local_clone()
         .build() as env
     ):
+        assert env.local_repo is not None, f'Expected local repo Path, got {type(env.local_repo)}'
+
         # First workon - creates the branch and PR
         await shell.run(
             ['gh', 'tt', 'workon', '--pr-workflow', '-i', str(env.issue_number), '--no-assign'],
@@ -119,6 +121,14 @@ async def test_workon_given_existing_local_branch_workon_exits_when_pr_does_not_
 
         result = await shell.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=env.local_repo)
         branch_name = result.stdout
+
+        # Wait for the PR to be visible before closing it (GitHub API eventual consistency)
+        pr_result = await shell.poll_until(
+            ['gh', 'pr', 'view', branch_name, '--json', 'number'],
+            cwd=env.local_repo,
+            predicate=lambda r: bool(r.stdout),
+        )
+        assert pr_result is not None, 'Expected PR to be visible'
 
         await shell.run(['gh', 'pr', 'close', branch_name], cwd=env.local_repo)
         await shell.run(['git', 'switch', 'main'], cwd=env.local_repo)
@@ -138,6 +148,8 @@ async def test_workon_given_existing_remote_branch_workon_exits_when_pr_does_not
     async with (
         IntegrationEnv().require_owner().create_repo().create_issue().create_local_clone().build()
     ) as env:
+        assert env.local_repo is not None, f'Expected local repo Path, got {type(env.local_repo)}'
+
         # First workon - creates the branch
         await shell.run(
             ['gh', 'tt', 'workon', '--pr-workflow', '-i', str(env.issue_number), '--no-assign'],
@@ -146,6 +158,14 @@ async def test_workon_given_existing_remote_branch_workon_exits_when_pr_does_not
 
         result = await shell.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=env.local_repo)
         branch_name = result.stdout
+
+        # Wait for the PR to be visible before closing it (GitHub API eventual consistency)
+        pr_result = await shell.poll_until(
+            ['gh', 'pr', 'view', branch_name, '--json', 'number'],
+            cwd=env.local_repo,
+            predicate=lambda r: bool(r.stdout),
+        )
+        assert pr_result is not None, 'Expected PR to be visible'
 
         # Switch back to main, delete local branch, close PR
         await shell.run(['git', 'checkout', 'main'], cwd=env.local_repo)
@@ -284,6 +304,8 @@ async def test_workon_commits_empty_with_pending_changes():
 @pytest.mark.usefixtures('check_end_to_end_env')
 async def test_workon_title_success():
     async with IntegrationEnv().require_owner().create_repo().create_local_clone().build() as env:
+        assert env.local_repo is not None, f'Expected local repo Path, got {type(env.local_repo)}'
+
         workon_result = await shell.run(
             ['gh', 'tt', 'workon', '--pr-workflow', '-t', 'title of the issue', '--no-assign'],
             cwd=env.local_repo,
@@ -305,7 +327,7 @@ async def test_workon_title_success():
         assert HttpUrl(output), 'Expected output to be a valid url'
 
         # Verify a draft PR was created for this branch
-        pr_data = await shell.run(
+        pr_data = await shell.poll_until(
             [
                 'gh',
                 'pr',
@@ -315,8 +337,11 @@ async def test_workon_title_success():
                 str(env.repo_url),
                 '--json',
                 'number,isDraft,body',
-            ]
+            ],
+            cwd=env.local_repo,
+            predicate=lambda r: bool(r.stdout),
         )
+        assert pr_data is not None, 'Expected PR to be visible'
         pr = json.loads(pr_data.stdout)
 
         assert pr['isDraft'], 'Expected PR to be a draft'
