@@ -9,7 +9,8 @@
         "**/.cspell/**",
         "**/logs/**",
         "**/tmp/**",
-        "**/temp/**"
+        "**/temp/**",
+        "docs/specs/**"
     ],
     "files": [
         "**/*.md",
@@ -48,6 +49,7 @@
         "Devbranch",
         "Pydantic",
         "frozenset",
-        "asyncio"
+        "asyncio",
+        "numprocesses"
     ]
 }
