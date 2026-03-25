@@ -8,7 +8,7 @@ from gh_tt import configuration
 from gh_tt.commands import git, shell
 from gh_tt.deliver import DeliverError, deliver
 from gh_tt.legacy.semver import ExecutionMode, ReleaseType, Semver
-from gh_tt.workon import workon_issue, workon_title
+from gh_tt.workon import WorkonError, workon_issue, workon_title
 
 logger = logging.getLogger(__name__)
 
@@ -28,19 +28,24 @@ def handle_workon(args):
         git_root = asyncio.run(git.get_root())
         config = configuration.load_config(git_root)
 
-        if args.title:
-            logger.debug('handle_workon: pr_workflow with title=%s', args.title)
-            asyncio.run(
-                workon_title(
-                    issue_title=args.title,
-                    issue_body=args.body,
-                    assign=args.assignee,
-                    config=config,
+        try:
+            if args.title:
+                logger.debug('handle_workon: pr_workflow with title=%s', args.title)
+                asyncio.run(
+                    workon_title(
+                        issue_title=args.title,
+                        issue_body=args.body,
+                        assign=args.assignee,
+                        config=config,
+                    )
                 )
-            )
-        else:
-            logger.debug('handle_workon: pr_workflow with issue=%s', args.issue)
-            asyncio.run(workon_issue(args.issue, assign=args.assignee, config=config))
+            else:
+                logger.debug('handle_workon: pr_workflow with issue=%s', args.issue)
+                asyncio.run(workon_issue(args.issue, assign=args.assignee, config=config))
+        except WorkonError as e:
+            print(e, file=sys.stderr)
+            sys.exit(1)
+
         return
 
     _abort_on_legacy_path(args)
