@@ -60,3 +60,25 @@ class Gitter(Lazyload):
         }
 
         return stdout, result
+
+    @classmethod
+    async def fetch(cls, *, prune=False, again=False):
+        """Fetch """
+
+        async with cls._fetch_lock:
+            if cls.fetched and not again:
+                return True
+
+            msg = "Fetch all branches and tags from all remotes"
+
+            prune_switch = "--prune --prune-tags" if prune else ""
+            if prune:
+                msg += " and prune local branches and tags)"
+
+            [_, _] = await Gitter(
+                cmd=f"git fetch --tags --all -f {prune_switch}",
+                msg=f"{msg}").run()
+
+            cls.fetched = True
+
+            return True
