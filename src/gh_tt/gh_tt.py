@@ -6,7 +6,7 @@ import sys
 
 from gh_tt import shell
 from gh_tt.commands import gh
-from gh_tt.modules.tt_handlers import COMMAND_HANDLERS
+from gh_tt.tt_handlers import COMMAND_HANDLERS
 from gh_tt.tt_parser import tt_parse
 
 logger = logging.getLogger(__name__)

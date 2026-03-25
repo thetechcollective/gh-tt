@@ -151,6 +151,7 @@ exclude = [
     "src/gh_tt/legacy/*.py",
     "src/gh_tt/modules/*.py",
     "src/gh_tt/tt_parser.py",
+    "src/gh_tt/tt_handlers.py",
     "tests/test_config.py",
     "tests/test_handlers.py",
     "tests/test_parser.py",
