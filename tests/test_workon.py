@@ -5,6 +5,7 @@ import pytest
 from pydantic import HttpUrl
 
 from gh_tt import shell
+from gh_tt.commands import git
 from gh_tt.shell import ShellError
 from tests.env_builder import IntegrationEnv
 
@@ -54,9 +55,8 @@ async def test_workon_basic_success():
         assert f'#{env.issue_number}' in pr['body'], 'Expected PR body to reference the issue'
 
         first_commit_message_headline = pr['commits'][0]['messageHeadline']
-        expected_first_commit_message_headline = '[skip ci] PR start commit'
-        assert first_commit_message_headline == expected_first_commit_message_headline, (
-            f'Expected first commit headline to be {expected_first_commit_message_headline}, but got {first_commit_message_headline}'
+        assert first_commit_message_headline == git.PR_START_COMMIT_HEADLINE, (
+            f'Expected first commit headline to be {git.PR_START_COMMIT_HEADLINE}, but got {first_commit_message_headline}'
         )
 
 
