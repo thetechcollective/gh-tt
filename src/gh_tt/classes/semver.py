@@ -6,7 +6,7 @@ import sys
 from dataclasses import dataclass
 from enum import Enum, StrEnum, auto
 
-from gh_tt.classes.gitter import Gitter
+from gh_tt import shell
 from gh_tt.classes.lazyload import Lazyload
 from gh_tt.commands import git
 from gh_tt.modules import configuration
@@ -455,10 +455,7 @@ class Semver(Lazyload):
             return cmd
         
         assert execution_mode is ExecutionMode.LIVE
-        asyncio.run(Gitter(
-            cmd=cmd,
-            msg=f"Bumping {level} from version '{self.get_current_semver(release_type)}' to '{next_tag}'"
-        ).run())
+        asyncio.run(shell.run(['git', 'tag', '-a', '-m', f'{next_tag}\nBumped {level} from version \'{from_version}\' to \'{next_tag}\'{message}', next_tag]))
 
         return {next_tag}
     
