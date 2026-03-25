@@ -5,7 +5,7 @@
 
 ## Guiding principle
 
-**No mocking.** The semver subsystem has very few external dependencies — all of them are git commands. Instead of mocking `Gitter` or `git.*`, we set up temporary git repositories and run real commands against them. This gives us high confidence that the refactored code actually works.
+**No mocking.** The semver subsystem has very few external dependencies — all of them are git commands. Instead of mocking `Gitter` or `git.*`, we set up temporary git repositories as fixtures and run real commands against them. This gives us high confidence that the refactored code actually works.
 
 The only things that genuinely cannot be tested without mocking are calls to GitHub's API — none of the semver code paths use `gh`, so this doesn't apply here.
 
@@ -53,71 +53,63 @@ These are already well-tested. Gaps:
 - **`get_current_semver`**: Works. Missing: empty tag list → `None`.
 - **`bump` (live mode)**: Completely untested — this actually creates a git tag. Should be tested in a real repo.
 - **`list`**: Only `filter_type='all'` tested (via SHA test with mocks). Individual filters, sort order, backwards-compat coercion — all untested.
-
 ### 4. `handle_semver` — completely untested
 
 All dispatch logic (no-subcommand, bump, list) and the `_handle_semver_bump_build` error path.
 
-### 5. `Gitter.fetch()` is broken
-
-`Lazyload._load_prop` calls `await Gitter.fetch()`, but the `fetch` classmethod was removed from `Gitter` during a prior refactoring. This means `Semver.with_tags_loaded()` — which goes through `_assert_props` → `_load_manifest` → `_load_prop` — will raise `AttributeError`. Existing tests avoid this by using `Semver.from_json()` or `Semver(tag_string=...)`.
-
-This must be fixed (restore `Gitter.fetch` as a no-op or remove the call from `_load_prop`) before integration tests can exercise the `with_tags_loaded` → handler path. Until then, the git-repo-based tests should construct `Semver` with `tag_string` or load tags manually via `_parse_tags`, which bypasses `_load_prop` entirely.
-
 ## Testing approach
 
-### Extend `IntegrationEnv` from `env_builder.py`
+### Temporary git repo fixture
 
-The existing `IntegrationEnv` already provides `create_local_clone()` which does:
-- `git init` in a temp directory
-- Configures `user.email` and `user.name`
-- Creates an initial empty commit
-- Handles cleanup via the context manager
-
-This overlaps directly with the `RepoHelper` concept. Instead of creating a new class, we extend `IntegrationEnv` with helper methods for creating commits and tags:
+A `pytest` fixture that creates a real git repository in `tmp_path`. Tests that need tags, commits, or SHA information use this fixture instead of JSON files or mocks.
 
 ```python
-# In env_builder.py — add to IntegrationEnv
+@pytest.fixture
+async def semver_repo(tmp_path, monkeypatch):
+    """Create a temporary git repo with commits and tags for semver testing.
 
-async def commit(self, message: str = 'test commit') -> None:
-    """Create an empty commit in the local repo."""
-    assert self.local_repo, 'Local repo required (call create_local_clone first)'
-    await shell.run(
-        ['git', 'commit', '--allow-empty', '-m', message],
-        cwd=self.local_repo,
-    )
+    Returns a helper object that can create commits and tags on demand.
+    Uses shell.run() for all git operations, consistent with the rest of the codebase.
+    """
+    monkeypatch.chdir(tmp_path)
+    # Gitter.workdir is a class variable that defaults to Path.cwd()
+    # at import time. Override it so Gitter commands run in our temp repo.
+    monkeypatch.setattr(Gitter, 'workdir', tmp_path)
 
-async def tag(self, name: str, message: str | None = None) -> None:
-    """Create a git tag in the local repo."""
-    assert self.local_repo, 'Local repo required (call create_local_clone first)'
-    cmd = ['git', 'tag']
-    if message:
-        cmd += ['-a', '-m', message]
-    cmd.append(name)
-    await shell.run(cmd, cwd=self.local_repo)
+    await shell.run(['git', 'init'], cwd=tmp_path)
+    await shell.run(['git', 'config', 'user.email', 'test@test.com'], cwd=tmp_path)
+    await shell.run(['git', 'config', 'user.name', 'Test'], cwd=tmp_path)
 
-async def get_head_sha(self) -> str:
-    """Get the SHA of HEAD in the local repo."""
-    assert self.local_repo, 'Local repo required (call create_local_clone first)'
-    result = await shell.run(['git', 'rev-parse', 'HEAD'], cwd=self.local_repo)
-    return result.stdout
+    class RepoHelper:
+        def __init__(self):
+            self.path = tmp_path
+
+        async def commit(self, message='test commit'):
+            await shell.run(
+                ['git', 'commit', '--allow-empty', '-m', message],
+                cwd=tmp_path,
+            )
+
+        async def tag(self, name, message=None):
+            cmd = ['git', 'tag']
+            if message:
+                cmd += ['-a', '-m', message]
+            cmd.append(name)
+            await shell.run(cmd, cwd=tmp_path)
+
+        async def get_head_sha(self):
+            result = await shell.run(
+                ['git', 'rev-parse', 'HEAD'],
+                cwd=tmp_path,
+            )
+            return result.stdout
+
+    return RepoHelper()
 ```
 
-Semver tests then use `IntegrationEnv` without any GitHub steps:
+Since `Gitter.fetch()` (called by `_load_manifest`) runs `git fetch --tags --all` which requires a remote, tests that use `Semver.with_tags_loaded()` will need to also disable the fetch. The cleanest approach is to set `Gitter.fetched = True` in the fixture via `monkeypatch`, which skips the fetch call entirely — this is a single class-level flag, not a mock of behaviour.
 
-```python
-async with IntegrationEnv().create_local_clone().build() as env:
-    await env.commit('first feature')
-    await env.tag('1.0.0', message='release 1.0.0')
-    await env.commit('second feature')
-    await env.tag('1.1.0', message='release 1.1.0')
-
-    # Now test semver against this real repo
-    semver = Semver(tag_string='1.0.0\n1.1.0')
-    ...
-```
-
-`Gitter.workdir` must be pointed at `env.local_repo` so that any `Gitter` commands run in the temp repo. This can be done via `monkeypatch.setattr(Gitter, 'workdir', env.local_repo)` within each test.
+> Note: `Gitter.fetched` is a class-level boolean flag that `Gitter.fetch()` checks before attempting to fetch. Setting it to `True` causes the fetch to be skipped. This is the production skip mechanism, not a mock. If `Gitter.fetch` does not have this guard yet, the fixture should `monkeypatch` `Gitter.fetch` to a no-op coroutine — this is the one acceptable concession since `fetch` is a network operation and the temp repo has no remote.
 
 ### What stays as-is
 
@@ -127,7 +119,7 @@ async with IntegrationEnv().create_local_clone().build() as env:
 
 ### What changes
 
-- **`test_semver_list_sha.py`**: Replace `MagicMock` approach with `IntegrationEnv`. Create real tags, construct `Semver` with the tag string, verify output.
+- **`test_semver_list_sha.py`**: Replace `MagicMock` approach with the `semver_repo` fixture. Create real tags, call `Semver.with_tags_loaded()` or `Semver(tag_string=...)`, verify output.
 
 ### Out of scope
 
@@ -152,7 +144,7 @@ async with IntegrationEnv().create_local_clone().build() as env:
 
 ### B. Real git repo tests — new test file `test_semver_integration.py`
 
-All tests below use `IntegrationEnv().create_local_clone().build()`. No mocks.
+All tests below use the `semver_repo` fixture. No mocks.
 
 #### `bump` (live mode)
 
@@ -195,7 +187,7 @@ All tests below use `IntegrationEnv().create_local_clone().build()`. No mocks.
 
 ### C. Handler integration — extend `test_handlers.py`
 
-These tests use `IntegrationEnv` and call the handler functions with real `argparse.Namespace` objects. Since `handle_semver` calls `Semver.with_tags_loaded()` which is currently broken (see gap #5), these tests should be written to use the manual tag-loading path until `Gitter.fetch` is restored. Alternatively, implement these tests after the `Gitter.fetch` fix lands, at which point they can exercise the full handler → `with_tags_loaded` → git path.
+These tests use the `semver_repo` fixture and call the handler functions with real `argparse.Namespace` objects, exercising the full path from handler → `Semver.with_tags_loaded()` → git.
 
 | Test | What it validates |
 |---|---|
@@ -211,8 +203,8 @@ These tests use `IntegrationEnv` and call the handler functions with real `argpa
 | Category | Count | Git repo needed? | Mocks? |
 |---|---|---|---|
 | A. SemverVersion/SemverTag pure logic | ~10 | No | No |
-| B. Real git repo integration | ~16 | Yes (`IntegrationEnv`) | No |
-| C. Handler integration | ~6 | Yes (`IntegrationEnv`) | No |
+| B. Real git repo integration | ~16 | Yes (`semver_repo` fixture) | No |
+| C. Handler integration | ~6 | Yes (`semver_repo` fixture) | No |
 | Existing parser tests | (keep as-is) | No | No |
 | **Total new** | **~32** | | **None** |
 
