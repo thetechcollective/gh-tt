@@ -138,7 +138,7 @@ dev = [
 requires-dist = [
     { name = "async-lru", specifier = "==2.3.0" },
     { name = "pydantic", specifier = "==2.12.5" },
-    { name = "rich", specifier = ">=14.3.3" },
+    { name = "rich", specifier = "==14.3.3" },
 ]
 
 [package.metadata.requires-dev]
