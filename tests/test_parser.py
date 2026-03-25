@@ -9,30 +9,33 @@ def test_parser_semver_bump_prerelease():
     """Test that the parser accepts the --pre option for prerelease bump"""
     args = ['semver', 'bump', '--pre']
     parsed = tt_parse(args)
-    
+
     assert parsed.level == 'prerelease'
     assert parsed.semver_command == 'bump'
     assert parsed.command == 'semver'
+
 
 def test_parser_semver_bump_build():
     """Test that the parser accepts the --build option for build bump"""
     args = ['semver', 'bump', '--build']
     parsed = tt_parse(args)
-    
+
     assert parsed.level == 'build'
     assert parsed.semver_command == 'bump'
     assert parsed.command == 'semver'
     assert parsed.include_sha is True  # Default is to include SHA
 
+
 def test_parser_semver_bump_build_no_sha():
     """Test that the parser accepts the --build option with --no-sha"""
     args = ['semver', 'bump', '--build', '--no-sha']
     parsed = tt_parse(args)
-    
+
     assert parsed.level == 'build'
     assert parsed.include_sha is False
     assert parsed.semver_command == 'bump'
     assert parsed.command == 'semver'
+
 
 def test_parser_semver_bump_with_prefix():
     """Test that the parser accepts the --prefix option with any bump level"""
@@ -41,28 +44,30 @@ def test_parser_semver_bump_with_prefix():
         '--minor': 'minor',
         '--patch': 'patch',
         '--pre': 'prerelease',
-        '--build': 'build'
+        '--build': 'build',
     }
-    
+
     for flag, expected in level_mapping.items():
         args = ['semver', 'bump', flag, '--prefix', 'v']
         parsed = tt_parse(args)
-        
+
         assert parsed.prefix == 'v'
         assert parsed.level == expected
         assert parsed.semver_command == 'bump'
         assert parsed.command == 'semver'
 
+
 def test_parser_semver_bump_with_message():
     """Test that the parser accepts the -m/--message option with any bump level"""
-    message = "Test release message"
+    message = 'Test release message'
     args = ['semver', 'bump', '--major', '-m', message]
     parsed = tt_parse(args)
-    
+
     assert parsed.message == message
     assert parsed.level == 'major'
     assert parsed.semver_command == 'bump'
     assert parsed.command == 'semver'
+
 
 def test_parser_semver_bump_with_run_options():
     """Test that the parser accepts --run and --no-run options"""
@@ -70,31 +75,34 @@ def test_parser_semver_bump_with_run_options():
     args = ['semver', 'bump', '--major']
     parsed = tt_parse(args)
     assert parsed.run is True
-    
+
     # Explicit run flag
     args = ['semver', 'bump', '--major', '--run']
     parsed = tt_parse(args)
     assert parsed.run is True
-    
+
     # No-run flag
     args = ['semver', 'bump', '--major', '--no-run']
     parsed = tt_parse(args)
     assert parsed.run is False
+
 
 def test_parser_semver_bump_mutual_exclusivity():
     """Test that the level options are mutually exclusive"""
     # Combining two level options should fail
     with pytest.raises(SystemExit):
         tt_parse(['semver', 'bump', '--major', '--minor'])
-    
+
     with pytest.raises(SystemExit):
         tt_parse(['semver', 'bump', '--pre', '--build'])
+
 
 def test_parser_semver_bump_level_required():
     """Test that a level option is required"""
     # Missing required level argument
     with pytest.raises(SystemExit):
         tt_parse(['semver', 'bump'])
+
 
 def test_parser_semver_bump_build_options():
     """Test that build-specific options work correctly"""
@@ -103,16 +111,17 @@ def test_parser_semver_bump_build_options():
     parsed = tt_parse(args)
     assert parsed.level == 'build'
     assert parsed.include_sha is True
-    
+
     # Test --no-sha
     args = ['semver', 'bump', '--build', '--no-sha']
     parsed = tt_parse(args)
     assert parsed.level == 'build'
     assert parsed.include_sha is False
-    
+
     # Test that --no-sha cannot be used with other levels
     with pytest.raises(SystemExit):
         tt_parse(['semver', 'bump', '--major', '--no-sha'])
+
 
 @pytest.mark.parametrize(
     ('delete_flag', 'pr_workflow_flag', 'expectation'),
@@ -124,10 +133,14 @@ def test_parser_semver_bump_build_options():
         ('--delete-branch', '--pr-workflow', does_not_raise()),
     ],
 )
-def test_parser_deliver_delete_branch_only_with_pr_workflow(delete_flag, pr_workflow_flag, expectation):
-    args = (['deliver']
+def test_parser_deliver_delete_branch_only_with_pr_workflow(
+    delete_flag, pr_workflow_flag, expectation
+):
+    args = (
+        ['deliver']
         # Filter out empty strings
-        + [arg for arg in [pr_workflow_flag, delete_flag] if arg])
+        + [arg for arg in [pr_workflow_flag, delete_flag] if arg]
+    )
 
     with expectation:
         tt_parse(args)
