@@ -5,13 +5,10 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-from gh_tt.classes.gitter import Gitter
 from gh_tt.classes.semver import ExecutionMode, ReleaseType, Semver, SemverTag, SemverVersion
 
 
 def test_semver_init(capsys):
-    Gitter.verbose = False
-
     semver = Semver()
     assert isinstance(semver, Semver)
     assert semver.get("initial") == "0.0.0"
