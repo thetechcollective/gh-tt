@@ -237,8 +237,6 @@ async def test_workon_with_project():
             cwd=env.local_repo,
             # given the jq filtering, we just want a non-empty result
             predicate=lambda r: r.stdout,
-            timeout_seconds=15,
-            interval=2,
         )
 
         if result is None:
