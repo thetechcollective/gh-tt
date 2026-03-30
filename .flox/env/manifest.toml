@@ -1,0 +1,58 @@
+## Flox Environment Manifest -----------------------------------------
+##
+##   _Everything_ you need to know about the _manifest_ is here:
+##
+##   https://flox.dev/docs/reference/command-reference/manifest.toml/
+##
+## -------------------------------------------------------------------
+# Flox manifest version managed by Flox CLI
+version = 1
+
+
+## Install Packages --------------------------------------------------
+##  System-level tools only. Python dependencies are managed by uv
+##  via pyproject.toml and uv.lock.
+## -------------------------------------------------------------------
+[install]
+uv = { pkg-path = "uv", pkg-group = "uv", version = "^0.11.2" }
+just.pkg-path = "just"
+gh.pkg-path = "gh"
+cspell.pkg-path = "cspell"
+actionlint.pkg-path = "actionlint"
+zizmor.pkg-path = "zizmor"
+
+
+## Environment Variables ---------------------------------------------
+[vars]
+
+
+## Activation Hook ---------------------------------------------------
+##  ... run by _bash_ shell when you run 'flox activate'.
+## -------------------------------------------------------------------
+[hook]
+on-activate = """
+  # Git configuration
+  git config --local --get include.path | grep -e ../.gitconfig >/dev/null 2>&1 \
+    || git config --local --add include.path ../.gitconfig
+
+  # GitHub CLI extension and aliases
+  gh extension install thetechcollective/gh-tt
+  gh alias import .devcontainer/.gh_alias.yml --clobber
+
+  # Python dependencies
+  uv sync
+"""
+
+
+## Profile script ----------------------------------------------------
+## ... sourced by _your shell_ when you run 'flox activate'.
+## -------------------------------------------------------------------
+[profile]
+
+
+## Services ---------------------------------------------------------
+[services]
+
+
+## Other Environment Options -----------------------------------------
+[options]
