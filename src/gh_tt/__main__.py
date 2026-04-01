@@ -9,7 +9,7 @@ from gh_tt.cli.tt_handlers import COMMAND_HANDLERS
 from gh_tt.cli.tt_parser import tt_parse
 from gh_tt.commands import gh, git, shell
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__package__ or "gh_tt")
 
 
 def setup_logging(verbose: int):
