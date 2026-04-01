@@ -4,7 +4,7 @@ from gh_tt.__main__ import is_version_sufficient, parse_version
 
 
 @pytest.mark.parametrize(
-    'version, expected',
+    ('version', 'expected'),
     [
         ('2.55.0', (2, 55, 0)),
         ('2.100.0', (2, 100, 0)),
@@ -17,7 +17,7 @@ def test_parse_version(version, expected):
 
 
 @pytest.mark.parametrize(
-    'actual, required, expected',
+    ('actual', 'required', 'expected'),
     [
         ('2.55.0', '2.55.0', True),  # exact match
         ('2.56.0', '2.55.0', True),  # minor bump above
