@@ -9,7 +9,17 @@ from gh_tt.cli.tt_handlers import COMMAND_HANDLERS
 from gh_tt.cli.tt_parser import tt_parse
 from gh_tt.commands import gh, git, shell
 
-logger = logging.getLogger(__package__ or "gh_tt")
+logger = logging.getLogger(__package__ or 'gh_tt')
+
+
+def parse_version(version: str) -> tuple[int, ...]:
+    """Parse a version string like '2.55.0' into a comparable tuple of ints."""
+    return tuple(int(x) for x in version.split('.'))
+
+
+def is_version_sufficient(actual: str, required: str) -> bool:
+    """Return True if `actual` version meets or exceeds `required` version."""
+    return parse_version(actual) >= parse_version(required)
 
 
 def setup_logging(verbose: int):
@@ -39,9 +49,7 @@ def main():
 
     gh_version = asyncio.run(gh.get_gh_cli_version())
     required_gh_version = '2.55.0'
-    if tuple(int(x) for x in gh_version.split('.')) < tuple(
-        int(x) for x in required_gh_version.split('.')
-    ):
+    if not is_version_sufficient(gh_version, required_gh_version):
         print(
             f'gh version {gh_version} is not supported. Please upgrade to version {required_gh_version} or higher',
             file=sys.stderr,
