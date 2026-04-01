@@ -39,7 +39,9 @@ def main():
 
     gh_version = asyncio.run(gh.get_gh_cli_version())
     required_gh_version = '2.55.0'
-    if tuple(int(x) for x in gh_version.split('.')) < tuple(int(x) for x in required_gh_version.split('.')):
+    if tuple(int(x) for x in gh_version.split('.')) < tuple(
+        int(x) for x in required_gh_version.split('.')
+    ):
         print(
             f'gh version {gh_version} is not supported. Please upgrade to version {required_gh_version} or higher',
             file=sys.stderr,
