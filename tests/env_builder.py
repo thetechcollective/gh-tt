@@ -5,8 +5,10 @@ Provides a fluent API to declaratively build test environments with
 GitHub resources (repos, issues) and local git clones.
 """
 
+import asyncio
 import contextlib
 import json
+import logging
 import os
 import tempfile
 import uuid
@@ -17,6 +19,8 @@ from typing import Self
 
 from gh_tt import configuration
 from gh_tt.commands import shell
+
+logger = logging.getLogger(__name__)
 
 QA_ORG_NAME = 'gh-tt-qa'
 
@@ -245,7 +249,23 @@ class IntegrationEnv:
 
         try:
             for name, create_fn, cleanup_fn in self._steps:
-                await create_fn()
+                # GitHub API sometimes needs a while to create resources
+                # like a repository which causes transient failures when
+                # creating resources that depend on the (e.g.) repository.
+                # Retry in case it is truly a transient failure.
+                for retry in range(3):
+                    try:
+                        await create_fn()
+                        break
+                    except shell.ShellError:
+                        if retry == 2:
+                            logger.debug('Retrying failed %s times. Raising exception.', retry)
+                            raise
+
+                        wait_time = 2**retry
+                        logger.debug('Command failed - retrying in %s', wait_time)
+                        await asyncio.sleep(wait_time)
+
                 pending_cleanups.append((name, cleanup_fn))
             yield self
         finally:
