@@ -25,9 +25,13 @@
       }
     },
     "hook": {
-      "on-activate": "  # Git configuration\n  git config --local --get include.path | grep -e ../.gitconfig >/dev/null 2>&1 || git config --local --add include.path ../.gitconfig\n\n  # GitHub CLI extension and aliases\n  gh extension install thetechcollective/gh-tt\n  gh alias import .devcontainer/.gh_alias.yml --clobber\n\n  # Python dependencies\n  uv sync\n"
+      "on-activate": "  # Git configuration\n  git config --local --get include.path | grep -e ../.gitconfig >/dev/null 2>&1 || git config --local --add include.path ../.gitconfig\n\n  # GitHub CLI extension and aliases\n  gh extension install thetechcollective/gh-tt\n  gh alias import .devcontainer/.gh_alias.yml --clobber\n"
     },
-    "profile": {},
+    "profile": {
+      "bash": "  if [ -f \"$HOME/.bash_profile\" ]; then\n    source \"$HOME/.bash_profile\"\n    # ensure even with your shell prefs in place we know this is a Flox.dev env\n    export PS1=\"\\033[47m(flox)\\033[0m $PS1\"\n  fi\n  # Ensure flox binaries take precedence over system binaries\n  export PATH=\"$FLOX_ENV/bin:$PATH\"\n  # Recreate venv if it was deleted (on-activate only runs on first activation)\n  if [ ! -f \"$FLOX_ENV_PROJECT/.venv/bin/activate\" ]; then\n    uv sync\n  fi\n  source \"$FLOX_ENV_PROJECT/.venv/bin/activate\"\n",
+      "zsh": "  if [[ -f \"$HOME/.zshrc\" ]]; then\n    source \"$HOME/.zshrc\"\n    # ensure even with your shell prefs in place we know this is a Flox.dev env\n    export PS1=\"%K{white}%F{black}(flox)%k%f $PS1\"\n  fi\n  # Ensure flox binaries take precedence over system binaries\n  export PATH=\"$FLOX_ENV/bin:$PATH\"\n  # Recreate venv if it was deleted (on-activate only runs on first activation)\n  if [[ ! -f \"$FLOX_ENV_PROJECT/.venv/bin/activate\" ]]; then\n    uv sync\n  fi\n  source \"$FLOX_ENV_PROJECT/.venv/bin/activate\"\n",
+      "fish": "  # Ensure flox binaries take precedence over system binaries\n  fish_add_path \"$FLOX_ENV/bin\"\n  # Recreate venv if it was deleted (on-activate only runs on first activation)\n  if not test -f \"$FLOX_ENV_PROJECT/.venv/bin/activate.fish\"\n    uv sync\n  end\n  source \"$FLOX_ENV_PROJECT/.venv/bin/activate.fish\"\n"
+    },
     "options": {}
   },
   "packages": [

@@ -48,6 +48,43 @@ on-activate = """
 ## ... sourced by _your shell_ when you run 'flox activate'.
 ## -------------------------------------------------------------------
 [profile]
+bash = '''
+  if [ -f "$HOME/.bash_profile" ]; then
+    source "$HOME/.bash_profile"
+    # ensure even with your shell prefs in place we know this is a Flox.dev env
+    export PS1="\033[47m(flox)\033[0m $PS1"
+  fi
+  # Ensure flox binaries take precedence over system binaries
+  export PATH="$FLOX_ENV/bin:$PATH"
+  # Recreate venv if it was deleted (on-activate only runs on first activation)
+  if [ ! -f "$FLOX_ENV_PROJECT/.venv/bin/activate" ]; then
+    uv sync
+  fi
+  source "$FLOX_ENV_PROJECT/.venv/bin/activate"
+'''
+zsh = '''
+  if [[ -f "$HOME/.zshrc" ]]; then
+    source "$HOME/.zshrc"
+    # ensure even with your shell prefs in place we know this is a Flox.dev env
+    export PS1="%K{white}%F{black}(flox)%k%f $PS1"
+  fi
+  # Ensure flox binaries take precedence over system binaries
+  export PATH="$FLOX_ENV/bin:$PATH"
+  # Recreate venv if it was deleted (on-activate only runs on first activation)
+  if [[ ! -f "$FLOX_ENV_PROJECT/.venv/bin/activate" ]]; then
+    uv sync
+  fi
+  source "$FLOX_ENV_PROJECT/.venv/bin/activate"
+'''
+fish = '''
+  # Ensure flox binaries take precedence over system binaries
+  fish_add_path "$FLOX_ENV/bin"
+  # Recreate venv if it was deleted (on-activate only runs on first activation)
+  if not test -f "$FLOX_ENV_PROJECT/.venv/bin/activate.fish"
+    uv sync
+  end
+  source "$FLOX_ENV_PROJECT/.venv/bin/activate.fish"
+'''
 
 
 ## Services ---------------------------------------------------------
