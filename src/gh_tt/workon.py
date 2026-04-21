@@ -122,7 +122,7 @@ async def _create_or_reuse_branch(issue: gh.Issue, repo: gh.Repo, remote: str) -
             )
 
             if not is_pr_open:
-                raise RuntimeError(
+                raise WorkonError(
                     f"Found local branch '{dev_branch}', but could not find a corresponding open pull request. This indicates this branch was not created via `gh tt workon`. gh-tt currently does not support working on branches not created via gh-tt.\n\nTo fix this, please create a PR manually.\n\nIf this branch was created via gh tt workon, please report this as a bug."
                 )
 
@@ -136,7 +136,7 @@ async def _create_or_reuse_branch(issue: gh.Issue, repo: gh.Repo, remote: str) -
             )
 
             if not is_pr_open:
-                raise RuntimeError(
+                raise WorkonError(
                     f"Found remote branch '{dev_branch}', but could not find a corresponding open pull request. This indicates this branch was not created via `gh tt workon`. gh-tt currently does not support working on branches not created via gh-tt.\n\nTo fix this, please create a PR manually.\n\nIf this branch was created via gh tt workon, please report this as a bug."
                 )
 
