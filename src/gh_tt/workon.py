@@ -14,12 +14,7 @@ class WorkonError(Exception):
 async def workon_issue(issue: int | gh.Issue, config: configuration.TtConfig, *, assign: bool):
     logger.debug('workon_issue: issue=%s, assign=%s', issue, assign)
 
-    _, is_safe_to_switch_branch = await asyncio.gather(git.fetch(), git.is_safe_to_switch_branch())
-    if not is_safe_to_switch_branch:
-        raise WorkonError(
-            'You have uncommitted changes to tracked files. Please commit or stash them before running this command.'
-        )
-
+    _, should_use_stash = await asyncio.gather(git.fetch(), git.has_changes_to_tracked_files())
     match issue:
         case int():
             issue, repo, remote = await asyncio.gather(
@@ -37,7 +32,25 @@ async def workon_issue(issue: int | gh.Issue, config: configuration.TtConfig, *,
             'Issue is closed. Working on closed issues is not supported. Please open a new issue in favor of reopening issues.'
         )
 
-    dev_branch = await _create_or_reuse_branch(issue=issue, repo=repo, remote=remote)
+    if should_use_stash:
+        logger.debug('stashing uncommitted changes before branch switch')
+        await git.stash()
+
+    try:
+        dev_branch = await _create_or_reuse_branch(issue=issue, repo=repo, remote=remote)
+    except:
+        if should_use_stash:
+            logger.debug('branch operation failed, restoring stashed changes')
+            await git.stash_pop()
+        raise
+
+    if should_use_stash:
+        logger.debug('restoring stashed changes on new branch')
+        result = await git.stash_pop()
+        if result.return_code != 0:
+            raise WorkonError(
+                "Your uncommitted changes were brought to the new branch but have conflicts with it. Resolve the conflicts, then run 'git stash drop' to clean up the stash entry."
+            )
 
     if assign:
         logger.debug('assigning issue and PR to @me')
