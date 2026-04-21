@@ -11,7 +11,7 @@ class WorkonError(Exception):
     pass
 
 
-async def workon_issue(issue: int | gh.Issue, config: configuration.TtConfig, *, assign: bool):
+async def workon_issue(issue: int | gh.Issue, config: configuration.TtConfig, *, assign: bool):  # noqa: C901
     logger.debug('workon_issue: issue=%s, assign=%s', issue, assign)
 
     _, should_use_stash = await asyncio.gather(git.fetch(), git.has_changes_to_tracked_files())
