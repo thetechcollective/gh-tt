@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import re
 import sys
 from dataclasses import dataclass
 from enum import Enum, StrEnum, auto
 
 from gh_tt import configuration
-from gh_tt.commands import git, shell
+from gh_tt.commands import gh, git, shell
 from gh_tt.legacy.lazyload import Lazyload
 
+logger = logging.getLogger(__name__)
 
 class ReleaseType(StrEnum):
     RELEASE = 'release'
@@ -497,3 +499,100 @@ class Semver(Lazyload):
                         print(f"{tag} {tag.sha}")
                     else:
                         print(tag)
+
+
+def _handle_semver_bump_build(args, semver):
+    """Handle the semver bump build subcommand"""
+    # First try to get a prerelease version, if not available fall back to release
+    current_version = semver.get_current_semver(release_type=ReleaseType.PRERELEASE)
+    if not current_version:
+        current_version = semver.get_current_semver(release_type=ReleaseType.RELEASE)
+
+    if not current_version:
+        print('No version found to bump build number.', file=sys.stderr)
+        sys.exit(1)
+
+    new_version = current_version.version.bump_build(include_sha=args.include_sha)
+    # Handle the prefix if specified
+    tag_str = f'{args.prefix or ""}{new_version}'
+    message = f"Bumped build from version '{current_version}' to '{tag_str}'"
+    if args.message:
+        message += f'\n{args.message}'
+
+    cmd = ['git', 'tag', '-a', '-m', f'{tag_str}\n{message}', tag_str]
+
+    if args.run:
+        asyncio.run(shell.run(cmd))
+        # Print the new tag when in --run mode
+        print(f'{tag_str}')
+    else:
+        print(' '.join(cmd))
+
+
+def handle_semver_bump(args, semver, release_type):
+    """Handle the semver bump subcommand"""
+    assert args.level in ['major', 'minor', 'patch', 'prerelease', 'build']
+
+    # For build level, we need to use the bump_build method directly
+    if args.level == 'build':
+        _handle_semver_bump_build(args, semver)
+    else:
+        result = semver.bump(
+            level=args.level,
+            message=args.message,
+            prefix=args.prefix,
+            release_type=release_type,
+            execution_mode=ExecutionMode.LIVE if args.run else ExecutionMode.DRY_RUN,
+        )
+
+        # Print the new tag in --run mode (which is the default)
+        if args.run and result:
+            # The result from bump() is a set with a single item - the new tag
+            new_tag = next(iter(result))
+            print(f'{new_tag}')
+
+class BumpError(Exception):
+    pass
+
+async def validate_bump_context():
+    """Validates that your git (branch, remote status) is in a state ready to execute semver bump."""
+
+    current_branch, _, remote, default_branch = await asyncio.gather(
+        git.get_current_branch_name(), git.fetch(), git.get_remote(), gh.get_default_branch()
+    )
+    logger.debug(
+        'current branch: %s, remote: %s, default_branch: %s',
+        current_branch,
+        remote,
+        default_branch,
+    )
+
+    if current_branch != default_branch:
+        raise BumpError(
+            f'You are currently on the {current_branch} branch. Bumping is only allowed from the {default_branch} branch. Switch to {default_branch} before bumping.'
+        )
+
+    (
+        default_branch_tip_hash,
+        remote_dev_branch_tip_hash,
+        merge_base_hash,
+    ) = await asyncio.gather(
+        git.get_branch_tip_hash(remote=remote, branch=default_branch),
+        git.get_branch_tip_hash(remote=remote, branch=current_branch),
+        git.get_merge_base(branch=current_branch, remote=remote, default_branch=default_branch),
+    )
+    logger.debug(
+        'default_branch_tip_hash=%s, remote_dev_branch_tip_hash=%s, merge_base_hash=%s',
+        default_branch_tip_hash,
+        remote_dev_branch_tip_hash,
+        merge_base_hash,
+    )
+        
+    if default_branch_tip_hash != merge_base_hash:
+        logger.debug(
+            'branch %s is not up to date with %s/%s', current_branch, remote, default_branch
+        )
+        raise BumpError(
+            f'The {default_branch} branch has commits your branch does not. Run git rebase {remote}/{default_branch} to integrate commits from {default_branch} before you bump.'
+        )
+
