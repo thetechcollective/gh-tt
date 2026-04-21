@@ -5,8 +5,10 @@ import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
+from gh_tt.commands import shell
 from gh_tt.legacy.gitter import Gitter
 from gh_tt.legacy.semver import ExecutionMode, ReleaseType, Semver, SemverTag, SemverVersion
+from tests.env_builder import IntegrationEnv
 
 
 def test_semver_init(capsys):
@@ -402,3 +404,39 @@ def test_semver_tag_lt_delegates():
     tag_b = SemverTag(SemverVersion(2, 0, 0))
     assert tag_a < tag_b
     assert not (tag_b < tag_a)
+
+
+@pytest.mark.usefixtures('check_end_to_end_env')
+async def test_semver_bump_raises_when_behind_default_branch():
+    async with (
+        IntegrationEnv().require_owner().create_repo().create_local_clone().build()
+    ) as env:
+        assert env.local_repo is not None
+     
+        # Push a commit to the remote and remove it from the local branch
+        await shell.run(
+            ['git', 'commit', '-m', 'remote is ahead', '--allow-empty'], cwd=env.local_repo
+        )
+        await shell.run(['git', 'push'], cwd=env.local_repo)
+        await shell.run(['git', 'reset', '--hard', 'HEAD~1'], cwd=env.local_repo)
+
+        result = await shell.run(['gh', 'tt', 'semver', 'bump', '--build'], cwd=env.local_repo, die_on_error=False)
+
+        assert result.return_code == 1
+        assert 'branch has commits your branch does not' in result.stderr
+        
+
+@pytest.mark.usefixtures('check_end_to_end_env')
+async def test_semver_bump_raises_when_not_on_default_branch():
+    async with (
+        IntegrationEnv().require_owner().create_repo().create_local_clone().build()
+    ) as env:
+        assert env.local_repo is not None
+     
+        await shell.run(['git', 'tag', 'v0.0.1'], cwd=env.local_repo)
+        await shell.run(['git', 'switch', '-c', 'new_branch'], cwd=env.local_repo)
+
+        result = await shell.run(['gh', 'tt', 'semver', 'bump', '--build'], cwd=env.local_repo, die_on_error=False)
+
+        assert result.return_code == 1
+        assert 'Bumping is only allowed' in result.stderr
