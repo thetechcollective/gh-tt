@@ -7,7 +7,13 @@ import sys
 from gh_tt import configuration
 from gh_tt.commands import git
 from gh_tt.deliver import DeliverError, deliver
-from gh_tt.legacy.semver import ReleaseType, Semver, handle_semver_bump
+from gh_tt.legacy.semver import (
+    BumpError,
+    ReleaseType,
+    Semver,
+    handle_semver_bump,
+    validate_bump_context,
+)
 from gh_tt.self_commands import upgrade
 from gh_tt.workon import WorkonError, workon_issue, workon_title
 
@@ -95,6 +101,12 @@ def handle_semver(args):
     )
 
     if args.semver_command == 'bump':
+        try:
+            asyncio.run(validate_bump_context())
+        except BumpError as e:
+            print(e, file=sys.stderr)
+            sys.exit(1)
+
         handle_semver_bump(args, semver, release_type)
     elif args.semver_command == 'list':
         filter_type = getattr(args, 'filter_type', 'release')
