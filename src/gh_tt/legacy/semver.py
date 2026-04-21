@@ -497,3 +497,54 @@ class Semver(Lazyload):
                         print(f"{tag} {tag.sha}")
                     else:
                         print(tag)
+
+
+def _handle_semver_bump_build(args, semver):
+    """Handle the semver bump build subcommand"""
+    # First try to get a prerelease version, if not available fall back to release
+    current_version = semver.get_current_semver(release_type=ReleaseType.PRERELEASE)
+    if not current_version:
+        current_version = semver.get_current_semver(release_type=ReleaseType.RELEASE)
+
+    if not current_version:
+        print('No version found to bump build number.', file=sys.stderr)
+        sys.exit(1)
+
+    new_version = current_version.version.bump_build(include_sha=args.include_sha)
+    # Handle the prefix if specified
+    tag_str = f'{args.prefix or ""}{new_version}'
+    message = f"Bumped build from version '{current_version}' to '{tag_str}'"
+    if args.message:
+        message += f'\n{args.message}'
+
+    cmd = ['git', 'tag', '-a', '-m', f'{tag_str}\n{message}', tag_str]
+
+    if args.run:
+        asyncio.run(shell.run(cmd))
+        # Print the new tag when in --run mode
+        print(f'{tag_str}')
+    else:
+        print(' '.join(cmd))
+
+
+def handle_semver_bump(args, semver, release_type):
+    """Handle the semver bump subcommand"""
+    assert args.level in ['major', 'minor', 'patch', 'prerelease', 'build']
+
+    # For build level, we need to use the bump_build method directly
+    if args.level == 'build':
+        _handle_semver_bump_build(args, semver)
+    else:
+        result = semver.bump(
+            level=args.level,
+            message=args.message,
+            prefix=args.prefix,
+            release_type=release_type,
+            execution_mode=ExecutionMode.LIVE if args.run else ExecutionMode.DRY_RUN,
+        )
+
+        # Print the new tag in --run mode (which is the default)
+        if args.run and result:
+            # The result from bump() is a set with a single item - the new tag
+            new_tag = next(iter(result))
+            print(f'{new_tag}')
