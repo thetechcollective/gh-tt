@@ -8,6 +8,7 @@ from gh_tt import configuration
 from gh_tt.commands import git, shell
 from gh_tt.deliver import DeliverError, deliver
 from gh_tt.legacy.semver import ExecutionMode, ReleaseType, Semver
+from gh_tt.self_commands import upgrade
 from gh_tt.workon import WorkonError, workon_issue, workon_title
 
 logger = logging.getLogger(__name__)
@@ -20,6 +21,11 @@ def _abort_on_legacy_path(args):
     )
     print(f'Passed arguments: {args}')
     sys.exit(1)
+
+
+def handle_self(args):
+    if args.self_command == 'upgrade':
+        asyncio.run(upgrade(pin=args.pin))
 
 
 def handle_workon(args):

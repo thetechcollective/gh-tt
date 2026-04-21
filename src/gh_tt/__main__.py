@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 
+import gh_tt.cli.tt_handlers
 from gh_tt import configuration
 from gh_tt.cli.tt_handlers import COMMAND_HANDLERS
 from gh_tt.cli.tt_parser import tt_parse
@@ -71,6 +72,13 @@ def main():
             return '\n'.join(r.stdout for r in results)
 
         print(asyncio.run(version_context()))
+        sys.exit(0)
+
+    # Upgrading should happen regardless of configuration, so dispatch the command from here
+    # instead of the COMMAND_HANDLER.
+    if args.command == 'self':
+        gh_tt.cli.tt_handlers.handle_self(args)
+        print('gh-tt successfully upgraded.')
         sys.exit(0)
 
     # Needed for end to end testing in GH workflows. When running in a GitHub action,

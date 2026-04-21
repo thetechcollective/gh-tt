@@ -58,6 +58,20 @@ def tt_parse(args=None):
 
     subparsers = parser.add_subparsers(dest='command')
 
+    # Add self update subcommand
+    self_parser = subparsers.add_parser('self', help='Commands to manage gh-tt itself')
+    self_sub_parser = self_parser.add_subparsers(dest='self_command', required=True)
+    upgrade_parser = self_sub_parser.add_parser(
+        'upgrade', help='Upgrade gh-tt to the latest version'
+    )
+
+    upgrade_parser.add_argument(
+        '--pin',
+        type=str,
+        help='A tag to pin the extension at. "stable" by default.',
+        default='stable',
+    )
+
     # Add workon subcommand
     workon_parser = subparsers.add_parser(
         'workon', parents=[parent_parser], help='Set the issue number context to work on'
