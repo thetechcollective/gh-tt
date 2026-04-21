@@ -20,11 +20,17 @@ async def get_root() -> Path:
     return Path(result.stdout)
 
 
-async def is_safe_to_switch_branch() -> bool:
+async def has_changes_to_tracked_files() -> bool:
     result = await shell.run(['git', 'status', '--porcelain'])
+    return any(not line.startswith('??') for line in result.stdout.splitlines())
 
-    # ?? marks untracked files - we can safely switch branches with those
-    return all(line.startswith('??') for line in result.stdout.splitlines())
+
+async def stash():
+    await shell.run(['git', 'stash', '--include-untracked'])
+
+
+async def stash_pop() -> shell.ShellResult:
+    return await shell.run(['git', 'stash', 'pop'], die_on_error=False)
 
 
 async def fetch():

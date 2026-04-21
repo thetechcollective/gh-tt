@@ -348,27 +348,33 @@ async def test_workon_title_success():
 
 
 @pytest.mark.usefixtures('check_end_to_end_env')
-async def test_workon_aborts_on_uncommitted_local_changes():
+async def test_workon_carries_uncommitted_changes_to_new_branch():
     async with IntegrationEnv().require_owner().create_repo().create_local_clone().build() as env:
         assert env.local_repo is not None, f'Expected local repo Path, got {type(env.local_repo)}'
 
-        # Arrange
+        # Arrange: create a tracked file, then modify it without committing
         (env.local_repo / 'EXAMPLE.md').write_text('original')
         await shell.run(['git', 'add', 'EXAMPLE.md'], cwd=env.local_repo)
         await shell.run(['git', 'commit', '-m', 'add file'], cwd=env.local_repo)
+        await shell.run(['git', 'push'], cwd=env.local_repo)
 
         (env.local_repo / 'EXAMPLE.md').write_text('some change')
 
         # Act
-        workon_result = await shell.run(
+        result = await shell.run(
             ['gh', 'tt', 'workon', '--pr-workflow', '-t', 'title of the issue', '--no-assign'],
             cwd=env.local_repo,
-            die_on_error=False,
         )
+        print(result.stderr)
 
-        # Assert
-        assert workon_result.return_code == 1
-        assert (
-            'You have uncommitted changes to tracked files. Please commit or stash them before running this command.'
-            in workon_result.stderr
+        # Assert: on the new branch and dirty file is still present
+        result = await shell.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'], cwd=env.local_repo)
+        branch_name = result.stdout
+        # Issue branches start with the issue number. Since the workon command is executed with the -t option,
+        # the issue is created on the fly and so we do not know its number. So, just check that it is _a_ number.
+        assert int(branch_name.split('-')[0])
+
+        content = (env.local_repo / 'EXAMPLE.md').read_text()
+        assert content == 'some change', (
+            'Expected uncommitted change to be present on the new branch'
         )
